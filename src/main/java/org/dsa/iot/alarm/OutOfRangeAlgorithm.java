@@ -13,8 +13,8 @@ import org.dsa.iot.dslink.node.value.*;
 import org.slf4j.*;
 
 /**
- * Represents a responder identified by a path that can be tested by invoking the action
- * Run Tests.
+ * This algorithm creates alarms for sources whose numeric value is less than a minimum
+ * value, or greater than a maximum value.
  *
  * @author Aaron Hansen
  */

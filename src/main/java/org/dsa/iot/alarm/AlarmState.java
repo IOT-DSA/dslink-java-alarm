@@ -9,18 +9,35 @@
 package org.dsa.iot.alarm;
 
 /**
- * Enum for the possible alarm state.
+ * Enum for the possible alarm states.
  *
  * @author Aaron Hansen
  */
 public enum AlarmState {
 
+    /**
+     * An alert is informational, it does not require acknowledgement.  Once an alarm
+     * source in alert returns to normal, an operator would not see the alert on their
+     * console unless explicitly queried.
+     */
     ALERT,
 
+    /**
+     * Faults represent a malfunction or failure within the system.  To close a fault,
+     * it must return to the normal state and be acknowledged.
+     */
     FAULT,
 
+    /**
+     * Offnormal represents an unexpected condition, or something outside the bounds of
+     * normal operation.  To close an offnormal alarm, it must return to the normal state
+     * and be acknowledged.
+     */
     OFFNORMAL,
 
+    /**
+     * Normal is healthy, and none of the other states.
+     */
     NORMAL;
 
     /**

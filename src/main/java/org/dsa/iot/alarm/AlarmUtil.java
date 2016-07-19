@@ -142,7 +142,7 @@ public class AlarmUtil implements AlarmConstants {
 
     /**
      * Ensures that a runtime exception is thrown. If the given error is not a
-     * runtime exception, then one will thrown with the parameter as the inner
+     * runtime exception, then one will be thrown with the parameter as the inner
      * exception.
      */
     public static void throwRuntime(Throwable error) {

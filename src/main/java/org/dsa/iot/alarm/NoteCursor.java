@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * A cursor for the notes of a specific alarm record.  Initially positioned before the
  * first note, fields should only accessed after a call to next() returns true.  Notes
- * should be returned in chronological order starting with the earliest note.
+ * should be returned in chronological order starting with the earliest timestamp.
  *
  * @author Aaron Hansen
  */

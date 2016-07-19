@@ -14,11 +14,13 @@ import org.dsa.iot.dslink.node.value.*;
 import java.util.*;
 
 /**
- * Basic implementation of the AlarmObject interface.
+ * Basic implementation of the AlarmObject interface.  Subclasses are not required to
+ * implement anything, this class simply provides a bunch of callbacks while managing
+ * the lifecycle of the instance.
  *
  * @author Aaron Hansen
  */
-public class AbstractAlarmObject implements AlarmObject, AlarmConstants {
+public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants {
 
     ///////////////////////////////////////////////////////////////////////////
     // Constants
@@ -153,7 +155,7 @@ public class AbstractAlarmObject implements AlarmObject, AlarmConstants {
         this.node = node;
         node.setRoConfig(JAVA_TYPE, new Value(getClass().getName()));
         AlarmObject alarmObject;
-        if ((node != null) && node.getHasChildren()) {
+        if (node != null) {
             Map<String,Node> kids = node.getChildren();
             if (kids != null) {
                 for (Node kid : kids.values()) {
@@ -163,8 +165,6 @@ public class AbstractAlarmObject implements AlarmObject, AlarmConstants {
                     }
                 }
             }
-        } else {
-            System.out.println(getClass().getName());//XXX
         }
         initProperties();
         initActions();
@@ -207,14 +207,6 @@ public class AbstractAlarmObject implements AlarmObject, AlarmConstants {
         if (!isEnabled() || isSteady()) {
             return false;
         }
-        /*
-        AlarmObject parent = getParent();
-        if (parent instanceof AbstractAlarmObject) {
-            if (!((AbstractAlarmObject)parent).isValid()) {
-                return false;
-            }
-        }
-        */
         return true;
     }
 

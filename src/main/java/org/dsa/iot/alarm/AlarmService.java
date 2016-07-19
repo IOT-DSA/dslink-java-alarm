@@ -39,7 +39,6 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
 
     private final Object uuidMutex = new Object();
     private AlarmLinkHandler alarmLinkHandler;
-    private Node alarmService;
     private ScheduledFuture executeFuture;
     private boolean executing = false;
 
@@ -131,8 +130,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         long now = System.currentTimeMillis();
         UUID uuid = null;
         synchronized (uuidMutex) {
-            int num = alarmService.getRoConfig(RECORD_COUNT).getNumber().intValue();
-            alarmService.setRoConfig(RECORD_COUNT, new Value(++num));
+            int num = getNode().getRoConfig(RECORD_COUNT).getNumber().intValue();
+            getNode().setRoConfig(RECORD_COUNT, new Value(++num));
             uuid = java.util.UUID.randomUUID();
         }
         AlarmRecord alarmRecord = Alarming.getProvider().newAlarmRecord().setUuid(uuid)
@@ -270,37 +269,37 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         Action action = new Action(Permission.WRITE, this::acknowledge);
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         action.addParameter(new Parameter(USER, ValueType.STRING));
-        alarmService.createChild("Acknowledge").setSerializable(false).setAction(action)
+        getNode().createChild("Acknowledge").setSerializable(false).setAction(action)
                 .build();
         //Add Alarm Class action
         action = new Action(Permission.WRITE, this::addAlarmClass);
         action.addParameter(
                 new Parameter(NAME, ValueType.STRING, new Value("Display Name")));
-        alarmService.createChild("Add Alarm Class").setSerializable(false)
+        getNode().createChild("Add Alarm Class").setSerializable(false)
                 .setAction(action).build();
         //Add Note
         action = new Action(Permission.WRITE, this::addNote);
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         action.addParameter(new Parameter(USER, ValueType.STRING));
         action.addParameter(new Parameter(NOTE, ValueType.STRING));
-        alarmService.createChild("Add Note").setSerializable(false).setAction(action)
+        getNode().createChild("Add Note").setSerializable(false).setAction(action)
                 .build();
         //Delete All Records action
         action = new Action(Permission.WRITE,
                 (p) -> Alarming.getProvider().deleteAllRecords());
-        alarmService.createChild("Delete All Records").setSerializable(false)
+        getNode().createChild("Delete All Records").setSerializable(false)
                 .setAction(action).build();
         //Delete Record
         action = new Action(Permission.WRITE, this::deleteRecord);
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
-        alarmService.createChild("Delete Record").setSerializable(false).setAction(action)
+        getNode().createChild("Delete Record").setSerializable(false).setAction(action)
                 .build();
         //Get Alarm
         action = new Action(Permission.READ, this::getAlarm);
         action.addParameter(new Parameter("UUID", ValueType.STRING));
         action.setResultType(ResultType.TABLE);
         AlarmUtil.encodeAlarmColumns(action);
-        alarmService.createChild("Get Alarm").setSerializable(false).setAction(action)
+        getNode().createChild("Get Alarm").setSerializable(false).setAction(action)
                 .build();
         //Get Notes
         action = new Action(Permission.READ, this::getNotes);
@@ -309,12 +308,12 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action.addResult(new Parameter(TIMESTAMP, ValueType.STRING));
         action.addResult(new Parameter(USER, ValueType.STRING));
         action.addResult(new Parameter(NOTE, ValueType.STRING));
-        alarmService.createChild("Get Notes").setSerializable(false).setAction(action)
+        getNode().createChild("Get Notes").setSerializable(false).setAction(action)
                 .build();
         //Return To Normal
         action = new Action(Permission.WRITE, this::returnToNormal);
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
-        alarmService.createChild("Return To Normal").setSerializable(false)
+        getNode().createChild("Return To Normal").setSerializable(false)
                 .setAction(action).build();
     }
 

@@ -13,8 +13,8 @@ import org.dsa.iot.dslink.node.value.*;
 import org.slf4j.*;
 
 /**
- * Represents a responder identified by a path that can be tested by invoking the action
- * Run Tests.
+ * This algorithm creates alarms when boolean data sources turn true.  This will allow
+ * other links the self detect alarmable conditions.
  *
  * @author Aaron Hansen
  */

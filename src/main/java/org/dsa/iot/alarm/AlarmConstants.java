@@ -23,7 +23,7 @@ public interface AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     String ALERT = "Alert";
-    String ENABLED = "Enabled Record Age In Days";
+    String ENABLED = "Enabled";
     String CREATE_ALARM = "Create Alarm";
     String CREATE_STATE = "Create State";
     String FAULT = "Fault";

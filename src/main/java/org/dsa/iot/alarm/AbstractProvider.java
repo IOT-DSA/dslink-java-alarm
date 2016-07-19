@@ -12,7 +12,8 @@ import org.slf4j.*;
 import java.util.*;
 
 /**
- * Skeletal Alarming.Provider.
+ * Skeletal Alarming.Provider.  Subclasses are only required to implement addNote and
+ * saveRecord.
  *
  * @author Aaron Hansen
  */

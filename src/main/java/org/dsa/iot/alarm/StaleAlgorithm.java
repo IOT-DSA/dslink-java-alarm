@@ -15,8 +15,8 @@ import org.slf4j.*;
 import java.util.*;
 
 /**
- * Represents a responder identified by a path that can be tested by invoking the action
- * Run Tests.
+ * This algorithm creates alarms for sources whose value does not change after a certain
+ * period of time. This can be useful for detecting sensor failure.
  *
  * @author Aaron Hansen
  */
