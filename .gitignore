@@ -1,0 +1,24 @@
+# Gradle
+**/.gradle
+**/build
+
+# Project files
+**/.iml
+**/.idea
+
+# Misc
+**.bak
+**.class
+**/.classpath
+**/.DS_Store
+**/.metadata
+**/.project
+**/.settings
+**/eclipseBin
+**/libJar
+**/target
+
+# Runtime files
+**/.key
+db
+nodes.json

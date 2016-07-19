@@ -1,0 +1,34 @@
+apply plugin: 'java'
+apply plugin: 'findbugs'
+apply plugin: 'application'
+
+version '0.0.1-SNAPSHOT'
+
+mainClassName = 'org.dsa.iot.alarm.Main'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+}
+
+dependencies {
+    compile 'org.iot-dsa:dslink:0.16.0-SNAPSHOT'
+}
+
+tasks.withType(FindBugs) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+
+run {
+    args System.getProperty("exec.args", "").split()
+    workingDir project.buildDir
+}
+
+applicationDistribution.from new File(project.projectDir, "/dslink.json")
