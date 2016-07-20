@@ -1,0 +1,516 @@
+/* THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD
+ * TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
+ * NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+ * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+package org.dsa.iot.alarm.jdbc;
+
+import org.dsa.iot.alarm.*;
+import org.slf4j.*;
+import java.sql.*;
+import java.text.*;
+import java.util.*;
+
+/**
+ * Alarming provider that uses a JDBC data source.  This uses a fixed schema, but
+ * leaves obtaining the database connection up to subclasses.
+ *
+ * @author Aaron Hansen
+ */
+public abstract class JdbcProvider extends AbstractProvider {
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Constants
+    ///////////////////////////////////////////////////////////////////////////
+
+    protected static final SimpleDateFormat dateFormat = new SimpleDateFormat(
+            "yyyy-MM-dd HH:mm:ss");
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JdbcProvider.class);
+
+    private static final String createAlarmTable =
+            "create table if not exists Alarm_Records (" + "Uuid varchar(36) not null, "
+                    + "SourcePath varchar(254), " + "AlarmClass varchar(254), "
+                    + "AlarmState varchar(9), " + "CreatedTime timestamp not null, "
+                    + "NormalTime timestamp, " + "AckTime timestamp, "
+                    + "AckUser varchar(256), " + "Message varchar(256), "
+                    + "HasNotes boolean not null," + "IsOpen boolean not null, "
+                    + "primary key (Uuid))";
+
+    private static final String createNoteTable =
+            "create table if not exists Alarm_Notes (" + "Uuid varchar(36) not null, "
+                    + "Timestamp timestamp not null, " + "User varchar(256), "
+                    + "Note longvarchar, " + "primary key (Uuid,Timestamp))";
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Fields
+    ///////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Constructors
+    ///////////////////////////////////////////////////////////////////////////
+
+    public JdbcProvider() {
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Methods
+    ///////////////////////////////////////////////////////////////////////////
+
+    @Override public void addAlarm(final AlarmRecord arg) {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        try {
+            conn = getConnection();
+            //insert the note
+            stmt = conn.prepareStatement(
+                    "insert into Alarm_Records " + "(Uuid, " + "SourcePath, "
+                            + "AlarmClass, " + "AlarmState, " + "CreatedTime, "
+                            + "NormalTime, " + "AckTime, " + "AckUser, " + "Message, "
+                            + "HasNotes," + "IsOpen) "
+                            + "VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+            stmt.setString(1, arg.getUuid().toString());
+            stmt.setString(2, arg.getSourcePath());
+            stmt.setString(3, arg.getAlarmClass().getNode().getName());
+            stmt.setString(4, AlarmState.encode(arg.getAlarmType()));
+            stmt.setTimestamp(5, new Timestamp(arg.getCreatedTime()));
+            stmt.setTimestamp(6, new Timestamp(arg.getNormalTime()));
+            stmt.setTimestamp(7, new Timestamp(arg.getAckTime()));
+            stmt.setString(8, arg.getAckUser());
+            stmt.setString(9, arg.getMessage());
+            stmt.setBoolean(10, arg.getHasNotes());
+            stmt.setBoolean(11, arg.isOpen());
+            stmt.executeUpdate();
+            conn.commit();
+        } catch (Exception x) {
+            AlarmUtil.throwRuntime(x);
+        } finally {
+            close(conn, stmt, null);
+        }
+    }
+
+    @Override protected synchronized void addNote(Note arg) {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        try {
+            conn = getConnection();
+            //insert the note
+            stmt = conn.prepareStatement(
+                    "insert into Alarm_Notes " + "(Uuid, Timestamp, User, Note) "
+                            + "VALUES (?,?,?,?)");
+            stmt.setString(1, arg.getUUID().toString());
+            stmt.setTimestamp(2, new Timestamp(arg.getTimestamp()));
+            stmt.setString(3, arg.getUser());
+            stmt.setString(4, arg.getText());
+            stmt.executeUpdate();
+            stmt.close();
+            //update the alarm record
+            stmt = conn.prepareStatement(
+                    "update Alarm_Records set HasNotes = true " + "where Uuid = ?");
+            stmt.setString(1, arg.getUUID().toString());
+            stmt.executeUpdate();
+            conn.commit();
+        } catch (Exception x) {
+            AlarmUtil.throwRuntime(x);
+        } finally {
+            close(conn, stmt, null);
+        }
+    }
+
+    /**
+     * Just a convenience for closing resources.
+     *
+     * @param conn      May be null.
+     * @param statement May be null.
+     * @param results   May be null.
+     */
+    private static void close(Connection conn, Statement statement, ResultSet results) {
+        if (results != null)
+            try {
+                results.close();
+            } catch (Exception ignore) {
+            }
+        if (statement != null)
+            try {
+                statement.close();
+            } catch (Exception ignore) {
+            }
+        if (conn != null)
+            try {
+                conn.close();
+            } catch (Exception ignore) {
+            }
+    }
+
+    @Override public void deleteAllRecords() {
+        Connection conn = null;
+        Statement statement = null;
+        try {
+            conn = getConnection();
+            statement = conn.createStatement();
+            statement.executeUpdate("delete from Alarm_Records");
+            statement.executeUpdate("delete from Alarm_Notes");
+        } catch (Exception x) {
+            AlarmUtil.throwRuntime(x);
+        } finally {
+            close(conn, statement, null);
+        }
+    }
+
+    @Override public void deleteRecord(UUID uuid) {
+        Connection conn = null;
+        PreparedStatement statement = null;
+        try {
+            AlarmRecord rec = getAlarm(uuid);
+            if (rec == null) {
+                return;
+            }
+            conn = getConnection();
+            statement = conn.prepareStatement("delete from Alarm_Records where Uuid = ?");
+            statement.setString(1, uuid.toString());
+            statement.executeUpdate();
+            if (rec.getHasNotes()) {
+                statement.close();
+                statement = conn.prepareStatement(
+                        "delete from Alarm_Notes where Uuid = ?");
+                statement.setString(1, uuid.toString());
+                statement.executeUpdate();
+            }
+        } catch (Exception x) {
+            AlarmUtil.throwRuntime(x);
+        } finally {
+            close(conn, statement, null);
+        }
+    }
+
+    @Override public AlarmRecord getAlarm(UUID uuid) {
+        Connection conn = null;
+        PreparedStatement statement = null;
+        ResultSet results = null;
+        MyAlarmCursor cursor = null;
+        try {
+            conn = getConnection();
+            statement = conn.prepareStatement(
+                    "select * from Alarm_Records where Uuid = ?");
+            statement.setString(1, uuid.toString());
+            results = statement.executeQuery();
+            cursor = new MyAlarmCursor(conn, statement, results);
+            if (cursor.next()) {
+                return cursor;
+            }
+        } catch (Exception x) {
+            close(conn, statement, results);
+            AlarmUtil.throwRuntime(x);
+        } finally {
+            try {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            } catch (Exception ignore) {
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Subclasses are responsible for obtaining a connection.
+     */
+    protected abstract Connection getConnection();
+
+    /**
+     * Returns "Alarms" by default.
+     */
+    protected String getDatabaseName() {
+        return "Alarms";
+    }
+
+    @Override public NoteCursor getNotes(UUID uuid) {
+        Connection conn = null;
+        PreparedStatement statement = null;
+        ResultSet results = null;
+        try {
+            conn = getConnection();
+            statement = conn.prepareStatement(
+                    "select * from Alarm_Notes where Uuid = ? order by Timestamp");
+            statement.setString(1, uuid.toString());
+            results = statement.executeQuery();
+            return new MyNoteCursor(conn, statement, results);
+        } catch (Exception x) {
+            close(conn, statement, results);
+            AlarmUtil.throwRuntime(x);
+        }
+        return null;
+    }
+
+    /**
+     * Creates the database and tables.
+     */
+    public void initializeDatabase() {
+        Connection conn = null;
+        PreparedStatement preparedStatement = null;
+        Statement statement = null;
+        try {
+            conn = getConnection();
+            preparedStatement = conn.prepareStatement("create database ? if not exist");
+            preparedStatement.setString(1, getDatabaseName());
+            preparedStatement.executeUpdate();
+            statement = conn.createStatement();
+            statement.executeUpdate(createAlarmTable);
+            statement.executeUpdate(createNoteTable);
+        } catch (Exception x) {
+            AlarmUtil.throwRuntime(x);
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (Exception ignore) {}
+            }
+            close(conn, statement, null);
+        }
+    }
+
+    @Override public AlarmCursor queryAlarms(AlarmClass alarmClass, Calendar from,
+            Calendar to) {
+        Connection conn = null;
+        Statement statement = null;
+        try {
+            conn = getConnection();
+            statement = conn.createStatement();
+            ResultSet results = statement.executeQuery(
+                    selectStatement(alarmClass, from, to, false));
+            return new MyAlarmCursor(conn, statement, results);
+        } catch (Exception x) {
+            AlarmUtil.throwRuntime(x);
+        }
+        return null;
+    }
+
+    @Override public AlarmCursor queryOpenAlarms(AlarmClass alarmClass) {
+        try {
+            Connection conn = getConnection();
+            Statement statement = conn.createStatement();
+            ResultSet results = statement.executeQuery(
+                    selectStatement(alarmClass, null, null, true));
+            return new MyAlarmCursor(conn, statement, results);
+        } catch (Exception x) {
+            AlarmUtil.throwRuntime(x);
+        }
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>This only updates NormalTime, AckTime, AckUser, and IsOpen</p>
+     */
+    @Override protected void saveRecord(AlarmRecord arg) {
+        StringBuffer buf = new StringBuffer("update Alarm_Records");
+        //Indexes in prepared statements start at 1.
+        int normalIdx = 0;
+        int ackTimeIdx = 0;
+        int ackUserIdx = 0;
+        int currentIdx = 0;
+        if (arg.getNormalTime() > 0) {
+            normalIdx = ++currentIdx;
+            buf.append(" set NormalTime = ?,");
+        }
+        if (arg.getAckTime() > 0) {
+            ackTimeIdx = ++currentIdx;
+            buf.append(" set AckTime = ?");
+        }
+        if (arg.getAckUser() != null) {
+            ackUserIdx = ++currentIdx;
+            buf.append(" set AckUser = ?,");
+        }
+        int isOpenIdx = ++currentIdx;
+        int uuidIdx = ++currentIdx;
+        buf.append(" set IsOpen = ? where Uuid = ?");
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        try {
+            conn = getConnection();
+            stmt = conn.prepareStatement(buf.toString());
+            if (normalIdx > 0) {
+                stmt.setTimestamp(normalIdx, new Timestamp(arg.getNormalTime()));
+            }
+            if (ackTimeIdx > 0) {
+                stmt.setTimestamp(ackTimeIdx, new Timestamp(arg.getAckTime()));
+            }
+            if (ackUserIdx > 0) {
+                stmt.setString(ackUserIdx, arg.getAckUser());
+            }
+            stmt.setBoolean(isOpenIdx, arg.isOpen());
+            stmt.setString(uuidIdx, arg.getUuid().toString());
+            stmt.executeUpdate();
+            conn.commit();
+        } catch (Exception x) {
+            AlarmUtil.throwRuntime(x);
+        } finally {
+            close(conn, stmt, null);
+        }
+    }
+
+    /**
+     * Creates a select statement based on the given parameters.
+     *
+     * @param alarmClass Alarm class name, may be null.
+     * @param from       Earliest inclusive created time, may be null.
+     * @param to         First excluded created time, may be null.
+     * @param mustBeOpen Whether or not to only return only open records.
+     * @return
+     */
+    protected String selectStatement(AlarmClass alarmClass, Calendar from, Calendar to,
+            boolean mustBeOpen) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("select * from Alarm_Records");
+        boolean hasWhere = false;
+        if (alarmClass != null) {
+            hasWhere = true;
+            buf.append(" where AlarmClass = ");
+            buf.append(alarmClass.getNode().getName());
+        }
+        if ((from != null) && (from.getTimeInMillis() > 0)) {
+            buf.append(hasWhere ? " where " : " and ");
+            hasWhere = true;
+            buf.append("CreatedTime >= " + dateFormat.format(from.getTime()));
+        }
+        if ((to != null) && (to.getTimeInMillis() > 0)) {
+            buf.append(hasWhere ? " where " : " and ");
+            hasWhere = true;
+            buf.append("CreatedTime < " + dateFormat.format(to.getTime()));
+        }
+        if (mustBeOpen) {
+            buf.append(hasWhere ? " where " : " and ");
+            buf.append("IsOpen = true");
+        }
+        buf.append(" order by CreatedTime");
+        return buf.toString();
+    }
+
+    @Override public void start(AlarmService service) {
+        super.start(service);
+        initializeDatabase();
+    }
+
+    /**
+     * Sets the AlarmRecord fields using the current position of the result set.
+     */
+    protected void toAlarm(ResultSet res, AlarmRecord rec) throws SQLException {
+        rec.setUuid(UUID.fromString(res.getString("Uuid")));
+        rec.setSourcePath(res.getString("SourcePath"));
+        String str = res.getString("AlarmClass");
+        if ((rec.getAlarmClass() == null) || !rec.getAlarmClass().getNode().getName()
+                .equals(str)) {
+            rec.setAlarmClass(getService().getAlarmClass(str));
+        }
+        rec.setAlarmType(AlarmState.decode(res.getString("AlarmState")));
+        Timestamp ts = res.getTimestamp("CreatedTime");
+        if (ts != null) {
+            rec.setCreatedTime(ts.getTime());
+        }
+        ts = res.getTimestamp("NormalTime");
+        if (ts != null) {
+            rec.setCreatedTime(ts.getTime());
+        }
+        if (ts != null) {
+            rec.setCreatedTime(ts.getTime());
+        }
+        rec.setAckUser(res.getString("AckUser"));
+        rec.setMessage(res.getString("Message"));
+        rec.setHasNotes(res.getBoolean("HasNotes"));
+    }
+
+    /**
+     * Sets the Note fields using the current position of the result set.
+     */
+    protected void toNote(ResultSet res, Note rec) throws SQLException {
+        rec.setUUID(UUID.fromString(res.getString("Uuid")));
+        rec.setUser(res.getString("User"));
+        rec.setText(res.getString("Note"));
+        Timestamp ts = res.getTimestamp("Timestamp");
+        if (ts != null) {
+            rec.setTimestamp(ts.getTime());
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Inner Classes
+    ///////////////////////////////////////////////////////////////////////////
+
+    private class MyAlarmCursor extends AlarmCursor {
+        private Connection conn;
+        private ResultSet results;
+        private Statement statement;
+
+        MyAlarmCursor(Connection conn, Statement statement, ResultSet results) {
+            this.conn = conn;
+            this.statement = statement;
+            this.results = results;
+        }
+
+        @Override public void close() {
+            JdbcProvider.close(conn, statement, results);
+            conn = null;
+            statement = null;
+            results = null;
+        }
+
+        @Override public boolean next() {
+            try {
+                if (results == null) {
+                    return false;
+                }
+                if (results.next()) {
+                    toAlarm(results, this);
+                    return true;
+                } else {
+                    close();
+                }
+            } catch (Exception x) {
+                close();
+                AlarmUtil.throwRuntime(x);
+            }
+            return false;
+        }
+    }
+
+    private class MyNoteCursor extends NoteCursor {
+        private Connection conn;
+        private ResultSet results;
+        private Statement statement;
+
+        MyNoteCursor(Connection conn, Statement statement, ResultSet results) {
+            this.conn = conn;
+            this.statement = statement;
+            this.results = results;
+        }
+
+        @Override public void close() {
+            JdbcProvider.close(conn, statement, results);
+            conn = null;
+            statement = null;
+            results = null;
+        }
+
+        @Override public boolean next() {
+            try {
+                if (results == null) {
+                    return false;
+                }
+                if (results.next()) {
+                    toNote(results, this);
+                    return true;
+                } else {
+                    close();
+                }
+            } catch (Exception x) {
+                close();
+                AlarmUtil.throwRuntime(x);
+            }
+            return false;
+        }
+    }
+
+} //class
