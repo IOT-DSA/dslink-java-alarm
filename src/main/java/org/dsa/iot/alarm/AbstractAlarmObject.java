@@ -281,8 +281,10 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     @Override public final void start() {
         started = true;
         doStart();
-        for (AlarmObject child : children) {
-            child.start();
+        if (children != null) {
+            for (AlarmObject child : children) {
+                child.start();
+            }
         }
     }
 
@@ -293,8 +295,10 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     @Override public final void steady() {
         steady = true;
         doSteady();
-        for (AlarmObject child : children) {
-            child.steady();
+        if (children != null) {
+            for (AlarmObject child : children) {
+                child.steady();
+            }
         }
     }
 
@@ -306,8 +310,10 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         started = false;
         steady = false;
         doStop();
-        for (AlarmObject child : children) {
-            child.stop();
+        if (children != null) {
+            for (AlarmObject child : children) {
+                child.stop();
+            }
         }
     }
 

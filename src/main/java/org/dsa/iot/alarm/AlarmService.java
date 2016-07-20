@@ -274,8 +274,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                 .build();
         //Add Alarm Class action
         action = new Action(Permission.WRITE, this::addAlarmClass);
-        action.addParameter(
-                new Parameter(NAME, ValueType.STRING, new Value("Display Name")));
+        action.addParameter(new Parameter(NAME, ValueType.STRING));
         getNode().createChild("Add Alarm Class").setSerializable(false).setAction(action)
                 .build();
         //Add Note

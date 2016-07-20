@@ -1,750 +1,483 @@
-<div class="WordSection1">
+<font color="#5b9bd5"><font face="Calibri Light, serif"><font style="font-size: 26pt" size="6">Alarm Link</font></font></font>
 
-Alarm Link
+<font color="#595959"><font style="font-size: 10pt" size="2">dslink-java-alarm</font></font>
 
-dslink-java-alarm
+# <a name="_Toc456677160"></a>Overview
 
-<div style="border:solid #5B9BD5 3.0pt;padding:0in 0in 0in 0in;background:#5B9BD5">
+The alarm link records details about interesting events so they may be considered by humans. The underlying model is influenced by the BACnet alarming design.
 
-Contents
+This link was designed as a framework upon which alarm links for different data stores can be developed. There are also two implementations: org.dsa.iot.alarm.inMemory.Main and org.dsa.iot.alarm.jdbc.Main.
 
-</div>
+## <a name="_Toc456677161"></a>Link Structure
 
-<span class="MsoHyperlink">[Overview<span style="color:windowtext;display:none;text-decoration:none">..</span> <span style="color:windowtext;display:none;text-decoration:none">3</span>](#_Toc456677160)</span>
+The nodes of this link follow this hierarchy. Descriptions of each can be found in the Component Guide.
 
-<span class="MsoHyperlink">[Link Structure<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">3</span>](#_Toc456677161)</span>
+*   Alarm Service ‚Äì The single root node of the link.
 
-<span class="MsoHyperlink">[Link Usage<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">3</span>](#_Toc456677162)</span>
+    *   Alarm Class ‚Äì There can be many alarm classes in a link, each representing some sort of grouping criteria such as location, system or users.
 
-<span class="MsoHyperlink">[Creating Alarms<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">3</span>](#_Toc456677163)</span>
+        *   Alarm Algorithm ‚Äì There can be many algorithms per alarm class. Each algorithm has its own logic for determining when an alarm condition exists.
 
-<span class="MsoHyperlink">[Receiving Alarms<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">3</span>](#_Toc456677164)</span>
+            *   Alarm Watch ‚Äì Path and meta-data about an entity being watched by the parent algorithm.
 
-<span class="MsoHyperlink">[Managing Alarms<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">3</span>](#_Toc456677165)</span>
-
-<span class="MsoHyperlink">[Alarm States<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">4</span>](#_Toc456677166)</span>
-
-<span class="MsoHyperlink">[Alert <span style="color:windowtext;display:none;text-decoration:none"></span> <span style="color:windowtext;display:none;text-decoration:none">4</span>](#_Toc456677167)</span>
-
-<span class="MsoHyperlink">[Fault <span style="color:windowtext;display:none;text-decoration:none"></span> <span style="color:windowtext;display:none;text-decoration:none">4</span>](#_Toc456677168)</span>
-
-<span class="MsoHyperlink">[Normal <span style="color:windowtext;display:none;text-decoration:none"></span> <span style="color:windowtext;display:none;text-decoration:none">4</span>](#_Toc456677169)</span>
-
-<span class="MsoHyperlink">[Offnormal <span style="color:windowtext;display:none;text-decoration:none"></span> <span style="color:windowtext;display:none;text-decoration:none">4</span>](#_Toc456677170)</span>
-
-<span class="MsoHyperlink">[Component Guide<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">5</span>](#_Toc456677171)</span>
-
-<span class="MsoHyperlink">[Alarm Service<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">5</span>](#_Toc456677172)</span>
-
-<span class="MsoHyperlink">[Properties<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">5</span>](#_Toc456677173)</span>
-
-<span class="MsoHyperlink">[Actions<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">5</span>](#_Toc456677174)</span>
-
-<span class="MsoHyperlink">[Alarm Class<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">7</span>](#_Toc456677175)</span>
-
-<span class="MsoHyperlink">[Properties<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">7</span>](#_Toc456677176)</span>
-
-<span class="MsoHyperlink">[Actions<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">7</span>](#_Toc456677177)</span>
-
-<span class="MsoHyperlink">[Alarm Algorithms<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">9</span>](#_Toc456677178)</span>
-
-<span class="MsoHyperlink">[Properties<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">9</span>](#_Toc456677179)</span>
-
-<span class="MsoHyperlink">[Actions<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">9</span>](#_Toc456677180)</span>
-
-<span class="MsoHyperlink">[Alarm Watch<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">10</span>](#_Toc456677181)</span>
-
-<span class="MsoHyperlink">[Properties<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">10</span>](#_Toc456677182)</span>
-
-<span class="MsoHyperlink">[Actions<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">10</span>](#_Toc456677183)</span>
-
-<span class="MsoHyperlink">[Alarm Record<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">10</span>](#_Toc456677184)</span>
-
-<span class="MsoHyperlink">[PROPERTIES<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">10</span>](#_Toc456677185)</span>
-
-<span class="MsoHyperlink">[Boolean Algorithm<span style="color:windowtext;display:none;text-decoration:none">..</span> <span style="color:windowtext;display:none;text-decoration:none">11</span>](#_Toc456677186)</span>
-
-<span class="MsoHyperlink">[Properties<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">11</span>](#_Toc456677187)</span>
-
-<span class="MsoHyperlink">[Actions<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">11</span>](#_Toc456677188)</span>
-
-<span class="MsoHyperlink">[<span style="text-transform:uppercase;letter-spacing:.75pt">Out Of Range Algorithm</span><span style="color:windowtext;display:none;text-decoration:none">...</span> <span style="color:windowtext;display:none;text-decoration:none">12</span>](#_Toc456677189)</span>
-
-<span class="MsoHyperlink">[<span style="text-transform:uppercase;letter-spacing:.75pt">Properties</span><span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">12</span>](#_Toc456677190)</span>
-
-<span class="MsoHyperlink">[<span style="text-transform:uppercase;letter-spacing:.75pt">Actions</span><span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">12</span>](#_Toc456677191)</span>
-
-<span class="MsoHyperlink">[<span style="text-transform:uppercase;letter-spacing:.75pt">Remote JDBC Service</span><span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">13</span>](#_Toc456677192)</span>
-
-<span class="MsoHyperlink">[<span style="text-transform:uppercase;letter-spacing:.75pt">Properties</span><span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">13</span>](#_Toc456677193)</span>
-
-<span class="MsoHyperlink">[Stale Algorithm<span style="color:windowtext;display:none;text-decoration:none">..</span> <span style="color:windowtext;display:none;text-decoration:none">13</span>](#_Toc456677194)</span>
-
-<span class="MsoHyperlink">[Properties<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">13</span>](#_Toc456677195)</span>
-
-<span class="MsoHyperlink">[Actions<span style="color:windowtext;display:none;text-decoration:none">.</span> <span style="color:windowtext;display:none;text-decoration:none">13</span>](#_Toc456677196)</span>
-
-<span class="MsoHyperlink">[Creating a Custom Alarm Link<span style="color:windowtext;display:none;text-decoration:
-none">.</span> <span style="color:windowtext;display:none;text-decoration:none">14</span>](#_Toc456677197)</span>
-
-<span style="font-size:10.0pt;line-height:115%;font-family:&quot;Calibri&quot;,sans-serif">
-</span>
-
-<span style="font-size:11.0pt;line-height:115%;color:white;
-text-transform:uppercase;letter-spacing:.75pt"> </span>
-
-<div style="border:solid #5B9BD5 3.0pt;padding:0in 0in 0in 0in;background:#5B9BD5">
-
-# <a name="_Toc456677160">Overview</a>
-
-</div>
-
-The alarm link records details about interesting events so they may be considered by humans.  The underlying model is influenced by the BACnet alarming design.
-
-This link was designed as a framework upon which alarm links for different data stores can be developed.  There are also two implementations:  org.dsa.iot.alarm.inMemory.Main and org.dsa.iot.alarm.jdbc.Main.
-
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
-
-## <a name="_Toc456677161">Link Structure</a>
-
-</div>
-
-The nodes of this link follow this hierarchy.  Descriptions of each can be found in the Component Guide.
-
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Alarm Service ñ The single root node of the link.
-
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Alarm Class ñ There can be many alarm classes in a link, each representing some sort of grouping criteria such as location, system or users.
-
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Alarm Algorithm ñ There can be many algorithms per alarm class.  Each algorithm has its own logic for determining when an alarm condition exists.
-
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Alarm Watch ñ Path and meta-data about an entity being watched by the parent algorithm.
-
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
-
-## <a name="_Toc456677162">Link Usage</a>
-
-</div>
+## <a name="_Toc456677162"></a>Link Usage
 
 The purpose of this link is to create and manage alarms.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+### <a name="_Toc456677163"></a>Creating Alarms
 
-### <a name="_Toc456677163">Creating Alarms</a>
+*   Action invocation ‚Äì Alarm sources can invoke an action on an alarm class to create an alarm.
 
-</div>
+*   Alarm algorithms ‚Äì Algorithms, such as ‚Äúout of range‚Äù can subscribe to data sources and monitor their condition.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Action invocation ñ Alarm sources can invoke an action on an alarm class to create an alarm.
+### <a name="_Toc456677164"></a>Receiving Alarms
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Alarm algorithms ñ Algorithms, such as ìout of rangeî can subscribe to data sources and monitor their condition.
+*   Viewing ‚Äì The alarm class has actions for retrieving alarm records.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+*   Notifications ‚Äì The alarm class has actions for receiving streams of new alarms, state changes as well as escalations.
 
-### <a name="_Toc456677164">Receiving Alarms</a>
+### <a name="_Toc456677165"></a>Managing Alarms
 
-</div>
+*   Acknowledgement ‚Äì Fault and offnormal alarms require acknowledgement. Acknowledgement can be achieved with an action on the Alarm Service.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Viewing ñ The alarm class has actions for retrieving alarm records.
+*   Return to normal ‚Äì All alarms must return to normal before they can be closed, this can be achieved with an action on the Alarm Service or an alarm algorithm automatically detecting it.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Notifications ñ The alarm class has actions for receiving streams of new alarms, state changes as well as escalations.
+*   Closing ‚Äì An alarm is considered closed when normal and acknowledged (unless it is an alert which does not require acknowledgement).
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+## <a name="_Toc456677166"></a>Alarm States
 
-### <a name="_Toc456677165">Managing Alarms</a>
+An alarm source is an entity that can be in an alarm condition. There are four possible states a source can be in.
 
-</div>
+### <a name="_Toc456677167"></a>Alert
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Acknowledgement ñ Fault and offnormal alarms require acknowledgement.  Acknowledgement can be achieved with an action on the Alarm Service.
+An alert is informational, it does not require acknowledgement. Once an alarm source in alert returns to normal, an operator would not see the alert on their console unless explicitly queried.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Return to normal ñ All alarms must return to normal before they can be closed, this can be achieved with an action on the Alarm Service or an alarm algorithm automatically detecting it.
+### <a name="_Toc456677168"></a>Fault
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Closing ñ An alarm is considered closed when normal and acknowledged (unless it is an alert which does not require acknowledgement).
+Faults represent a malfunction or failure within the system. To close a fault, it must return to the normal state and be acknowledged.
 
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
-
-## <a name="_Toc456677166">Alarm States</a>
-
-</div>
-
-An alarm source is an entity that can be in an alarm condition.  There are four possible states a source can be in.
-
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
-
-### <a name="_Toc456677167">Alert</a>
-
-</div>
-
-An alert is informational, it does not require acknowledgement.  Once an alarm source in alert returns to normal, an operator would not see the alert on their console unless explicitly queried.
-
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
-
-### <a name="_Toc456677168">Fault</a>
-
-</div>
-
-Faults represent a malfunction or failure within the system.  To close a fault, it must return to the normal state and be acknowledged.
-
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
-
-### <a name="_Toc456677169">Normal</a>
-
-</div>
+### <a name="_Toc456677169"></a>Normal
 
 Normal is healthy, and none of the other states.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+### <a name="_Toc456677170"></a>Offnormal
 
-### <a name="_Toc456677170">Offnormal</a>
+Offnormal represents an unexpected condition, or something outside the bounds of normal operation. To close an offnormal alarm, it must return to the normal state and be acknowledged.
 
-</div>
-
-Offnormal represents an unexpected condition, or something outside the bounds of normal operation.  To close an offnormal alarm, it must return to the normal state and be acknowledged.
-
-<span style="font-size:10.0pt;line-height:115%;font-family:&quot;Calibri&quot;,sans-serif">
-</span>
-
-<span style="font-size:11.0pt;line-height:115%;color:white;
-text-transform:uppercase;letter-spacing:.75pt"> </span>
-
-<div style="border:solid #5B9BD5 3.0pt;padding:0in 0in 0in 0in;background:#5B9BD5">
-
-# <a name="_Toc456677171">Component Guide</a>
-
-</div>
+# <a name="_Toc456677171"></a>Component Guide
 
 This section documents the major components of the link.
 
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
+## <a name="_Toc456677172"></a>Alarm Service
 
-## <a name="_Toc456677172">Alarm Service</a>
+This is the visible root node of the link. Its purpose is to create alarm classes and manage alarm records independent of alarm class.
 
-</div>
+### <a name="_Toc456677173"></a>Properties
 
-This is the visible root node of the link.  Its purpose is to create alarm classes and manage alarm records independent of alarm class.
+*   Enabled - When false, no new alarms will be created.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+### <a name="_Toc456677174"></a>Actions
 
-### <a name="_Toc456677173">Properties</a>
+*   Acknowledge ‚Äì This updates an open alarm record.
 
-</div>
+    *   Parameters
 
-<span style="font-family:
-Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Enabled - When false, no new alarms will be created.
+        *   UUID ‚Äì Required unique alarm ID.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+        *   User ‚Äì Entity performing the update.
 
-### <a name="_Toc456677174">Actions</a>
+*   Add Alarm Class ‚Äì Add a new Alarm Class.
 
-</div>
+    *   Parameters
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Acknowledge ñ This updates an open alarm record.
+        *   Name ‚Äì The alarm class name.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Parameters
+*   Add Note ‚Äì Add a note to an existing alarm.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>UUID ñ Required unique alarm ID.
+    *   Parameters
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>User ñ Entity performing the update.
+        *   UUID ‚Äì Alarm record.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Add Alarm Class ñ Add a new Alarm Class.
+        *   User ‚Äì User name.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Parameters
+        *   Note ‚Äì Test message.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Name ñ The alarm class name.
+*   Delete All Records ‚Äì Deletes all records from the database.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Add Note ñ Add a note to an existing alarm.
+*   Delete Record ‚Äì Deletes all records for the given UUIDs.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Parameters
+    *   Parameters
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>UUID ñ Alarm record.
+        *   UUID ‚Äì Specific alarm id
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>User ñ User name.
+*   Get Alarm ‚Äì Return a single row table representing the alarm record for the give UUID.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Note ñ Test message.
+    *   Parameters
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Delete All Records ñ Deletes all records from the database.
+        *   UUID ‚Äì Specific alarm id
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Delete Record ñ Deletes all records for the given UUIDs.
+    *   Return ‚Äì a single record. See the alarm record section of this document.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Parameters
+*   Get Notes ‚Äì This returns a table of notes for a specific alarm. The columns are:
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>UUID ñ Specific alarm id
+    *   Parameters
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Get Alarm ñ Return a single row table representing the alarm record for the give UUID.
+        *   UUID ‚Äì Specific alarm id
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Parameters
+    *   Return ‚Äì a table with the following columns:
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>UUID ñ Specific alarm id
+        *   Timestamp ‚Äì The time of the alarm.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Return ñ a single record.  See the alarm record section of this document.
+        *   User ‚Äì The entity providing the note.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Get Notes ñ This returns a table of notes for a specific alarm.  The columns are:
+        *   Note ‚Äì The text of the note.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Parameters
+*   Return To Normal ‚Äì This returns an alarm record to its normal state. It has no effect on records that are already normal.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>UUID ñ Specific alarm id
+    *   Parameters
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Return ñ a table with the following columns:
+        *   UUID ‚Äì The record to return to the normal state.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Timestamp ñ The time of the alarm.
+## <a name="_Toc456677175"></a>Alarm Class
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>User ñ The entity providing the note.
+An alarm class represents a group of alarms that are related in some way. Alarms can only be created with an alarm class but other alarm lifecycle operations are handled on the service.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Note ñ The text of the note.
+The alarm class offers many streams (as actions) for monitoring various states of alarms including escalation. Escalation happens when alarm goes unacknowledged for a certain period of time and can be used to notify backup or higher seniority staff.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Return To Normal ñ This returns an alarm record to its normal state.  It has no effect on records that are already normal.
+### <a name="_Toc456677176"></a>Properties
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Parameters
+*   Enabled ‚Äì When false, no new alarms will be created.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>UUID ñ The record to return to the normal state.
+*   Escalation 1 Days ‚Äì The number of days to add to the escalation duration. If the total duration is zero or less, the escalation level will be disabled.
 
-<span style="font-size:10.0pt;line-height:115%;font-family:&quot;Calibri&quot;,sans-serif">
-</span>
+*   Escalation 1 Hours ‚Äì The number of hours to add to the escalation duration. If the total duration is zero or less, escalation level will be disabled.
 
-<span style="text-transform:uppercase;letter-spacing:.75pt"> </span>
+*   Escalation 1 Minutes ‚Äì The number of minutes to add to the escalation duration. If the total duration is zero or less, escalation level will be disabled.
 
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
+*   Escalation 2 Days ‚Äì The number of days to add to the escalation duration. If the total duration is zero or less, escalation level will be disabled.
 
-## <a name="_Toc456677175">Alarm Class</a>
+*   Escalation 2 Hours ‚Äì The number of hours to add to the escalation duration. If the total duration is zero or less, escalation level will be disabled.
 
-</div>
+*   Escalation 2 Minutes ‚Äì The number of minutes to add to the escalation duration. If the total duration is zero or less, escalation level will be disabled.
 
-An alarm class represents a group of alarms that are related in some way.  Alarms can only be created with an alarm class but other alarm lifecycle operations are handled on the service.
+### <a name="_Toc456677177"></a>Actions
 
-The alarm class offers many streams (as actions) for monitoring various states of alarms including escalation.  Escalation happens when alarm goes unacknowledged for a certain period of time and can be used to notify backup or higher seniority staff.
+*   Add Algorithm ‚Äì This adds an algorithm for generating alarms.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+    *   Parameters
 
-### <a name="_Toc456677176">Properties</a>
+        *   Name ‚Äì The alarm class name.
 
-</div>
+        *   Type ‚Äì The specific alarm class desired.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Enabled ñ When false, no new alarms will be created.
+*   Create Alarm ‚Äì Creates a new alarm record.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Escalation 1 Days ñ The number of days to add to the escalation duration.  If the total duration is zero or less, the escalation level will be disabled.
+    *   Parameters
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Escalation 1 Hours ñ The number of hours to add to the escalation duration.  If the total duration is zero or less, escalation level will be disabled.
+        *   Source Path ‚Äì Path to the alarm source.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Escalation 1 Minutes ñ The number of minutes to add to the escalation duration.  If the total duration is zero or less, escalation level will be disabled.
+        *   Create State ‚Äì Alert, Fault or Offnormal
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Escalation 2 Days ñ The number of days to add to the escalation duration.  If the total duration is zero or less, escalation level will be disabled.
+        *   Message ‚Äì Short text description.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Escalation 2 Hours ñ The number of hours to add to the escalation duration.  If the total duration is zero or less, escalation level will be disabled.
+    *   Returns ‚Äì a one row table representing the alarm record.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Escalation 2 Minutes ñ The number of minutes to add to the escalation duration.  If the total duration is zero or less, escalation level will be disabled.
+        *   See the alarm record section of this document.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+*   Delete Alarm Class ‚Äì Removes the alarm class and its child nodes.
 
-### <a name="_Toc456677177">Actions</a>
+*   Get Alarms ‚Äì Returns a table of alarm for this alarm class.
 
-</div>
+    *   Parameters
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Add Algorithm ñ This adds an algorithm for generating alarms.
+        *   Time Range ‚Äì A DSA time range.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Parameters
+    *   Returns ‚Äì a table of alarm records.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Name ñ The alarm class name.
+        *   See the alarm record section of this document.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Type ñ The specific alarm class desired.
+*   Get Open Alarms ‚Äì This returns a table of open alarm alarms for this alarm class. The table stream can remain open and any updates as well as new records will be passed along. The primary intent of this is for an alarm console.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Create Alarm ñ Creates a new alarm record.
+    *   Returns ‚Äì a stream of table rows representing the alarm records. The stream state will switch to open once the initial set of open alarms is sent.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Parameters
+        *   See the alarm record section of this document.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Source Path ñ Path to the alarm source.
+*   Stream Escalation 1 ‚Äì Returns a stream of alarm records as they escalate in real time.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Create State ñ Alert, Fault or Offnormal
+    *   Returns ‚Äì table rows representing the alarm records.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Message ñ Short text description.
+        *   See the alarm record section of this document.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Returns ñ a one row table representing the alarm record.
+*   Stream Escalation 2 ‚Äì Returns a stream of alarm records as they escalate in real time.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>See the alarm record section of this document.
+    *   Returns ‚Äì table rows representing the alarm records.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Delete Alarm Class ñ Removes the alarm class and its child nodes.
+        *   See the alarm record section of this document.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Get Alarms ñ Returns a table of alarm for this alarm class.
+*   Stream New Alarms‚Äì This returns a stream of new alarm records for this alarm class. The table stream will remain open and any updates and new records will be passed along.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Parameters
+    *   Returns ‚Äì table rows representing the alarm records.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Time Range ñ A DSA time range.
+        *   See the alarm record section of this document.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Returns ñ a table of alarm records.
+*   Rename Alarm Class ‚Äì Changes the name of the alarm class, all records will reflect the change.
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>See the alarm record section of this document.
+    *   Parameters
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Get Open Alarms ñ This returns a table of open alarm alarms for this alarm class.  The table stream can remain open and any updates as well as new records will be passed along.  The primary intent of this is for an alarm console.
+        *   Name ‚Äì The new name.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Returns ñ a stream of table rows representing the alarm records.  The stream state will switch to open once the initial set of open alarms is sent.
+## <a name="_Toc456677178"></a>Alarm Algorithms
 
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>See the alarm record section of this document.
+Alarm algorithms evaluates the state of Alarm Watch objects, and generate alarms for each when the conditions of the algorithm are met. This describes the common functionality of all alarm algorithms, individual algorithms will be described in a separately.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Stream Escalation 1 ñ Returns a stream of alarm records as they escalate in real time.
-
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Returns ñ table rows representing the alarm records.
-
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>See the alarm record section of this document.
-
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Stream Escalation 2 ñ Returns a stream of alarm records as they escalate in real time.
-
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Returns ñ table rows representing the alarm records.
-
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>See the alarm record section of this document.
-
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Stream New Alarmsñ This returns a stream of new alarm records for this alarm class.  The table stream will remain open and any updates and new records will be passed along.
-
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Returns ñ table rows representing the alarm records.
-
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>See the alarm record section of this document.
-
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Rename Alarm Class ñ Changes the name of the alarm class, all records will reflect the change.
-
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Parameters
-
-<span style="font-family:Wingdings">ß<span style="font:7.0pt &quot;Times New Roman&quot;"> </span> </span>Name ñ The new name.
-
-<span style="font-size:10.0pt;line-height:115%;font-family:&quot;Calibri&quot;,sans-serif">
-</span>
-
-<span style="text-transform:uppercase;letter-spacing:.75pt"> </span>
-
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
-
-## <a name="_Toc456677178">Alarm Algorithms</a>
-
-</div>
-
-Alarm algorithms evaluates the state of Alarm Watch objects, and generate alarms for each when the conditions of the algorithm are met.  This describes the common functionality of all alarm algorithms, individual algorithms will be described in a separately.
-
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
-
-### <a name="_Toc456677179">Properties</a>
-
-</div>
+### <a name="_Toc456677179"></a>Properties
 
 The properties of an algorithm will be specific to its type.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Enabled ñ When false, no new records will be created.
+*   Enabled ‚Äì When false, no new records will be created.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Alarm Type ñ What type of alarm this algorithm creates: alert, fault or offnormal.
+*   Alarm Type ‚Äì What type of alarm this algorithm creates: alert, fault or offnormal.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Auto Update Interval ñ If greater than zero, will automatically re-evaluate the alarm state of each watch on this interval.  An auto interval should be used if using inhibits.  Watches will always update themselves they detect a change of value on the source.
+*   Auto Update Interval ‚Äì If greater than zero, will automatically re-evaluate the alarm state of each watch on this interval. An auto interval should be used if using inhibits. Watches will always update themselves they detect a change of value on the source.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>To Alarm Inhibit ñ How long (in seconds) to delay going into alarm after the alarm condition is first detected.  This can help minimize alarm creation.  Use zero to disable, otherwise you should have a positive auto update interval.
+*   To Alarm Inhibit ‚Äì How long (in seconds) to delay going into alarm after the alarm condition is first detected. This can help minimize alarm creation. Use zero to disable, otherwise you should have a positive auto update interval.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>To Normal Inhibit ñ How long (in seconds) to delay a return to normal after the normal condition is first detected.  This can help minimize alarm creation.  Use zero to disable, otherwise you should have a positive auto update interval.
+*   To Normal Inhibit ‚Äì How long (in seconds) to delay a return to normal after the normal condition is first detected. This can help minimize alarm creation. Use zero to disable, otherwise you should have a positive auto update interval.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+### <a name="_Toc456677180"></a>Actions
 
-### <a name="_Toc456677180">Actions</a>
+*   Add Watch ‚Äì Takes path for subscription in the parent broker.
 
-</div>
+*   Set Alarm Type ‚Äì Determines what type of alarm this algorithm creates: alert, fault or offnormal.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Add Watch ñ Takes path for subscription in the parent broker.
+*   Set Auto Update Interval ‚Äì Sets auto update interval property in seconds. Use zero to disable.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Set Alarm Type ñ Determines what type of alarm this algorithm creates: alert, fault or offnormal.
+*   Delete Algorithm ‚Äì Remove the algorithm from the parent alarm class.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Set Auto Update Interval ñ Sets auto update interval property in seconds.  Use zero to disable.
-
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Delete Algorithm ñ Remove the algorithm from the parent alarm class.
-
-<span style="font-size:10.0pt;line-height:115%;font-family:&quot;Calibri&quot;,sans-serif">
-</span>
-
-<span style="text-transform:uppercase;letter-spacing:.75pt"> </span>
-
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
-
-## <a name="_Toc456677181">Alarm Watch</a>
-
-</div>
+## <a name="_Toc456677181"></a>Alarm Watch
 
 Represents an alarm source that an algorithm will monitor for alarm conditions. There is a primary alarm source, but other paths may be used by subclasses for determining more complex conditions.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
-
-### <a name="_Toc456677182">Properties</a>
-
-</div>
+### <a name="_Toc456677182"></a>Properties
 
 The properties of an algorithm will be specific to its type.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Enabled ñ When false, no new records will be created.
+*   Enabled ‚Äì When false, no new records will be created.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Source Path ñ The path to the primary alarmable entity.
+*   Source Path ‚Äì The path to the primary alarmable entity.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Alarm State ñ The current state of the source.
+*   Alarm State ‚Äì The current state of the source.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Alarm State Time ñ The best known time that the source transitioned to the alarm state.
+*   Alarm State Time ‚Äì The best known time that the source transitioned to the alarm state.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Last Alarm Record wwwñ The UUID of the last related alarm record.
+*   Last Alarm Record www‚Äì The UUID of the last related alarm record.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Last Cov ñ The timestamp of the last change of value of the source.
+*   Last Cov ‚Äì The timestamp of the last change of value of the source.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+### <a name="_Toc456677183"></a>Actions
 
-### <a name="_Toc456677183">Actions</a>
+*   Delete Watch ‚Äì Remove the watch from the parent algorithm.
 
-</div>
+## <a name="_Toc456677184"></a>Alarm Record
 
-<span style="font-family:
-Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Delete Watch ñ Remove the watch from the parent algorithm.
+An alarm record represents details about an alarm. This is an abstract description of the Java class as well table columns in the DSA protocol.
 
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
+### <a name="_Toc456677185"></a>PROPERTIES
 
-## <a name="_Toc456677184">Alarm Record</a>
+*   UUID ‚Äì Unique ID, generated by the link.
 
-</div>
+*   Source ‚Äì Path to the alarm source.
 
-An alarm record represents details about an alarm.   This is an abstract description of the Java class as well table columns in the DSA protocol.
+*   Alarm Class ‚Äì The name of the alarm class the record was created in.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+*   Created Time ‚Äì Timestamp of creation.
 
-### <a name="_Toc456677185">PROPERTIES</a>
+*   Created State ‚Äì The state of the source at creation. Possible values are:
 
-</div>
+    *   Alert ‚Äì Informational, acknowledge not required.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>UUID ñ Unique ID, generated by the link.
+    *   Fault ‚Äì A malfunction representing a failure within the system.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Source ñ Path to the alarm source.
+    *   Offnormal ‚Äì An unexpected condition, or outside the bounds of normal operation.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Alarm Class ñ The name of the alarm class the record was created in.
+*   Normal Time ‚Äì If not null, the timestamp that the source returned to normal.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Created Time ñ Timestamp of creation.
+*   Ack Time ‚Äì If not null, the timestamp of acknowledgement.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Created State ñ The state of the source at creation.  Possible values are:
+*   Ack User ‚Äì The entity that acknowledged the alarm.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Alert ñ Informational, acknowledge not required.
+*   Message ‚Äì Text describing the alarm at the time of creation.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Fault ñ A malfunction representing a failure within the system.
+*   Has Notes ‚Äì Whether or not the alarm has any notes associated with it.
 
-<span style="font-family:&quot;Courier New&quot;">o<span style="font:7.0pt &quot;Times New Roman&quot;">   </span> </span>Offnormal ñ An unexpected condition, or outside the bounds of normal operation.
-
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Normal Time ñ If not null, the timestamp that the source returned to normal.
-
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Ack Time ñ If not null, the timestamp of acknowledgement.
-
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Ack User ñ The entity that acknowledged the alarm.
-
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Message ñ Text describing the alarm at the time of creation.
-
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Has Notes ñ Whether or not the alarm has any notes associated with it.
-
-<span style="font-size:10.0pt;line-height:115%;font-family:&quot;Calibri&quot;,sans-serif;
-text-transform:uppercase;letter-spacing:.75pt">
-</span>
-
-<span style="text-transform:uppercase;letter-spacing:.75pt"> </span>
-
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
-
-## <a name="_Toc456677186">Boolean Algorithm</a>
-
-</div>
+## <a name="_Toc456677186"></a>Boolean Algorithm
 
 This algorithm creates alarms when boolean sources turn true or false.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
-
-### <a name="_Toc456677187">Properties</a>
-
-</div>
+### <a name="_Toc456677187"></a>Properties
 
 The properties of an algorithm will be specific to its type.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Enabled ñ When false, no new records will be created.
+*   Enabled ‚Äì When false, no new records will be created.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Alarm Type ñ What type of alarm this algorithm creates: alert, fault or offnormal.
+*   Alarm Type ‚Äì What type of alarm this algorithm creates: alert, fault or offnormal.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Auto Update Interval ñ If greater than zero, will automatically re-evaluate the alarm state of each watch on this interval.  Will always update when the watch detects a change of value on the source.
+*   Auto Update Interval ‚Äì If greater than zero, will automatically re-evaluate the alarm state of each watch on this interval. Will always update when the watch detects a change of value on the source.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>To Alarm Inhibit ñ How long (in seconds) to delay going into alarm after the alarm condition is first detected.  This can help minimize alarm creation.  Use zero to disable, otherwise you should have a positive auto update interval.
+*   To Alarm Inhibit ‚Äì How long (in seconds) to delay going into alarm after the alarm condition is first detected. This can help minimize alarm creation. Use zero to disable, otherwise you should have a positive auto update interval.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>To Normal Inhibit ñ How long (in seconds) to delay a return to normal after the normal condition is first detected.  This can help minimize alarm creation.  Use zero to disable, otherwise you should have a positive auto update interval.
+*   To Normal Inhibit ‚Äì How long (in seconds) to delay a return to normal after the normal condition is first detected. This can help minimize alarm creation. Use zero to disable, otherwise you should have a positive auto update interval.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Alarm Value ñ What to alarm on, true or false.
+*   Alarm Value ‚Äì What to alarm on, true or false.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+### <a name="_Toc456677188"></a>Actions
 
-### <a name="_Toc456677188">Actions</a>
+*   Add Watch ‚Äì Takes path for subscription in the parent broker.
 
-</div>
+*   Set Alarm Type ‚Äì Determines what type of alarm this algorithm creates: alert, fault or offnormal.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Add Watch ñ Takes path for subscription in the parent broker.
+*   Set Auto Update Interval ‚Äì Sets auto update interval property in seconds. Use zero to disable.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Set Alarm Type ñ Determines what type of alarm this algorithm creates: alert, fault or offnormal.
+*   Update All ‚Äì Re-evaluate all child watches.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Set Auto Update Interval ñ Sets auto update interval property in seconds.  Use zero to disable.
+*   Delete Algorithm ‚Äì Remove the algorithm from the parent alarm class.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Update All ñ Re-evaluate all child watches.
+<a name="_Toc456677189"></a><span style="text-transform: uppercase">Out Of Range Algorithm</span>
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Delete Algorithm ñ Remove the algorithm from the parent alarm class.
+This algorithm creates alarms for sources whose numeric value is less than a minimum value, or greater than a maximum value.
 
-<span style="font-size:10.0pt;line-height:115%;font-family:&quot;Calibri&quot;,sans-serif;
-text-transform:uppercase;letter-spacing:.75pt">
-</span>
-
-<span style="text-transform:uppercase;letter-spacing:.75pt"> </span>
-
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
-
-<a name="_Toc456677189"><span style="text-transform:uppercase;letter-spacing:.75pt">Out Of Range Algorithm</span></a>
-
-</div>
-
-This algorithm creates alarms for sources whose numeric value is less than a minimum value, or greater than a maximum value. 
-
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
-
-<a name="_Toc456677190"><span style="color:#1F4D78;text-transform:uppercase;
-letter-spacing:.75pt">Properties</span></a>
-
-</div>
+<a name="_Toc456677190"></a><span style="text-transform: uppercase"><font color="#1f4d78">Properties</font></span>
 
 The properties of an algorithm will be specific to its type.
 
-*   Enabled ñ When false, no new records will be created.
-*   Alarm Type ñ Enum indicating whether records should be alert, fault or offnormal.
-*   Auto Update Interval ñ If greater than zero, will automatically re-evaluate the alarm state of each watch on this interval.  Will always update when the watch detects a change of value on the source.
-*   To Alarm Inhibit ñ How long (in seconds) to delay going into alarm after the alarm condition is first detected.  This can help minimize alarm creation.  Use zero to disable, otherwise you should have a positive auto update interval.
-*   To Normal Inhibit ñ How long (in seconds) to delay a return to normal after the normal condition is first detected.  This can help minimize alarm creation.  Use zero to disable, otherwise you should have a positive auto update interval.
-*   Min Value ñ Value to use if Use Node Range is false, or the target node does not define a min value.
-*   Max Value ñ Value to use if Use Node Range is false, or the target node does not define a max value.
+*   Enabled ‚Äì When false, no new records will be created.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+*   Alarm Type ‚Äì Enum indicating whether records should be alert, fault or offnormal.
 
-<a name="_Toc456677191"><span style="color:#1F4D78;text-transform:uppercase;
-letter-spacing:.75pt">Actions</span></a>
+*   Auto Update Interval ‚Äì If greater than zero, will automatically re-evaluate the alarm state of each watch on this interval. Will always update when the watch detects a change of value on the source.
 
-</div>
+*   To Alarm Inhibit ‚Äì How long (in seconds) to delay going into alarm after the alarm condition is first detected. This can help minimize alarm creation. Use zero to disable, otherwise you should have a positive auto update interval.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Add Watch ñ Takes path for subscription in the parent broker.
+*   To Normal Inhibit ‚Äì How long (in seconds) to delay a return to normal after the normal condition is first detected. This can help minimize alarm creation. Use zero to disable, otherwise you should have a positive auto update interval.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Set Alarm Type ñ Determines what type of alarm this algorithm creates: alert, fault or offnormal.
+*   Min Value ‚Äì Value to use if Use Node Range is false, or the target node does not define a min value.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Set Auto Update Interval ñ Sets auto update interval property in seconds.  Use zero to disable.
+*   Max Value ‚Äì Value to use if Use Node Range is false, or the target node does not define a max value.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Update All ñ Re-evaluate all child watches.
+<a name="_Toc456677191"></a><span style="text-transform: uppercase"><font color="#1f4d78">Actions</font></span>
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Delete Algorithm ñ Remove the algorithm from the parent alarm class.
+*   Add Watch ‚Äì Takes path for subscription in the parent broker.
 
-<span style="text-transform:uppercase;letter-spacing:.75pt"> </span>
+*   Set Alarm Type ‚Äì Determines what type of alarm this algorithm creates: alert, fault or offnormal.
 
-<span style="text-transform:uppercase;letter-spacing:.75pt"> </span>
+*   Set Auto Update Interval ‚Äì Sets auto update interval property in seconds. Use zero to disable.
 
-<span style="font-size:10.0pt;line-height:115%;font-family:&quot;Calibri&quot;,sans-serif;
-text-transform:uppercase;letter-spacing:.75pt">
-</span>
+*   Update All ‚Äì Re-evaluate all child watches.
 
-<span style="text-transform:uppercase;letter-spacing:.75pt"> </span>
+*   Delete Algorithm ‚Äì Remove the algorithm from the parent alarm class.
 
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
+<a name="_Toc456677192"></a><span style="text-transform: uppercase">Remote JDBC Service</span>
 
-<a name="_Toc456677192"><span style="text-transform:uppercase;letter-spacing:.75pt">Remote JDBC Service</span></a>
+This is an alarm service with a connection to a remote database. All properties and actions are inherited from the base Alarm Service.
 
-</div>
-
-This is an alarm service with a connection to a remote database.  All properties and actions are inherited from the base Alarm Service. 
-
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
-
-<a name="_Toc456677193"><span style="color:#1F4D78;text-transform:uppercase;
-letter-spacing:.75pt">Properties</span></a>
-
-</div>
+<a name="_Toc456677193"></a><span style="text-transform: uppercase"><font color="#1f4d78">Properties</font></span>
 
 The following are unique to this type.
 
-*   JDBC Driver ñ Class name of the driver.
-*   Database URL ñ Enum indicating whether records should be alert, fault or offnormal.
-*   Database Name ñ The database will be created if it does not already exist.
-*   Database User ñ Credentials to access the database base.  If blank, will only attempt to acquire a connection using the URL.
-*   Database Pass ñ Password for the database user.
+*   JDBC Driver ‚Äì Class name of the driver.
 
-<span style="text-transform:uppercase;letter-spacing:.75pt"> </span>
+*   Database URL ‚Äì Enum indicating whether records should be alert, fault or offnormal.
 
-<div style="border:solid #DEEAF6 3.0pt;padding:0in 0in 0in 0in;background:#DEEAF6">
+*   Database Name ‚Äì The database will be created if it does not already exist.
 
-## <a name="_Toc456677194">Stale Algorithm</a>
+*   Database User ‚Äì Credentials to access the database base. If blank, will only attempt to acquire a connection using the URL.
 
-</div>
+*   Database Pass ‚Äì Password for the database user.
+
+## <a name="_Toc456677194"></a>Stale Algorithm
 
 This algorithm creates alarms for sources whose value does not change after a certain period of time. This can be useful for detecting sensor failure.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
-
-### <a name="_Toc456677195">Properties</a>
-
-</div>
+### <a name="_Toc456677195"></a>Properties
 
 The properties of an algorithm will be specific to its type.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Enabled ñ When false, no new records will be created.
+*   Enabled ‚Äì When false, no new records will be created.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Alarm Type ñ What type of alarm this algorithm creates: alert, fault or offnormal.
+*   Alarm Type ‚Äì What type of alarm this algorithm creates: alert, fault or offnormal.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Auto Update Interval ñ If greater than zero, will automatically re-evaluate the alarm state of each watch on this interval.  Will always update when the watch detects a change of value on the source.
+*   Auto Update Interval ‚Äì If greater than zero, will automatically re-evaluate the alarm state of each watch on this interval. Will always update when the watch detects a change of value on the source.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>To Alarm Inhibit ñ How long (in seconds) to delay going into alarm after the alarm condition is first detected.  This can help minimize alarm creation.  Use zero to disable, otherwise you should have a positive auto update interval.
+*   To Alarm Inhibit ‚Äì How long (in seconds) to delay going into alarm after the alarm condition is first detected. This can help minimize alarm creation. Use zero to disable, otherwise you should have a positive auto update interval.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>To Normal Inhibit ñ How long (in seconds) to delay a return to normal after the normal condition is first detected.  This can help minimize alarm creation.  Use zero to disable, otherwise you should have a positive auto update interval.
+*   To Normal Inhibit ‚Äì How long (in seconds) to delay a return to normal after the normal condition is first detected. This can help minimize alarm creation. Use zero to disable, otherwise you should have a positive auto update interval.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Stale Days ñ The number of days to add to the stale duration.
+*   Stale Days ‚Äì The number of days to add to the stale duration.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Stale Hours ñ The number of hours to add to the stale duration.
+*   Stale Hours ‚Äì The number of hours to add to the stale duration.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Stale Minutes ñ The number of minutes to add to the stale duration.
+*   Stale Minutes ‚Äì The number of minutes to add to the stale duration.
 
-<div style="border:none;border-top:solid #5B9BD5 1.0pt;padding:2.0pt 0in 0in 0in">
+### <a name="_Toc456677196"></a>Actions
 
-### <a name="_Toc456677196">Actions</a>
+*   Add Watch ‚Äì Takes path for subscription in the parent broker.
 
-</div>
+*   Set Alarm Type ‚Äì Determines what type of alarm this algorithm creates: alert, fault or offnormal.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Add Watch ñ Takes path for subscription in the parent broker.
+*   Set Auto Update Interval ‚Äì Sets auto update interval property in seconds. Use zero to disable.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Set Alarm Type ñ Determines what type of alarm this algorithm creates: alert, fault or offnormal.
+*   Update All ‚Äì Re-evaluate all child watches.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Set Auto Update Interval ñ Sets auto update interval property in seconds.  Use zero to disable.
+*   Delete Algorithm ‚Äì Remove the algorithm from the parent alarm class.
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Update All ñ Re-evaluate all child watches.
+# <a name="_Toc456677197"></a>Creating a Custom Alarm Link
 
-<span style="font-family:Symbol">∑<span style="font:7.0pt &quot;Times New Roman&quot;">        </span> </span>Delete Algorithm ñ Remove the algorithm from the parent alarm class.
+Creating a custom link primarily requires implementing a single interface. After that, plenty of hooks exist if customizations of other built in types are required.
 
-<div style="border:solid #5B9BD5 3.0pt;padding:0in 0in 0in 0in;background:#5B9BD5">
+1.  Create an implementation of org.iot.dsa.alarm.Alarming.Provider.
 
-# <a name="_Toc456677197">Creating a Custom Alarm Link</a>
+2.  Create a ‚Äúmain‚Äù class that subclasses org.iot.dsa.alarm.AlarmLinkHandler.
 
-</div>
+3.  In the main method of the Main class:
 
-Creating a custom link primarily requires implementing a single interface.  After that, plenty of hooks exist if customizations of other built in types are required.
+    1.  Call Alarming.setProvider with an instance of your provider.
 
-1.<span style="font:7.0pt &quot;Times New Roman&quot;">      </span> Create an implementation of org.iot.dsa.alarm.Alarming.Provider.
-
-2.<span style="font:7.0pt &quot;Times New Roman&quot;">      </span> Create a ìmainî class that subclasses org.iot.dsa.alarm.AlarmLinkHandler.
-
-3.<span style="font:7.0pt &quot;Times New Roman&quot;">      </span> In the main method of the Main class:
-
-a.<span style="font:7.0pt &quot;Times New Roman&quot;">       </span> Call Alarming.setProvider with an instance of your provider.
-
-b.<span style="font:7.0pt &quot;Times New Roman&quot;">      </span> Call DSLinkFactory.start with an instance of your main class.
+    2.  Call DSLinkFactory.start with an instance of your main class.
 
 For example:
 
-| 
+<table bgcolor="#f2f2f2" cellpadding="7" cellspacing="0" width="623"><colgroup><col width="607"></colgroup>
 
-    public static void main(String[] args) {
+<tbody>
 
-        Alarming.setProvider(new RemoteJdbcProvider());
+<tr>
 
-        DSLinkFactory.start(args, new Main());
+<td style="border: 1px solid #00000a; padding-top: 0in; padding-bottom: 0in; padding-left: 0.08in; padding-right: 0.08in" bgcolor="#f2f2f2" valign="TOP" width="607">
 
-    }
+public static void main(String[] args) {
 
- |
+Alarming.setProvider(new RemoteJdbcProvider());
+
+DSLinkFactory.start(args, new Main());
+
+}
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
 
 In the dslink-java-alarm module there are some providers that can be used for reference:
 
-1.<span style="font:7.0pt &quot;Times New Roman&quot;">      </span> org.dsa.iot.alarm.inMemory
+1.  org.dsa.iot.alarm.inMemory
 
-2.<span style="font:7.0pt &quot;Times New Roman&quot;">      </span> org.dsa.iot.alarm.jdbc
+2.  org.dsa.iot.alarm.jdbc
+
+<div type="FOOTER">
+
+<a name="_GoBack"></a>Version 0.0.1 July 19, 2016
 
 </div>
