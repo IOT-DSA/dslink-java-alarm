@@ -16,7 +16,7 @@ import org.dsa.iot.dslink.util.handler.*;
  *
  * @author Aaron Hansen
  */
-public abstract class AlarmActionHandler implements Handler<Void>, Runnable  {
+public abstract class AlarmActionHandler implements Handler<Void>, Runnable {
 
     ///////////////////////////////////////////////////////////////////////////
     // Constants
@@ -32,7 +32,8 @@ public abstract class AlarmActionHandler implements Handler<Void>, Runnable  {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public AlarmActionHandler() {}
+    public AlarmActionHandler() {
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -41,7 +42,7 @@ public abstract class AlarmActionHandler implements Handler<Void>, Runnable  {
     /**
      * Sets the open state to false.
      */
-    public void handle(Void arg) {
+    @Override public void handle(Void arg) {
         open = false;
     }
 

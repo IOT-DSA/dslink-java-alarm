@@ -42,7 +42,8 @@ public class RemoteJdbcAlarmService extends AlarmService {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public RemoteJdbcAlarmService() {}
+    public RemoteJdbcAlarmService() {
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -87,6 +88,5 @@ public class RemoteJdbcAlarmService extends AlarmService {
             node.setConfig(DATABASE_PASS, new Value("userPass"));
         }
     }
-
 
 } //class

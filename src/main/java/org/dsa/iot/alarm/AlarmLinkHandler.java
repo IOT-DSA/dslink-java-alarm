@@ -13,7 +13,6 @@ import org.dsa.iot.dslink.node.*;
 import org.slf4j.*;
 
 /**
- *
  * @author Aaron Hansen
  */
 public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
@@ -33,12 +32,12 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
     private DSLink requesterLink;
     private DSLink responderLink;
 
-
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public AlarmLinkHandler() {}
+    public AlarmLinkHandler() {
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -61,24 +60,21 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
     /**
      * Returns true
      */
-    @Override
-    public boolean isRequester() {
+    @Override public boolean isRequester() {
         return true;
     }
 
     /**
      * Returns true
      */
-    @Override
-    public boolean isResponder() {
+    @Override public boolean isResponder() {
         return true;
     }
 
     /**
      * Cleans up everything related to the requester.
      */
-    @Override
-    public void onRequesterDisconnected(DSLink link) {
+    @Override public void onRequesterDisconnected(DSLink link) {
         LOGGER.info("Requester disconnected");
         requesterLink = null;
     }
@@ -86,8 +82,7 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
     /**
      * Captures the reference to the requester link.
      */
-    @Override
-    public void onRequesterInitialized(DSLink link) {
+    @Override public void onRequesterInitialized(DSLink link) {
         LOGGER.info("Requester initialized");
         requesterLink = link;
     }
@@ -95,8 +90,7 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
     /**
      * Cleans up everything related to the responder.
      */
-    @Override
-    public void onResponderDisconnected(DSLink link) {
+    @Override public void onResponderDisconnected(DSLink link) {
         responderLink = null;
     }
 
@@ -104,8 +98,7 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
      * Captures the reference to the responder link and creates the alarm service
      * hierarchy.
      */
-    @Override
-    public void onResponderInitialized(DSLink link) {
+    @Override public void onResponderInitialized(DSLink link) {
         LOGGER.info("Responder initialized");
         responderLink = link;
         Node superRoot = responderLink.getNodeManager().getSuperRoot();
@@ -115,9 +108,8 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
                 alarmService = null;
             }
             this.superRoot = superRoot;
-            Node serviceNode = superRoot.createChild("Alarm Service")
-                    .setSerializable(true)
-                    .build();
+            Node serviceNode = superRoot.createChild("Alarm Service").setSerializable(
+                    true).build();
             alarmService = (AlarmService) AlarmUtil.tryCreateAlarmObject(serviceNode);
             if (alarmService == null) {
                 alarmService = Alarming.getProvider().newAlarmService();
@@ -128,8 +120,7 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
         }
     }
 
-    @Override
-    public void stop() {
+    @Override public void stop() {
         if (alarmService != null) {
             alarmService.stop();
         }
@@ -137,7 +128,6 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
         superRoot = null;
         super.stop();
     }
-
 
     ///////////////////////////////////////////////////////////////////////////
     // Inner Classes

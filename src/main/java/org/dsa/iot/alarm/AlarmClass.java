@@ -119,8 +119,8 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             int e2hrs = getProperty(ESCALATION1_HRS).getNumber().intValue();
             int e2mns = getProperty(ESCALATION1_MNS).getNumber().intValue();
             //Bail if no escalation configured.
-            if ((e1dys <= 0) && (e1hrs <= 0) && (e1mns <= 0) &&
-                    (e2dys <= 0) && (e2hrs <= 0) && (e2mns <= 0)) {
+            if ((e1dys <= 0) && (e1hrs <= 0) && (e1mns <= 0) && (e2dys <= 0) && (e2hrs
+                    <= 0) && (e2mns <= 0)) {
                 return;
             }
             Calendar calendar = Calendar.getInstance();
@@ -153,9 +153,11 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         Value createState = event.getParameter(CREATE_STATE);
         Value message = event.getParameter(MESSAGE, new Value(""));
         AlarmState alarmState = AlarmState.decode(createState.getString());
-        AlarmRecord alarmRecord = ((AlarmService) getParent())
-                .createAlarm(this, sourcePath.getString(), alarmState,
-                             message.toString());
+        AlarmRecord alarmRecord = ((AlarmService) getParent()).createAlarm(this,
+                                                                           sourcePath
+                                                                                   .getString(),
+                                                                           alarmState,
+                                                                           message.toString());
         event.setStreamState(StreamState.INITIALIZED);
         Table table = event.getTable();
         table.setMode(Table.Mode.APPEND);
@@ -172,11 +174,11 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         if (!isEnabled() || !getService().isEnabled()) {
             return;
         }
-        AlarmObject kid;
+        AlarmObject child;
         for (int i = 0, len = childCount(); i < len; i++) {
-            kid = getChild(i);
-            if (kid instanceof AlarmAlgorithm) {
-                ((AlarmAlgorithm) kid).execute();
+            child = getChild(i);
+            if (child instanceof AlarmAlgorithm) {
+                ((AlarmAlgorithm) child).execute();
             }
         }
         checkEscalations();
@@ -207,7 +209,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         table.sendReady();
         AlarmActionHandler runnable = new AlarmActionHandler() {
             public void run() {
-                table.waitForStream(10000, true);
+                table.waitForStream(WAIT_FOR_STREAM, true);
                 int count = 0;
                 while (isOpen() && cursor.next()) {
                     AlarmUtil.encodeAlarm(cursor, table, null, null);
@@ -234,7 +236,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         table.setMode(Table.Mode.STREAM);
         table.sendReady();
         AlarmStreamer streamer = new AlarmStreamer(allUpdatesListeners, event, cursor);
-        AlarmUtil.run(streamer,"Open Alarms");
+        AlarmUtil.run(streamer, "Open Alarms");
     }
 
     /**
@@ -252,14 +254,14 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
                 new Parameter(NAME, ValueType.STRING, new Value("Unique Name")));
         Set<String> algos = Alarming.getProvider().getAlarmAlgorithms().keySet();
         action.addParameter(new Parameter(TYPE, ValueType.makeEnum(algos),
-                new Value(algos.iterator().next())));
+                                          new Value(algos.iterator().next())));
         node.createChild("Add Algorithm").setSerializable(false).setAction(action)
                 .build();
         //Create Alarm action
         action = new Action(Permission.WRITE, this::createAlarm);
         action.setResultType(ResultType.TABLE);
         action.addParameter(new Parameter(SOURCE_PATH, ValueType.STRING,
-                new Value("/path/in/broker")));
+                                          new Value("/path/in/broker")));
         action.addParameter(
                 new Parameter(CREATE_STATE, ENUM_ALARM_TYPE, new Value(ALERT)));
         action.addParameter(
@@ -424,41 +426,39 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
      * Action handler for streaming esclation 1 alarms
      */
     private void streamEscalation1(final ActionResult event) {
-        final AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(this);
-        event.setStreamState(StreamState.INITIALIZED);
-        final Table table = event.getTable();
-        table.setMode(Table.Mode.STREAM);
-        table.sendReady();
-        AlarmStreamer streamer = new AlarmStreamer(escalation1Listeners, event, cursor);
-        AlarmUtil.run(streamer,"Escalation 1");
+        startStream(event,escalation1Listeners,getNode().getName() + " Escalation 1");
     }
 
     /**
      * Action handler for streaming escalation 2 alarms
      */
     private void streamEscalation2(final ActionResult event) {
+        startStream(event,escalation2Listeners,getNode().getName() + " Escalation 2");
+    }
+
+    /**
+     * Establishes a stream 
+     * @param event Action invocation event.
+     * @param listeners The set the steamer object will add itself too.
+     * @param title The name of the thread handling the stream.
+     */
+    private void startStream(final ActionResult event,
+            Set<AlarmStreamer> listeners, String title) {
         final AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(this);
         event.setStreamState(StreamState.INITIALIZED);
         final Table table = event.getTable();
         table.setMode(Table.Mode.STREAM);
         table.sendReady();
-        AlarmStreamer streamer = new AlarmStreamer(escalation2Listeners, event, cursor);
-        AlarmUtil.run(streamer,"Escalation 2");
+        AlarmStreamer streamer = new AlarmStreamer(listeners, event, cursor);
+        AlarmUtil.run(streamer, title);
     }
 
     /**
      * Action handler for streaming new alarms
      */
     private void streamNewAlarms(final ActionResult event) {
-        final AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(this);
-        event.setStreamState(StreamState.INITIALIZED);
-        final Table table = event.getTable();
-        table.setMode(Table.Mode.STREAM);
-        table.sendReady();
-        AlarmStreamer streamer = new AlarmStreamer(newAlarmListeners, event, cursor);
-        AlarmUtil.run(streamer,"New Alarms");
+        startStream(event,newAlarmListeners,getNode().getName() + " New Alarms");
     }
-
 
     ///////////////////////////////////////////////////////////////////////////
     // Inner Classes

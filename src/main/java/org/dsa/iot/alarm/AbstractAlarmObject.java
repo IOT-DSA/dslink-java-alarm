@@ -156,10 +156,10 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         node.setRoConfig(JAVA_TYPE, new Value(getClass().getName()));
         AlarmObject alarmObject;
         if (node != null) {
-            Map<String,Node> kids = node.getChildren();
-            if (kids != null) {
-                for (Node kid : kids.values()) {
-                    alarmObject = AlarmUtil.tryCreateAlarmObject(kid);
+            Map<String, Node> children = node.getChildren();
+            if (children != null) {
+                for (Node child : children.values()) {
+                    alarmObject = AlarmUtil.tryCreateAlarmObject(child);
                     if (alarmObject != null) {
                         addChild(alarmObject);
                     }
@@ -281,8 +281,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     @Override public final void start() {
         started = true;
         doStart();
-        for (AlarmObject kid : children) {
-            kid.start();
+        for (AlarmObject child : children) {
+            child.start();
         }
     }
 
@@ -293,8 +293,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     @Override public final void steady() {
         steady = true;
         doSteady();
-        for (AlarmObject kid : children) {
-            kid.steady();
+        for (AlarmObject child : children) {
+            child.steady();
         }
     }
 
@@ -306,8 +306,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         started = false;
         steady = false;
         doStop();
-        for (AlarmObject kid : children) {
-            kid.stop();
+        for (AlarmObject child : children) {
+            child.stop();
         }
     }
 

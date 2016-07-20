@@ -26,8 +26,7 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
 
     private static final String ALARM_VALUE = "Alarm Value";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(
-            BooleanAlgorithm.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BooleanAlgorithm.class);
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -37,7 +36,8 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public BooleanAlgorithm() {}
+    public BooleanAlgorithm() {
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -46,7 +46,7 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
     /**
      * Subclass callback for whenever a configuration variable changes.
      */
-    protected void configChanged(final NodeListener.ValueUpdate update) {
+    protected void onConfigChanged(final NodeListener.ValueUpdate update) {
         if (update.name().equals(ALARM_VALUE)) {
             AlarmUtil.enqueue(this);
         }

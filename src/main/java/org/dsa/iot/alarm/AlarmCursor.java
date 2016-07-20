@@ -38,5 +38,4 @@ public abstract class AlarmCursor extends AlarmRecord {
      */
     public abstract boolean next();
 
-
 } //class

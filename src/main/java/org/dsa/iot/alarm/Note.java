@@ -30,7 +30,8 @@ public class Note {
     // Construction
     ///////////////////////////////////////////////////////////////////////////
 
-    public Note() {}
+    public Note() {
+    }
 
     public Note(UUID uuid) {
         this.uuid = uuid;
@@ -71,7 +72,7 @@ public class Note {
         return user;
     }
 
-   /**
+    /**
      * The UUID of the correspondning alarm record, will not change with calls to next().
      */
     public UUID getUUID() {
@@ -110,6 +111,5 @@ public class Note {
         uuid = arg;
         return this;
     }
-
 
 } //class

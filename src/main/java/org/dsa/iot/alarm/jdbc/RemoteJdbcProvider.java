@@ -11,8 +11,6 @@ package org.dsa.iot.alarm.jdbc;
 import org.dsa.iot.alarm.*;
 import org.slf4j.*;
 import java.sql.*;
-import java.text.*;
-import java.util.*;
 
 /**
  * Jdbc provider that uses the connection details on the RemoteJdbcAlarmService to
@@ -26,7 +24,8 @@ public class RemoteJdbcProvider extends JdbcProvider {
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RemoteJdbcProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+            RemoteJdbcProvider.class);
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -53,8 +52,7 @@ public class RemoteJdbcProvider extends JdbcProvider {
             RemoteJdbcAlarmService svc = (RemoteJdbcAlarmService) getService();
             String user = svc.getDatabaseUser();
             if ((user != null) && (user.length() > 0)) {
-                return DriverManager.getConnection(svc.getDatabaseUrl(),
-                                                   user,
+                return DriverManager.getConnection(svc.getDatabaseUrl(), user,
                                                    svc.getDatabasePass());
             }
             return DriverManager.getConnection(svc.getDatabaseUrl());
@@ -66,6 +64,7 @@ public class RemoteJdbcProvider extends JdbcProvider {
 
     /**
      * {@inheritDoc} <p/>
+     *
      * @return Database name from the service.
      */
     @Override protected String getDatabaseName() {
@@ -75,12 +74,12 @@ public class RemoteJdbcProvider extends JdbcProvider {
 
     /**
      * {@inheritDoc} <p/>
+     *
      * @return RemoteJdbcAlarmService instance.
      */
     @Override public AlarmService newAlarmService() {
         return new RemoteJdbcAlarmService();
     }
-
 
     ///////////////////////////////////////////////////////////////////////////
     // Inner Classes

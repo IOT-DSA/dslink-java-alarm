@@ -50,7 +50,7 @@ public class InMemoryProvider extends AbstractProvider {
     @Override public synchronized void addAlarm(AlarmRecord record) {
         alarmSet.add(record);
         alarmCache = new TreeSet<>(alarmComparator);
-        alarmMap.put(record.getUuid(),record);
+        alarmMap.put(record.getUuid(), record);
     }
 
     @Override protected synchronized void addNote(Note note) {
@@ -174,7 +174,8 @@ public class InMemoryProvider extends AbstractProvider {
             }
         }
 
-        @Override public void close() {}
+        @Override public void close() {
+        }
 
         @Override public boolean next() {
             if (iterator == null) {
@@ -218,7 +219,8 @@ public class InMemoryProvider extends AbstractProvider {
             iterator = getNoteIterator();
         }
 
-        @Override public void close() {}
+        @Override public void close() {
+        }
 
         @Override public boolean next() {
             Note tmp;

@@ -39,7 +39,7 @@ public interface AlarmConstants {
     String TIMESTAMP = "Timestamp";
     String TYPE = "Type";
     String USER = "User";
-    String UUID_STR = "UUID_STR";
+    String UUID_STR = "UUID";
 
     ///////////////////////////////////////////////////////////////////////////
     // Enums
@@ -55,5 +55,10 @@ public interface AlarmConstants {
      * How many alarm records to send without an interleaving call to table.sendReady.
      */
     int ALARM_RECORD_CHUNK = 50;
+
+    /**
+     * How long to wait for a stream to establish before failing.
+     */
+    long WAIT_FOR_STREAM = 1000;
 
 }

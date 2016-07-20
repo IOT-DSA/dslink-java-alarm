@@ -27,7 +27,8 @@ public abstract class NoteCursor extends Note {
     // Construction
     ///////////////////////////////////////////////////////////////////////////
 
-    public NoteCursor() {}
+    public NoteCursor() {
+    }
 
     public NoteCursor(UUID uuid) {
         super(uuid);
@@ -47,6 +48,5 @@ public abstract class NoteCursor extends Note {
      * true.
      */
     public abstract boolean next();
-
 
 } //class

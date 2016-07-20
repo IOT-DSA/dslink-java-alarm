@@ -35,12 +35,12 @@ public abstract class AbstractProvider implements Alarming.Provider {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public AbstractProvider() {}
+    public AbstractProvider() {
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
-
 
     /**
      * {@inheritDoc} <p/>
@@ -83,7 +83,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * This implementation returns a map with all the algorithms defined in the
      * core alarm sdk.
      */
-    @Override public Map<String,Class> getAlarmAlgorithms() {
+    @Override public Map<String, Class> getAlarmAlgorithms() {
         TreeMap ret = new TreeMap();
         ret.put("Boolean Algorithm", Boolean.class);
         ret.put("Out of Range Algorithm", OutOfRangeAlgorithm.class);
@@ -100,7 +100,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
 
     /**
      * {@inheritDoc} <p/>
-     * This implementation returns AlarmClass.class.
+     * This implementation returns an AlarmClass.class.
      */
     @Override public AlarmClass newAlarmClass(String name) {
         return new AlarmClass();
@@ -108,7 +108,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
 
     /**
      * {@inheritDoc} <p/>
-     * This implementation returns AlarmRecord.class.
+     * This implementation returns an AlarmRecord.class.
      */
     @Override public AlarmRecord newAlarmRecord() {
         return new AlarmRecord();
@@ -116,7 +116,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
 
     /**
      * {@inheritDoc} <p/>
-     * This implementation returns AlarmService.class.
+     * This implementation returns an AlarmService.class.
      */
     @Override public AlarmService newAlarmService() {
         return new AlarmService();
@@ -139,7 +139,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
 
     /**
      * {@inheritDoc} <p/>
-     * This implementation does nothing.
+     * This implementation does nothing other than store the service.
      */
     @Override public void start(AlarmService service) {
         this.service = service;
@@ -149,17 +149,16 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * {@inheritDoc} <p/>
      * This implementation does nothing.
      */
-    @Override public void stop() {}
+    @Override public void stop() {
+    }
 
     /**
      * Called by various methods in the abstract implementation.
      */
     protected abstract void saveRecord(AlarmRecord alarmRecord);
 
-
     ///////////////////////////////////////////////////////////////////////////
     // Inner Classes
     ///////////////////////////////////////////////////////////////////////////
-
 
 } //class

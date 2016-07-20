@@ -44,16 +44,16 @@ public enum AlarmState {
      * Returns the enum for the given state, case-independent.
      */
     public static AlarmState decode(String state) {
-        if (state.equalsIgnoreCase(AlarmConstants.NORMAL)) {
+        if (AlarmConstants.NORMAL.equalsIgnoreCase(state)) {
             return NORMAL;
         }
-        if (state.equalsIgnoreCase(AlarmConstants.ALERT)) {
+        if (AlarmConstants.ALERT.equalsIgnoreCase(state)) {
             return ALERT;
         }
-        if (state.equalsIgnoreCase(AlarmConstants.FAULT)) {
+        if (AlarmConstants.FAULT.equalsIgnoreCase(state)) {
             return FAULT;
         }
-        if (state.equalsIgnoreCase(AlarmConstants.OFFNORMAL)) {
+        if (AlarmConstants.OFFNORMAL.equalsIgnoreCase(state)) {
             return OFFNORMAL;
         }
         throw new IllegalArgumentException("Unknown alarm state: " + state);

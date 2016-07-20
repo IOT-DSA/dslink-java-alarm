@@ -10,7 +10,7 @@ package org.dsa.iot.alarm;
 
 /**
  * Simple RuntimeException used for execute failures, not bugs.
- *
+ * <p>
  * Created by Aaron on 4/29/2016.
  */
 public class AlarmException extends RuntimeException {

@@ -41,15 +41,13 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     *  Will set this as the close handler on the given request and will add and
-     *  remove itself from the given container.
+     * Will set this as the close handler on the given request and will add and
+     * remove itself from the given container.
      *
-     *  @param container Where to add and remove this instnace.
-     *  @param initialSet Optional.
+     * @param container  Where to add and remove this instnace.
+     * @param initialSet Optional.
      */
-    public AlarmStreamer(
-            Collection container,
-            ActionResult request,
+    public AlarmStreamer(Collection container, ActionResult request,
             AlarmCursor initialSet) {
         request.setCloseHandler(this);
         this.container = container;
@@ -85,7 +83,8 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
             while (isValid() && (updates.size() == 0)) {
                 try {
                     updates.wait(5000);
-                } catch (Exception ignore) {}
+                } catch (Exception ignore) {
+                }
                 if (updates.size() > 0) {
                     return updates.removeFirst();
                 }
@@ -113,7 +112,7 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
      * stream is closed.
      */
     public void run() {
-        table.waitForStream(10000, true);
+        table.waitForStream(WAIT_FOR_STREAM, true);
         if (initialSet != null) {
             int count = 1;
             while (isValid() && initialSet.next()) {

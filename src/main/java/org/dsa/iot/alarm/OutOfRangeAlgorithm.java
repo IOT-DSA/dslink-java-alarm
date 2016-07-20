@@ -48,7 +48,7 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
     /**
      * Subclass callback for whenever a configuration variable changes.
      */
-    protected void configChanged(final NodeListener.ValueUpdate update) {
+    protected void onConfigChanged(final NodeListener.ValueUpdate update) {
         String name = update.name();
         if (name.equals(MIN_VALUE)) {
             AlarmUtil.enqueue(this);
@@ -61,7 +61,7 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
         return "Value out of range: " + watch.getNode().getValue().toString();
     }
 
-   @Override protected void initProperties() {
+    @Override protected void initProperties() {
         super.initProperties();
         Node node = getNode();
         if (node.getConfig(MIN_VALUE) == null) {

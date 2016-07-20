@@ -52,7 +52,7 @@ public class StaleAlgorithm extends AlarmAlgorithm {
     /**
      * Subclass callback for whenever a configuration variable changes.
      */
-    protected void configChanged(final NodeListener.ValueUpdate update) {
+    protected void onConfigChanged(final NodeListener.ValueUpdate update) {
         String name = update.name();
         if (name.equals(STALE_DAYS)) {
             AlarmUtil.enqueue(this);
@@ -69,6 +69,7 @@ public class StaleAlgorithm extends AlarmAlgorithm {
 
     /**
      * Attempts to reuse a cached instance.  Return the calendar with the recycle method.
+     *
      * @return Never null, will create a new calendar if necessary.
      */
     private static Calendar getCalendar(long arg) {

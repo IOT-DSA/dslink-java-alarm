@@ -32,27 +32,18 @@ public abstract class JdbcProvider extends AbstractProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(JdbcProvider.class);
 
     private static final String createAlarmTable =
-            "create table if not exists Alarm_Records ("
-            + "Uuid varchar(36) not null, "
-            + "SourcePath varchar(254), "
-            + "AlarmClass varchar(254), "
-            + "AlarmState varchar(9), "
-            + "CreatedTime timestamp not null, "
-            + "NormalTime timestamp, "
-            + "AckTime timestamp, "
-            + "AckUser varchar(256), "
-            + "Message varchar(256), "
-            + "HasNotes boolean not null,"
-            + "IsOpen boolean not null, "
-            + "primary key (Uuid))";
+            "create table if not exists Alarm_Records (" + "Uuid varchar(36) not null, "
+                    + "SourcePath varchar(254), " + "AlarmClass varchar(254), "
+                    + "AlarmState varchar(9), " + "CreatedTime timestamp not null, "
+                    + "NormalTime timestamp, " + "AckTime timestamp, "
+                    + "AckUser varchar(256), " + "Message varchar(256), "
+                    + "HasNotes boolean not null," + "IsOpen boolean not null, "
+                    + "primary key (Uuid))";
 
     private static final String createNoteTable =
-            "create table if not exists Alarm_Notes ("
-            + "Uuid varchar(36) not null, "
-            + "Timestamp timestamp not null, "
-            + "User varchar(256), "
-            + "Note longvarchar, "
-            + "primary key (Uuid,Timestamp))";
+            "create table if not exists Alarm_Notes (" + "Uuid varchar(36) not null, "
+                    + "Timestamp timestamp not null, " + "User varchar(256), "
+                    + "Note longvarchar, " + "primary key (Uuid,Timestamp))";
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -75,19 +66,12 @@ public abstract class JdbcProvider extends AbstractProvider {
         try {
             conn = getConnection();
             //insert the note
-            stmt = conn.prepareStatement("insert into Alarm_Records "
-                                         + "(Uuid, "
-                                         + "SourcePath, "
-                                         + "AlarmClass, "
-                                         + "AlarmState, "
-                                         + "CreatedTime, "
-                                         + "NormalTime, "
-                                         + "AckTime, "
-                                         + "AckUser, "
-                                         + "Message, "
-                                         + "HasNotes,"
-                                         + "IsOpen) "
-                                         + "VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+            stmt = conn.prepareStatement(
+                    "insert into Alarm_Records " + "(Uuid, " + "SourcePath, "
+                            + "AlarmClass, " + "AlarmState, " + "CreatedTime, "
+                            + "NormalTime, " + "AckTime, " + "AckUser, " + "Message, "
+                            + "HasNotes," + "IsOpen) "
+                            + "VALUES (?,?,?,?,?,?,?,?,?,?,?)");
             stmt.setString(1, arg.getUuid().toString());
             stmt.setString(2, arg.getSourcePath());
             stmt.setString(3, arg.getAlarmClass().getNode().getName());
@@ -114,9 +98,9 @@ public abstract class JdbcProvider extends AbstractProvider {
         try {
             conn = getConnection();
             //insert the note
-            stmt = conn.prepareStatement("insert into Alarm_Notes "
-                                         + "(Uuid, Timestamp, User, Note) "
-                                         + "VALUES (?,?,?,?)");
+            stmt = conn.prepareStatement(
+                    "insert into Alarm_Notes " + "(Uuid, Timestamp, User, Note) "
+                            + "VALUES (?,?,?,?)");
             stmt.setString(1, arg.getUUID().toString());
             stmt.setTimestamp(2, new Timestamp(arg.getTimestamp()));
             stmt.setString(3, arg.getUser());
@@ -124,8 +108,8 @@ public abstract class JdbcProvider extends AbstractProvider {
             stmt.executeUpdate();
             stmt.close();
             //update the alarm record
-            stmt = conn.prepareStatement("update Alarm_Records set HasNotes = true "
-                                         + "where Uuid = ?");
+            stmt = conn.prepareStatement(
+                    "update Alarm_Records set HasNotes = true " + "where Uuid = ?");
             stmt.setString(1, arg.getUUID().toString());
             stmt.executeUpdate();
             conn.commit();
@@ -147,15 +131,18 @@ public abstract class JdbcProvider extends AbstractProvider {
         if (results != null)
             try {
                 results.close();
-            } catch (Exception ignore) {}
+            } catch (Exception ignore) {
+            }
         if (statement != null)
             try {
                 statement.close();
-            } catch (Exception ignore) {}
+            } catch (Exception ignore) {
+            }
         if (conn != null)
             try {
                 conn.close();
-            } catch (Exception ignore) {}
+            } catch (Exception ignore) {
+            }
     }
 
     @Override public void deleteAllRecords() {
@@ -175,17 +162,22 @@ public abstract class JdbcProvider extends AbstractProvider {
 
     @Override public void deleteRecord(UUID uuid) {
         Connection conn = null;
-        Statement statement = null;
+        PreparedStatement statement = null;
         try {
             AlarmRecord rec = getAlarm(uuid);
             if (rec == null) {
                 return;
             }
             conn = getConnection();
-            statement = conn.createStatement();
-            statement.executeUpdate("delete from Alarm_Records where Uuid = " + uuid);
+            statement = conn.prepareStatement("delete from Alarm_Records where Uuid = ?");
+            statement.setString(1, uuid.toString());
+            statement.executeUpdate();
             if (rec.getHasNotes()) {
-                statement.executeUpdate("delete from Alarm_Notes where Uuid = " + uuid);
+                statement.close();
+                statement = conn.prepareStatement(
+                        "delete from Alarm_Notes where Uuid = ?");
+                statement.setString(1, uuid.toString());
+                statement.executeUpdate();
             }
         } catch (Exception x) {
             AlarmUtil.throwRuntime(x);
@@ -195,17 +187,22 @@ public abstract class JdbcProvider extends AbstractProvider {
     }
 
     @Override public AlarmRecord getAlarm(UUID uuid) {
+        Connection conn = null;
+        PreparedStatement statement = null;
+        ResultSet results = null;
         MyAlarmCursor cursor = null;
         try {
-            Connection conn = getConnection();
-            Statement statement = conn.createStatement();
-            ResultSet results = statement.executeQuery(
-                    "select * from Alarm_Records where Uuid = " + uuid);
+            conn = getConnection();
+            statement = conn.prepareStatement(
+                    "select * from Alarm_Records where Uuid = ?");
+            statement.setString(1, uuid.toString());
+            results = statement.executeQuery();
             cursor = new MyAlarmCursor(conn, statement, results);
             if (cursor.next()) {
                 return cursor;
             }
         } catch (Exception x) {
+            close(conn, statement, results);
             AlarmUtil.throwRuntime(x);
         } finally {
             try {
@@ -232,14 +229,14 @@ public abstract class JdbcProvider extends AbstractProvider {
 
     @Override public NoteCursor getNotes(UUID uuid) {
         Connection conn = null;
-        Statement statement = null;
+        PreparedStatement statement = null;
         ResultSet results = null;
         try {
             conn = getConnection();
-            statement = conn.createStatement();
-            results = statement.executeQuery(
-                    "select * from Alarm_Notes where Uuid = " + uuid + " order by "
-                    + "Timestamp");
+            statement = conn.prepareStatement(
+                    "select * from Alarm_Notes where Uuid = ? order by Timestamp");
+            statement.setString(1, uuid.toString());
+            results = statement.executeQuery();
             return new MyNoteCursor(conn, statement, results);
         } catch (Exception x) {
             close(conn, statement, results);
@@ -253,23 +250,30 @@ public abstract class JdbcProvider extends AbstractProvider {
      */
     public void initializeDatabase() {
         Connection conn = null;
+        PreparedStatement preparedStatement = null;
         Statement statement = null;
         try {
             conn = getConnection();
+            preparedStatement = conn.prepareStatement("create database ? if not exist");
+            preparedStatement.setString(1, getDatabaseName());
+            preparedStatement.executeUpdate();
             statement = conn.createStatement();
-            statement.executeUpdate(
-                    "create database " + getDatabaseName() + " if not exist");
             statement.executeUpdate(createAlarmTable);
             statement.executeUpdate(createNoteTable);
         } catch (Exception x) {
             AlarmUtil.throwRuntime(x);
         } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (Exception ignore) {}
+            }
             close(conn, statement, null);
         }
     }
 
     @Override public AlarmCursor queryAlarms(AlarmClass alarmClass, Calendar from,
-                                             Calendar to) {
+            Calendar to) {
         Connection conn = null;
         Statement statement = null;
         try {
@@ -358,7 +362,7 @@ public abstract class JdbcProvider extends AbstractProvider {
      * @return
      */
     protected String selectStatement(AlarmClass alarmClass, Calendar from, Calendar to,
-                                     boolean mustBeOpen) {
+            boolean mustBeOpen) {
         StringBuilder buf = new StringBuilder();
         buf.append("select * from Alarm_Records");
         boolean hasWhere = false;
@@ -398,7 +402,7 @@ public abstract class JdbcProvider extends AbstractProvider {
         rec.setSourcePath(res.getString("SourcePath"));
         String str = res.getString("AlarmClass");
         if ((rec.getAlarmClass() == null) || !rec.getAlarmClass().getNode().getName()
-                                                 .equals(str)) {
+                .equals(str)) {
             rec.setAlarmClass(getService().getAlarmClass(str));
         }
         rec.setAlarmType(AlarmState.decode(res.getString("AlarmState")));

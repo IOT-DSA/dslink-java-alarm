@@ -203,7 +203,7 @@ public class AlarmWatch extends AbstractAlarmObject
         }
         Calendar cal = getCachedCalendar(time);
         getNode().setRoConfig(LAST_COV,
-                new Value(TimeUtils.encode(cal, true, null).toString()));
+                              new Value(TimeUtils.encode(cal, true, null).toString()));
         returnCachedCalendar(cal);
         getNode().setValue(subValue.getValue());
         if (isValid()) {
@@ -235,10 +235,9 @@ public class AlarmWatch extends AbstractAlarmObject
         Calendar cal = Calendar.getInstance();
         if (node.getRoConfig(ALARM_STATE_TIME) == null) {
             node.setRoConfig(ALARM_STATE_TIME,
-                    new Value(TimeUtils.encode(cal,true, null).toString()));
-        }
-        else {
-            TimeUtils.decode(node.getRoConfig(ALARM_STATE_TIME).getString(),cal);
+                             new Value(TimeUtils.encode(cal, true, null).toString()));
+        } else {
+            TimeUtils.decode(node.getRoConfig(ALARM_STATE_TIME).getString(), cal);
         }
         lastStateTime = cal.getTimeInMillis();
         if (node.getRoConfig(LAST_ALARM_RECORD) == null) {
@@ -288,7 +287,7 @@ public class AlarmWatch extends AbstractAlarmObject
         lastStateTime = System.currentTimeMillis();
         Calendar cal = getCachedCalendar(lastStateTime);
         getNode().setRoConfig(ALARM_STATE_TIME,
-                new Value(TimeUtils.encode(cal, true, null).toString()));
+                              new Value(TimeUtils.encode(cal, true, null).toString()));
         returnCachedCalendar(cal);
     }
 
@@ -298,6 +297,5 @@ public class AlarmWatch extends AbstractAlarmObject
     protected void setLastAlarmUuid(UUID uuid) {
         getNode().setRoConfig(LAST_ALARM_RECORD, new Value(uuid.toString()));
     }
-
 
 }

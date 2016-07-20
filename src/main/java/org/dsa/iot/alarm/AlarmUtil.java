@@ -39,7 +39,8 @@ public class AlarmUtil implements AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     // Prevent construction.
-    private AlarmUtil() {}
+    private AlarmUtil() {
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -48,15 +49,12 @@ public class AlarmUtil implements AlarmConstants {
     /**
      * Encodes the columns for an action that returns a table/stream of alarms.
      *
-     * @param record The record to encode.
-     * @param table Where to encode the record.
+     * @param record   The record to encode.
+     * @param table    Where to encode the record.
      * @param cacheCal Optional but efficient if encoding many rows at once.
      * @param cacheBuf Optional but efficient if encoding many rows at once.
      */
-    public static void encodeAlarm(
-            AlarmRecord record,
-            Table table,
-            Calendar cacheCal,
+    public static void encodeAlarm(AlarmRecord record, Table table, Calendar cacheCal,
             StringBuilder cacheBuf) {
         if (cacheCal == null) {
             cacheCal = Calendar.getInstance();
@@ -71,44 +69,41 @@ public class AlarmUtil implements AlarmConstants {
         String ackTime = null;
         if (record.getCreatedTime() > 0) {
             cacheCal.setTimeInMillis(record.getCreatedTime());
-            createdTime = TimeUtils.encode(cacheCal,true,cacheBuf).toString();
+            createdTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         }
         if (record.getNormalTime() > 0) {
             cacheCal.setTimeInMillis(record.getNormalTime());
-            normalTime = TimeUtils.encode(cacheCal,true,cacheBuf).toString();
+            normalTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         }
         if (record.getAckTime() > 0) {
             cacheCal.setTimeInMillis(record.getAckTime());
-            ackTime = TimeUtils.encode(cacheCal,true,cacheBuf).toString();
+            ackTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         }
-        table.addRow(Row.make(
-                new Value(record.getUuid().toString()),
-                new Value(record.getSourcePath()),
-                new Value(record.getAlarmClass().getNode().getDisplayName()),
-                new Value(createdTime),
-                new Value(AlarmState.encode(record.getAlarmType())),
-                new Value(normalTime),
-                new Value(ackTime),
-                new Value(record.getAckUser()),
-                new Value(record.getMessage()),
-                new Value(record.getHasNotes())
-        ));
+        table.addRow(Row.make(new Value(record.getUuid().toString()),
+                              new Value(record.getSourcePath()), new Value(
+                        record.getAlarmClass().getNode().getDisplayName()),
+                              new Value(createdTime),
+                              new Value(AlarmState.encode(record.getAlarmType())),
+                              new Value(normalTime), new Value(ackTime),
+                              new Value(record.getAckUser()),
+                              new Value(record.getMessage()),
+                              new Value(record.getHasNotes())));
     }
 
     /**
      * Encodes the columns for an action that returns a table of alarms.
      */
     public static void encodeAlarmColumns(Action action) {
-        action.addResult(new Parameter("UUID_STR",ValueType.STRING));
-        action.addResult(new Parameter(SOURCE_PATH,ValueType.STRING));
-        action.addResult(new Parameter("Alarm Class",ValueType.STRING));
-        action.addResult(new Parameter("Created Time",ValueType.STRING));
+        action.addResult(new Parameter("UUID_STR", ValueType.STRING));
+        action.addResult(new Parameter(SOURCE_PATH, ValueType.STRING));
+        action.addResult(new Parameter("Alarm Class", ValueType.STRING));
+        action.addResult(new Parameter("Created Time", ValueType.STRING));
         action.addResult(new Parameter("Created State", ENUM_ALARM_TYPE));
-        action.addResult(new Parameter("Normal Time",ValueType.STRING));
-        action.addResult(new Parameter("Ack Time",ValueType.STRING));
-        action.addResult(new Parameter("Ack User",ValueType.STRING));
-        action.addResult(new Parameter(MESSAGE,ValueType.STRING));
-        action.addResult(new Parameter("Has Notes",ValueType.BOOL));
+        action.addResult(new Parameter("Normal Time", ValueType.STRING));
+        action.addResult(new Parameter("Ack Time", ValueType.STRING));
+        action.addResult(new Parameter("Ack User", ValueType.STRING));
+        action.addResult(new Parameter(MESSAGE, ValueType.STRING));
+        action.addResult(new Parameter("Has Notes", ValueType.BOOL));
     }
 
     /**
@@ -127,7 +122,8 @@ public class AlarmUtil implements AlarmConstants {
 
     /**
      * Creates a daemon thread to execute the given runnable.
-     * @param runnable What to run.
+     *
+     * @param runnable   What to run.
      * @param threadName Optional, name to give the thread.
      */
     public static void run(Runnable runnable, String threadName) {
@@ -155,10 +151,11 @@ public class AlarmUtil implements AlarmConstants {
     /**
      * Looks for the JAVA_TYPE config and if found, instantiates an instance and calls
      * init for the given node thus, loading the entire subtree of AlarmObjects.
+     *
      * @param node The node the alarm object represents/proxies.
      * @return An instance of the javaType config, or null if there isn't one.
      * @throws RuntimeException Which will wrap the true exception if there are
-     * issues instantiating the type.
+     *                          issues instantiating the type.
      */
     public static AlarmObject tryCreateAlarmObject(Node node) {
         AlarmObject ret = null;
@@ -173,8 +170,8 @@ public class AlarmUtil implements AlarmConstants {
             ret = (AlarmObject) type.newInstance();
             ret.init(node);
             return ret;
-        } catch(Exception x) {
-            AlarmService.LOGGER.error("Error creating " + typeName,x);
+        } catch (Exception x) {
+            AlarmService.LOGGER.error("Error creating " + typeName, x);
             throwRuntime(x);
         }
         return ret;

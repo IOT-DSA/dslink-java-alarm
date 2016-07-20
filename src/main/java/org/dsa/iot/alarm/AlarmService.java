@@ -156,8 +156,9 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
      * Schedules execute in the daemon thread pool.
      */
     @Override protected void doSteady() {
-        executeFuture = Objects.getDaemonThreadPool()
-                .scheduleAtFixedRate(this::execute, 10, 10, TimeUnit.SECONDS);
+        executeFuture = Objects.getDaemonThreadPool().scheduleAtFixedRate(this::execute,
+                                                                          10, 10,
+                                                                          TimeUnit.SECONDS);
         Alarming.getProvider().start(this);
     }
 
@@ -185,11 +186,11 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             executing = true;
         }
         try {
-            AlarmObject kid;
+            AlarmObject child;
             for (int i = 0, len = childCount(); i < len; i++) {
-                kid = getChild(i);
-                if (kid instanceof AlarmClass) {
-                    ((AlarmClass) kid).execute();
+                child = getChild(i);
+                if (child instanceof AlarmClass) {
+                    ((AlarmClass) child).execute();
                 }
             }
         } catch (Exception x) {
@@ -207,8 +208,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         if (uuid == null) {
             throw new NullPointerException("Missing UUID_STR");
         }
-        AlarmRecord record = Alarming.getProvider()
-                .getAlarm(UUID.fromString(uuid.getString()));
+        AlarmRecord record = Alarming.getProvider().getAlarm(
+                UUID.fromString(uuid.getString()));
         event.setStreamState(StreamState.INITIALIZED);
         Table table = event.getTable();
         table.setMode(Table.Mode.APPEND);
@@ -245,8 +246,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         if (uuid == null) {
             throw new NullPointerException("Missing UUID_STR");
         }
-        NoteCursor cursor = Alarming.getProvider()
-                .getNotes(UUID.fromString(uuid.getString()));
+        NoteCursor cursor = Alarming.getProvider().getNotes(
+                UUID.fromString(uuid.getString()));
         event.setStreamState(StreamState.INITIALIZED);
         Table table = event.getTable();
         table.setMode(Table.Mode.APPEND);
@@ -256,7 +257,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             calendar.setTimeInMillis(cursor.getTimestamp());
             TimeUtils.encode(calendar, true, buf);
             table.addRow(Row.make(new Value(buf.toString()), new Value(cursor.getUser()),
-                    new Value(cursor.getText())));
+                                  new Value(cursor.getText())));
         }
         event.setStreamState(StreamState.CLOSED);
     }
@@ -275,8 +276,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action = new Action(Permission.WRITE, this::addAlarmClass);
         action.addParameter(
                 new Parameter(NAME, ValueType.STRING, new Value("Display Name")));
-        getNode().createChild("Add Alarm Class").setSerializable(false)
-                .setAction(action).build();
+        getNode().createChild("Add Alarm Class").setSerializable(false).setAction(action)
+                .build();
         //Add Note
         action = new Action(Permission.WRITE, this::addNote);
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
@@ -286,9 +287,9 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                 .build();
         //Delete All Records action
         action = new Action(Permission.WRITE,
-                (p) -> Alarming.getProvider().deleteAllRecords());
-        getNode().createChild("Delete All Records").setSerializable(false)
-                .setAction(action).build();
+                            (p) -> Alarming.getProvider().deleteAllRecords());
+        getNode().createChild("Delete All Records").setSerializable(false).setAction(
+                action).build();
         //Delete Record
         action = new Action(Permission.WRITE, this::deleteRecord);
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
@@ -296,7 +297,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                 .build();
         //Get Alarm
         action = new Action(Permission.READ, this::getAlarm);
-        action.addParameter(new Parameter("UUID", ValueType.STRING));
+        action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         action.setResultType(ResultType.TABLE);
         AlarmUtil.encodeAlarmColumns(action);
         getNode().createChild("Get Alarm").setSerializable(false).setAction(action)
@@ -313,8 +314,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         //Return To Normal
         action = new Action(Permission.WRITE, this::returnToNormal);
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
-        getNode().createChild("Return To Normal").setSerializable(false)
-                .setAction(action).build();
+        getNode().createChild("Return To Normal").setSerializable(false).setAction(action)
+                .build();
     }
 
     @Override protected void initProperties() {

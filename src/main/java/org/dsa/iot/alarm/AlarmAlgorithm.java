@@ -84,18 +84,12 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         }
     }
 
-    /**
-     * Subclass callback for whenever a configuration variable changes.
-     */
-    protected void configChanged(final NodeListener.ValueUpdate update) {
-    }
-
-    /**
+   /**
      * Schedules the auto update timer.
      */
     @Override public void doSteady() {
         rescheduleAutoUpdate();
-        getNode().getListener().setConfigHandler((p) -> configChanged(p));
+        getNode().getListener().setConfigHandler((p) -> onConfigChanged(p));
     }
 
     /**
@@ -115,11 +109,11 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         if (!isEnabled()) {
             return;
         }
-        AlarmObject kid;
+        AlarmObject child;
         for (int i = 0, len = childCount(); i < len; i++) {
-            kid = getChild(i);
-            if (kid instanceof AlarmWatch) {
-                ((AlarmWatch) kid).execute();
+            child = getChild(i);
+            if (child instanceof AlarmWatch) {
+                ((AlarmWatch) child).execute();
             }
         }
     }
@@ -180,8 +174,8 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         action.addParameter(
                 new Parameter(AUTO_UPDATE_INTERVAL, ValueType.NUMBER, new Value(0))
                         .setMetaData(new JsonObject().put("unit", "s")));
-        node.createChild("Set Auto Update Interval").setSerializable(false)
-                .setAction(action).build();
+        node.createChild("Set Auto Update Interval").setSerializable(false).setAction(
+                action).build();
         //Update All
         action = new Action(Permission.WRITE, this::updateAll);
         node.createChild("Update All").setSerializable(false).setAction(action).build();
@@ -214,6 +208,12 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
     protected abstract boolean isAlarm(AlarmWatch watch);
 
     /**
+     * Subclass callback for whenever a configuration variable changes.
+     */
+    protected void onConfigChanged(final NodeListener.ValueUpdate update) {
+    }
+
+    /**
      * Cancels an existing timer, then schedules a new one if the auto update interval
      * is greater than zero.
      */
@@ -225,8 +225,10 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         int interval = getNode().getRoConfig(AUTO_UPDATE_INTERVAL).getNumber().intValue();
         if (interval > 0) {
             int delay = Math.min(5, interval);
-            autoUpdateFuture = Objects.getDaemonThreadPool()
-                    .scheduleAtFixedRate(this, delay, interval, TimeUnit.SECONDS);
+            autoUpdateFuture = Objects.getDaemonThreadPool().scheduleAtFixedRate(this,
+                                                                                 delay,
+                                                                                 interval,
+                                                                                 TimeUnit.SECONDS);
         }
     }
 
@@ -291,11 +293,11 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
             updatingAll = true;
         }
         try {
-            AlarmObject kid;
+            AlarmObject child;
             for (int i = 0, len = childCount(); i < len; i++) {
-                kid = getChild(i);
-                if (kid instanceof AlarmWatch) {
-                    update(((AlarmWatch) kid));
+                child = getChild(i);
+                if (child instanceof AlarmWatch) {
+                    update(((AlarmWatch) child));
                     Thread.yield();
                 }
             }
@@ -311,7 +313,7 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         AlarmUtil.enqueue(this);
     }
 
-   /**
+    /**
      * Updates the alarm state of the watch and will create or update the corresponding
      * alarm record.  Inhibits are taken into account as well.
      */
@@ -342,9 +344,10 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
                 alarmClass.notifyAllUpdates(rec);
             }
         } else {
-            AlarmRecord rec = alarmClass.getService()
-                    .createAlarm(getAlarmClass(), watch.getSourcePath(), state,
-                            getAlarmMessage(watch));
+            AlarmRecord rec = alarmClass.getService().createAlarm(getAlarmClass(),
+                                                                  watch.getSourcePath(),
+                                                                  state,
+                                                                  getAlarmMessage(watch));
             watch.setLastAlarmUuid(rec.getUuid());
             alarmClass.notifyNewRecord(rec);
             alarmClass.notifyAllUpdates(rec);

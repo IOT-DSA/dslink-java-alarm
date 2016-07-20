@@ -64,16 +64,24 @@ public class Alarming {
          */
         public void acknowledge(UUID uuid, String user);
 
-        /** Add a new record to the provider's store. */
+        /**
+         * Add a new record to the provider's store.
+         */
         public void addAlarm(AlarmRecord newRecord);
 
-        /** Add the given note to the alarm record indicated by the UUID. */
+        /**
+         * Add the given note to the alarm record indicated by the UUID.
+         */
         public void addNote(UUID uuid, String user, String note);
 
-        /** Delete everything. */
+        /**
+         * Delete everything.
+         */
         public void deleteAllRecords();
 
-        /** Delete everything related to the alarm record for the give UUID. */
+        /**
+         * Delete everything related to the alarm record for the give UUID.
+         */
         public void deleteRecord(UUID uuid);
 
         /**
@@ -81,9 +89,11 @@ public class Alarming {
          * for subclasses.  All alarm algorithms must subclass AlarmAlgorithm and
          * support the no-arg public constructor.
          */
-        public Map<String,Class> getAlarmAlgorithms();
+        public Map<String, Class> getAlarmAlgorithms();
 
-        /** The alarm record for the given UUID. */
+        /**
+         * The alarm record for the given UUID.
+         */
         public AlarmRecord getAlarm(UUID uuid);
 
         /**
@@ -126,8 +136,9 @@ public class Alarming {
          * Returns a cursor of alarms from the given alarm class in specified
          * time range.  Implementors should expect concurrent queries and database
          * updates.
+         *
          * @param from Inclusive start time, can be null.
-         * @param to First excluded end time, can be null.
+         * @param to   First excluded end time, can be null.
          */
         public AlarmCursor queryAlarms(AlarmClass alarmClass, Calendar from, Calendar to);
 
