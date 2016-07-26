@@ -2,7 +2,7 @@ DSLINK-JAVA-ALARM
 =================
 
 * Date: July 26, 2016
-* Version: 0.0.2
+* Version: 0.0.3
 
 
 Overview
@@ -28,8 +28,8 @@ plenty of hooks exist if customization of other types is required.
 1.	Create an implementation of org.iot.dsa.alarm.Alarming.Provider.
 2.	Create a "main" class that subclasses org.iot.dsa.alarm.AlarmLinkHandler.
 3.	In the main method of the Main class:
-⋅⋅1.	 Call Alarming.setProvider with an instance of your provider.
-⋅⋅2.	 Call DSLinkFactory.start with an instance of your main class.
+    1. Call Alarming.setProvider with an instance of your provider.
+    2. Call DSLinkFactory.start with an instance of your main class.
 
 For example:
 
@@ -48,4 +48,4 @@ _0.0.3 - 2016-7-26_
   - Bug fixes
 
 _0.0.2 - 2016-7-20_
-  - First checkin
+  - Hello World
