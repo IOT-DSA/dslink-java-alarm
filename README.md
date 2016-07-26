@@ -8,17 +8,22 @@ DSLINK-JAVA-ALARM
 Overview
 --------
 
-This is a [DSA link](https://github.com/IOT-DSA).  It records details about interesting events so they may be considered by humans.  The underlying model is influenced by the BACnet alarming design.  
+This is a [DSA link](https://github.com/IOT-DSA).  It records details about interesting 
+events so they may be considered by humans.  The underlying model is influenced by the 
+BACnet alarming design.  
 
-This link was designed as a framework upon which alarm links for different data stores can be developed.  This module includes two example implementations:  org.dsa.iot.alarm.inMemory.Main and org.dsa.iot.alarm.jdbc.Main.  
+This link was designed as a framework upon which alarm links for different data stores 
+can be developed.  This module includes two example implementations:  *org.dsa.iot
+.alarm.inMemory.Main* and *org.dsa.iot.alarm.jdbc.Main*.  
 
-To understand link usage, view the [Alarm Link User Guide](https://github.com/IOT-DSA/dslink-java-alarm/blob/master/Alarm-Link-User-Guide.pdf).
+To understand link usage, view the [Alarm Link User Guide](https://github.com/IOT-DSA/dslink-java-alarm/raw/master/Alarm-Link-User-Guide.pdf).
 
 
 Creating Custom Alarm Links
 ---------------------------
 
-Creating a custom link primarily requires implementing a single interface.  After that, plenty of hooks exist if customizations of other types is required.
+Creating a custom link primarily requires implementing a single interface.  After that, 
+plenty of hooks exist if customization of other types is required.
 
 1.	Create an implementation of org.iot.dsa.alarm.Alarming.Provider.
 2.	Create a "main" class that subclasses org.iot.dsa.alarm.AlarmLinkHandler.
