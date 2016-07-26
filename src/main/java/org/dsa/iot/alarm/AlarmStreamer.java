@@ -29,7 +29,7 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private boolean closed = false;
+    private boolean closedLocally = false;
     private Collection container;
     private AlarmCursor initialSet;
     private ActionResult request;
@@ -70,13 +70,13 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
      * Force close the stream.
      */
     public void close() {
-        closed = true;
+        closedLocally = true;
     }
 
     /**
-     * Does not return until there is a record, or the stream is closed.
+     * Does not return until there is a record, or the stream is closedLocally.
      *
-     * @return Possibly null if the stream is closed.
+     * @return Possibly null if the stream is closedLocally.
      */
     public AlarmRecord getNextUpdate() {
         synchronized (updates) {
@@ -104,12 +104,12 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
      * True if both sides of the connection are open.
      */
     public boolean isValid() {
-        return isOpen() && !closed;
+        return isOpen() && !closedLocally;
     }
 
     /**
      * Sends the initial set of alarms if not null, then sends updates until the
-     * stream is closed.
+     * stream is closedLocally.
      */
     public void run() {
         table.waitForStream(WAIT_FOR_STREAM, true);
@@ -131,7 +131,7 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
         while (isValid()) {
             record = getNextUpdate();
             if (record != null) {
-                AlarmUtil.encodeAlarm(initialSet, table, null, null);
+                AlarmUtil.encodeAlarm(record, table, null, null);
             }
             if (isValid()) {
                 Thread.yield();

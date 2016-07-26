@@ -38,9 +38,9 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     private static final String ESCALATION1_HRS = "Escalation 1 Hours";
     private static final String ESCALATION1_MNS = "Escalation 1 Minutes";
 
-    private static final String ESCALATION2_DYS = "Escalation 1 Days";
-    private static final String ESCALATION2_HRS = "Escalation 1 Hours";
-    private static final String ESCALATION2_MNS = "Escalation 1 Minutes";
+    private static final String ESCALATION2_DYS = "Escalation 2 Days";
+    private static final String ESCALATION2_HRS = "Escalation 2 Hours";
+    private static final String ESCALATION2_MNS = "Escalation 2 Minutes";
 
     private static final String TIME_RANGE = "Time Range";
 
@@ -108,30 +108,36 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         long now = System.currentTimeMillis();
         try {
             //Bail if no listeners.
-            if ((escalation1Listeners.size() == 0) && (escalation2Listeners.size()
-                    == 0)) {
+            if ((escalation1Listeners.isEmpty()) && (escalation2Listeners.isEmpty())) {
                 return;
             }
             int e1dys = getProperty(ESCALATION1_DYS).getNumber().intValue();
             int e1hrs = getProperty(ESCALATION1_HRS).getNumber().intValue();
             int e1mns = getProperty(ESCALATION1_MNS).getNumber().intValue();
-            int e2dys = getProperty(ESCALATION1_DYS).getNumber().intValue();
-            int e2hrs = getProperty(ESCALATION1_HRS).getNumber().intValue();
-            int e2mns = getProperty(ESCALATION1_MNS).getNumber().intValue();
+            boolean checkEs1 = (e1dys > 0) || (e1hrs > 0) || (e1mns > 0);
+            int e2dys = getProperty(ESCALATION2_DYS).getNumber().intValue();
+            int e2hrs = getProperty(ESCALATION2_HRS).getNumber().intValue();
+            int e2mns = getProperty(ESCALATION2_MNS).getNumber().intValue();
+            boolean checkEs2 = (e2dys > 0) || (e2hrs > 0) || (e2mns > 0);
             //Bail if no escalation configured.
-            if ((e1dys <= 0) && (e1hrs <= 0) && (e1mns <= 0) && (e2dys <= 0) && (e2hrs
-                    <= 0) && (e2mns <= 0)) {
+            if (!checkEs1 && !checkEs2) {
                 return;
             }
             Calendar calendar = Calendar.getInstance();
             AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(this);
             while (cursor.next()) {
-                if (!cursor.isAcknowledged()) {
-                    calendar.setTimeInMillis(cursor.getCreatedTime());
-                    if (shouldEscalate(calendar, e1dys, e1hrs, e1mns, now)) {
-                        notifyEscalation1(cursor.newCopy());
-                    } else if (shouldEscalate(calendar, e2dys, e2hrs, e2mns, now)) {
-                        notifyEscalation2(cursor.newCopy());
+                if (cursor.isAckRequired() && !cursor.isAcknowledged()) {
+                    if (checkEs1) {
+                        calendar.setTimeInMillis(cursor.getCreatedTime());
+                        if (shouldEscalate(calendar, e1dys, e1hrs, e1mns, now)) {
+                            notifyEscalation1(cursor.newCopy());
+                        }
+                    }
+                    if (checkEs2) {
+                        calendar.setTimeInMillis(cursor.getCreatedTime());
+                        if (shouldEscalate(calendar, e2dys, e2hrs, e2mns, now)) {
+                            notifyEscalation2(cursor.newCopy());
+                        }
                     }
                 }
             }
@@ -153,11 +159,8 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         Value createState = event.getParameter(CREATE_STATE);
         Value message = event.getParameter(MESSAGE, new Value(""));
         AlarmState alarmState = AlarmState.decode(createState.getString());
-        AlarmRecord alarmRecord = ((AlarmService) getParent()).createAlarm(this,
-                                                                           sourcePath
-                                                                                   .getString(),
-                                                                           alarmState,
-                                                                           message.toString());
+        AlarmRecord alarmRecord = ((AlarmService) getParent()).createAlarm(
+                this, sourcePath.getString(), alarmState, message.toString());
         event.setStreamState(StreamState.INITIALIZED);
         Table table = event.getTable();
         table.setMode(Table.Mode.APPEND);
@@ -231,10 +234,6 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
      */
     private void getOpenAlarms(final ActionResult event) {
         final AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(this);
-        event.setStreamState(StreamState.INITIALIZED);
-        final Table table = event.getTable();
-        table.setMode(Table.Mode.STREAM);
-        table.sendReady();
         AlarmStreamer streamer = new AlarmStreamer(allUpdatesListeners, event, cursor);
         AlarmUtil.run(streamer, "Open Alarms");
     }
@@ -304,28 +303,13 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     }
 
     @Override protected void initProperties() {
-        Node node = getNode();
-        if (node.getConfig(ENABLED) == null) {
-            node.setConfig(ENABLED, new Value(false));
-        }
-        if (node.getConfig(ESCALATION1_DYS) == null) {
-            node.setConfig(ESCALATION1_DYS, new Value(0));
-        }
-        if (node.getConfig(ESCALATION1_HRS) == null) {
-            node.setConfig(ESCALATION1_HRS, new Value(0));
-        }
-        if (node.getConfig(ESCALATION1_MNS) == null) {
-            node.setConfig(ESCALATION1_MNS, new Value(0));
-        }
-        if (node.getConfig(ESCALATION2_DYS) == null) {
-            node.setConfig(ESCALATION2_DYS, new Value(0));
-        }
-        if (node.getConfig(ESCALATION2_HRS) == null) {
-            node.setConfig(ESCALATION2_HRS, new Value(0));
-        }
-        if (node.getConfig(ESCALATION2_MNS) == null) {
-            node.setConfig(ESCALATION2_MNS, new Value(0));
-        }
+        initProperty(ENABLED, new Value(true));
+        initProperty(ESCALATION1_DYS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ESCALATION1_HRS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ESCALATION1_MNS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ESCALATION2_DYS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ESCALATION2_HRS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ESCALATION2_MNS, new Value(0)).setWritable(Writable.CONFIG);
     }
 
     /**
@@ -408,7 +392,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
      * @return Whether or not an escalation is needed.
      */
     private boolean shouldEscalate(Calendar from, int days, int hours, int mins,
-            long checkTime) {
+                                   long checkTime) {
         if ((days <= 0) && (hours <= 0) && (mins <= 0)) {
             return false;
         }
@@ -426,30 +410,27 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
      * Action handler for streaming esclation 1 alarms
      */
     private void streamEscalation1(final ActionResult event) {
-        startStream(event,escalation1Listeners,getNode().getName() + " Escalation 1");
+        startStream(event, escalation1Listeners, getNode().getName() + " Escalation 1");
     }
 
     /**
      * Action handler for streaming escalation 2 alarms
      */
     private void streamEscalation2(final ActionResult event) {
-        startStream(event,escalation2Listeners,getNode().getName() + " Escalation 2");
+        startStream(event, escalation2Listeners, getNode().getName() + " Escalation 2");
     }
 
     /**
-     * Establishes a stream 
-     * @param event Action invocation event.
+     * Establishes a stream with no initial set of values.
+     *
+     * @param event     Action invocation event.
      * @param listeners The set the steamer object will add itself too.
-     * @param title The name of the thread handling the stream.
+     * @param title     The name of the thread handling the stream.
      */
     private void startStream(final ActionResult event,
-            Set<AlarmStreamer> listeners, String title) {
-        final AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(this);
-        event.setStreamState(StreamState.INITIALIZED);
-        final Table table = event.getTable();
-        table.setMode(Table.Mode.STREAM);
-        table.sendReady();
-        AlarmStreamer streamer = new AlarmStreamer(listeners, event, cursor);
+                             Set<AlarmStreamer> listeners,
+                             String title) {
+        AlarmStreamer streamer = new AlarmStreamer(listeners, event, null);
         AlarmUtil.run(streamer, title);
     }
 
@@ -457,7 +438,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
      * Action handler for streaming new alarms
      */
     private void streamNewAlarms(final ActionResult event) {
-        startStream(event,newAlarmListeners,getNode().getName() + " New Alarms");
+        startStream(event, newAlarmListeners, getNode().getName() + " New Alarms");
     }
 
     ///////////////////////////////////////////////////////////////////////////

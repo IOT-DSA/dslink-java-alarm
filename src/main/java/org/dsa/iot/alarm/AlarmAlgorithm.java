@@ -12,7 +12,6 @@ import org.dsa.iot.dslink.node.*;
 import org.dsa.iot.dslink.node.actions.*;
 import org.dsa.iot.dslink.node.value.*;
 import org.dsa.iot.dslink.util.*;
-import org.dsa.iot.dslink.util.json.*;
 import java.util.concurrent.*;
 
 /**
@@ -33,7 +32,6 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
-    private static final String ALARM_TYPE = "Alarm Type";
     private static final String AUTO_UPDATE_INTERVAL = "Auto Update Interval";
     private static final String TO_ALARM_INHIBIT = "To Alarm Inhibit";
     private static final String TO_NORMAL_INHIBIT = "To Normal Inhibit";
@@ -84,12 +82,11 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         }
     }
 
-   /**
+    /**
      * Schedules the auto update timer.
      */
     @Override public void doSteady() {
         rescheduleAutoUpdate();
-        getNode().getListener().setConfigHandler((p) -> onConfigChanged(p));
     }
 
     /**
@@ -164,41 +161,26 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         action.addParameter(
                 new Parameter(PATH, ValueType.STRING, new Value("/path/to/node")));
         node.createChild("Add Watch").setSerializable(false).setAction(action).build();
-        //Set Alarm Type
-        action = new Action(Permission.WRITE, this::setAlarmType);
-        action.addParameter(new Parameter(TYPE, ENUM_ALARM_TYPE, new Value(ALERT)));
-        node.createChild("Set Alarm Type").setSerializable(false).setAction(action)
-                .build();
-        //Set Alarm Type
-        action = new Action(Permission.WRITE, this::setAutoUpdateInterval);
-        action.addParameter(
-                new Parameter(AUTO_UPDATE_INTERVAL, ValueType.NUMBER, new Value(0))
-                        .setMetaData(new JsonObject().put("unit", "s")));
-        node.createChild("Set Auto Update Interval").setSerializable(false).setAction(
-                action).build();
+        //Delete
+        addDeleteAction("Delete Algorithm");
         //Update All
         action = new Action(Permission.WRITE, this::updateAll);
         node.createChild("Update All").setSerializable(false).setAction(action).build();
-        addDeleteAction("Delete Algorithm");
     }
 
     @Override protected void initProperties() {
-        Node node = getNode();
-        if (node.getConfig(ENABLED) == null) {
-            node.setConfig(ENABLED, new Value(false));
-        }
-        if (node.getRoConfig(ALARM_TYPE) == null) {
-            node.setRoConfig(ALARM_TYPE, new Value(ALERT));
-        }
-        if (node.getRoConfig(AUTO_UPDATE_INTERVAL) == null) {
-            node.setRoConfig(AUTO_UPDATE_INTERVAL, new Value(0));
-        }
-        if (node.getConfig(TO_ALARM_INHIBIT) == null) {
-            node.setConfig(TO_ALARM_INHIBIT, new Value(0));
-        }
-        if (node.getConfig(TO_NORMAL_INHIBIT) == null) {
-            node.setConfig(TO_NORMAL_INHIBIT, new Value(0));
-        }
+        initProperty(ENABLED, new Value(true));
+        initProperty(ALARM_TYPE, ENUM_ALARM_TYPE, new Value(ALERT))
+                .setWritable(Writable.CONFIG);
+        initProperty(AUTO_UPDATE_INTERVAL, new Value(0)).createFakeBuilder()
+                .setConfig("unit", new Value("sec"))
+                .setWritable(Writable.CONFIG);
+        initProperty(TO_ALARM_INHIBIT, new Value(0)).createFakeBuilder()
+                .setConfig("unit", new Value("sec"))
+                .setWritable(Writable.CONFIG);
+        initProperty(TO_NORMAL_INHIBIT, new Value(0)).createFakeBuilder()
+                .setConfig("unit", new Value("sec"))
+                .setWritable(Writable.CONFIG);
     }
 
     /**
@@ -206,12 +188,6 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
      * watch.  This method should be as efficient as possible.
      */
     protected abstract boolean isAlarm(AlarmWatch watch);
-
-    /**
-     * Subclass callback for whenever a configuration variable changes.
-     */
-    protected void onConfigChanged(final NodeListener.ValueUpdate update) {
-    }
 
     /**
      * Cancels an existing timer, then schedules a new one if the auto update interval
@@ -225,10 +201,8 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         int interval = getNode().getRoConfig(AUTO_UPDATE_INTERVAL).getNumber().intValue();
         if (interval > 0) {
             int delay = Math.min(5, interval);
-            autoUpdateFuture = Objects.getDaemonThreadPool().scheduleAtFixedRate(this,
-                                                                                 delay,
-                                                                                 interval,
-                                                                                 TimeUnit.SECONDS);
+            autoUpdateFuture = Objects.getDaemonThreadPool()
+                    .scheduleAtFixedRate(this, delay, interval, TimeUnit.SECONDS);
         }
     }
 

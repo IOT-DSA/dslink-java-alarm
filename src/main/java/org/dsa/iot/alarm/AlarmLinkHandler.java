@@ -114,9 +114,9 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
             if (alarmService == null) {
                 alarmService = Alarming.getProvider().newAlarmService();
                 alarmService.init(serviceNode);
-                alarmService.start();
-                alarmService.steady();
             }
+            alarmService.start();
+            alarmService.steady();
         }
     }
 

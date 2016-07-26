@@ -85,7 +85,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
      */
     @Override public Map<String, Class> getAlarmAlgorithms() {
         TreeMap ret = new TreeMap();
-        ret.put("Boolean Algorithm", Boolean.class);
+        ret.put("Boolean Algorithm", BooleanAlgorithm.class);
         ret.put("Out of Range Algorithm", OutOfRangeAlgorithm.class);
         ret.put("Stale Algorithm", StaleAlgorithm.class);
         return ret;

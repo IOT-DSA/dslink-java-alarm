@@ -45,31 +45,14 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Subclass callback for whenever a configuration variable changes.
-     */
-    protected void onConfigChanged(final NodeListener.ValueUpdate update) {
-        String name = update.name();
-        if (name.equals(MIN_VALUE)) {
-            AlarmUtil.enqueue(this);
-        } else if (name.equals(MIN_VALUE)) {
-            AlarmUtil.enqueue(this);
-        }
-    }
-
-    @Override protected String getAlarmMessage(AlarmWatch watch) {
+   @Override protected String getAlarmMessage(AlarmWatch watch) {
         return "Value out of range: " + watch.getNode().getValue().toString();
     }
 
     @Override protected void initProperties() {
         super.initProperties();
-        Node node = getNode();
-        if (node.getConfig(MIN_VALUE) == null) {
-            node.setConfig(MIN_VALUE, new Value(0.0d));
-        }
-        if (node.getConfig(MAX_VALUE) == null) {
-            node.setConfig(MAX_VALUE, new Value(100.0d));
-        }
+        initProperty(MIN_VALUE, new Value(0.0d)).setWritable(Writable.CONFIG);
+        initProperty(MAX_VALUE, new Value(100.0d)).setWritable(Writable.CONFIG);
     }
 
     @Override protected boolean isAlarm(AlarmWatch watch) {
@@ -83,6 +66,15 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
             return true;
         }
         return false;
+    }
+
+    @Override protected void onPropertyChange(Node child, ValuePair valuePair) {
+        String name = child.getName();
+        if (name.equals(MIN_VALUE)) {
+            AlarmUtil.enqueue(this);
+        } else if (name.equals(MIN_VALUE)) {
+            AlarmUtil.enqueue(this);
+        }
     }
 
 }

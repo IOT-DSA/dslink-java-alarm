@@ -49,20 +49,6 @@ public class StaleAlgorithm extends AlarmAlgorithm {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Subclass callback for whenever a configuration variable changes.
-     */
-    protected void onConfigChanged(final NodeListener.ValueUpdate update) {
-        String name = update.name();
-        if (name.equals(STALE_DAYS)) {
-            AlarmUtil.enqueue(this);
-        } else if (name.equals(STALE_HOURS)) {
-            AlarmUtil.enqueue(this);
-        } else if (name.equals(STALE_MINUTES)) {
-            AlarmUtil.enqueue(this);
-        }
-    }
-
     @Override protected String getAlarmMessage(AlarmWatch watch) {
         return "Stale value";
     }
@@ -89,15 +75,14 @@ public class StaleAlgorithm extends AlarmAlgorithm {
 
     @Override protected void initProperties() {
         super.initProperties();
-        Node node = getNode();
-        if (node.getConfig(STALE_DAYS) == null) {
-            node.setConfig(STALE_DAYS, new Value(1));
+        if (!hasProperty(STALE_DAYS)) {
+            initProperty(STALE_DAYS, new Value(1)).setWritable(Writable.CONFIG);
         }
-        if (node.getConfig(STALE_HOURS) == null) {
-            node.setConfig(STALE_HOURS, new Value(0));
+        if (!hasProperty(STALE_HOURS)) {
+            initProperty(STALE_HOURS, new Value(0)).setWritable(Writable.CONFIG);
         }
-        if (node.getConfig(STALE_MINUTES) == null) {
-            node.setConfig(STALE_MINUTES, new Value(0));
+        if (!hasProperty(STALE_MINUTES)) {
+            initProperty(STALE_MINUTES, new Value(0)).setWritable(Writable.CONFIG);
         }
     }
 
@@ -110,6 +95,17 @@ public class StaleAlgorithm extends AlarmAlgorithm {
         long end = from.getTimeInMillis();
         recycle(from);
         return ((end - start) > watch.getTimeInCurrentState());
+    }
+
+    @Override protected void onPropertyChange(Node node, ValuePair valuePair) {
+        String name = node.getName();
+        if (name.equals(STALE_DAYS)) {
+            AlarmUtil.enqueue(this);
+        } else if (name.equals(STALE_HOURS)) {
+            AlarmUtil.enqueue(this);
+        } else if (name.equals(STALE_MINUTES)) {
+            AlarmUtil.enqueue(this);
+        }
     }
 
     /**

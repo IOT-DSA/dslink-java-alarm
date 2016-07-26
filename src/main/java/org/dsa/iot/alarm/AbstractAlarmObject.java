@@ -43,10 +43,6 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     public AbstractAlarmObject() {
     }
 
-    public AbstractAlarmObject(AlarmObject parent) {
-        this.parent = parent;
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
@@ -116,6 +112,9 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     }
 
     @Override public AlarmObject getChild(int index) {
+        if (children == null) {
+            return null;
+        }
         return children.get(index);
     }
 
@@ -131,23 +130,31 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     }
 
     /**
-     * A convenience that first looks for the config, and if not found, tries for
-     * the attribute.
+     * Returns the value of the named child of the inner node.
+     *
+     * @return Possibly null.
      */
     public Value getProperty(String name) {
-        Value ret = node.getConfig(name);
-        if (ret == null) {
-            ret = node.getRoConfig(name);
+        Node child = node.getChild(name);
+        if (child == null) {
+            return null;
         }
-        if (ret == null) {
-            ret = node.getAttribute(name);
-        }
-        return ret;
+        return child.getValue();
+    }
+
+    /**
+     * Whether or not the inner node has a child node with the given name.
+     */
+    public boolean hasProperty(String name) {
+        return node.getChild(name) != null;
     }
 
     @Override public void init(Node node) {
         if (node == null) {
             throw new NullPointerException("SDK node cannot be null.");
+        }
+        if (this.node == node) {
+            return;
         }
         if (this.node != null) {
             throw new IllegalStateException("SDK node already set.");
@@ -185,6 +192,45 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     }
 
     /**
+     * Adds a child value node to the inner node if it is not already present.  This
+     * should be called during startup no matter what, it will register with the child
+     * listener for value change callbacks, which get routed to onPropertyChange.
+     *
+     * @param name  Must be unique.
+     * @param value Only used if the property does not exist.
+     * @return The child value node.
+     */
+    public Node initProperty(String name, Value value) {
+        if (value == null) {
+            return initProperty(name, null, value);
+        }
+        return initProperty(name, value.getType(), value);
+    }
+
+    /**
+     * Adds a child value node to the inner node if it is not already present.  This
+     * should be called during startup no matter what, it will register with the child
+     * nodes listener for value change callbacks, which get routed to onPropertyChange.
+     *
+     * @param name  Must be unique.
+     * @param type  Only used if the property does not exist.
+     * @param value Only used if the property does not exist.
+     * @return The child value node.
+     */
+    public Node initProperty(String name, ValueType type, Value value) {
+        Node child = node.getChild(name);
+        if (child == null) {
+            child = node.createChild(name).setSerializable(true).build();
+            child.setValueType(type);
+            child.setValue(value);
+        }
+        child.setHasChildren(false);
+        final Node tmp = child;
+        child.getListener().setValueHandler(p -> onPropertyChange(tmp, p));
+        return child;
+    }
+
+    /**
      * Returns the value of the enabled property.  If there is no enabled
      * property, will return true;
      */
@@ -204,10 +250,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * A convenience for isEnabled() && isSteady()
      */
     public boolean isValid() {
-        if (!isEnabled() || isSteady()) {
-            return false;
-        }
-        return true;
+        return isEnabled() && isSteady();
     }
 
     /**
@@ -223,7 +266,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     public AlarmObject newChild(String name, Class alarmObjectType) {
         AlarmObject ret = null;
         try {
-            Node parent = getNode().getParent();
+            Node parent = getNode();
             Node node = parent.getChild(name);
             if (node != null) {
                 throw new IllegalArgumentException("Name already in use: " + name);
@@ -236,6 +279,14 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
             AlarmUtil.throwRuntime(x);
         }
         return ret;
+    }
+
+    /**
+     * Callback for property changes (value changes in child nodes).  The property
+     * must have been calling initProperty.
+     */
+    protected void onPropertyChange(Node child, ValuePair valuePair) {
+        System.out.println("Property change!"); //TODO - remove
     }
 
     /**
@@ -272,6 +323,20 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
 
     @Override public void setParent(AlarmObject parent) {
         this.parent = parent;
+    }
+
+    /**
+     * Sets the value of a named child of the inner node.
+     *
+     * @param name  The name of the child node.
+     * @param value The new value.
+     * @return The old value.
+     */
+    public Value setProperty(String name, Value value) {
+        Node child = node.getChild(name);
+        Value ret = child.getValue();
+        child.setValue(value);
+        return ret;
     }
 
     /**

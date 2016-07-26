@@ -22,19 +22,25 @@ public interface AlarmConstants {
     // Strings
     ///////////////////////////////////////////////////////////////////////////
 
+    String ACK_TIME = "Ack Time";
+    String ACK_USER = "Ack User";
+    String ALARM_CLASS = "Alarm Class";
+    String ALARM_TYPE = "Alarm Type";
     String ALERT = "Alert";
     String ENABLED = "Enabled";
     String CREATE_ALARM = "Create Alarm";
     String CREATE_STATE = "Create State";
+    String CREATED_TIME = "Created Time";
     String FAULT = "Fault";
+    String HAS_NOTES = "Has Notes";
     String JAVA_TYPE = "javaType";
     String MESSAGE = "Message";
     String NAME = "Name";
     String NORMAL = "Normal";
+    String NORMAL_TIME = "Normal Time";
     String NOTE = "Note";
     String OFFNORMAL = "Offnormal";
     String PATH = "Path";
-    String RECORD_COUNT = "Record Count";
     String SOURCE_PATH = "Source Path";
     String TIMESTAMP = "Timestamp";
     String TYPE = "Type";

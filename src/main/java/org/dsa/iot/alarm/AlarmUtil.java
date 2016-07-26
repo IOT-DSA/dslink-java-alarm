@@ -80,8 +80,8 @@ public class AlarmUtil implements AlarmConstants {
             ackTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         }
         table.addRow(Row.make(new Value(record.getUuid().toString()),
-                              new Value(record.getSourcePath()), new Value(
-                        record.getAlarmClass().getNode().getDisplayName()),
+                              new Value(record.getSourcePath()),
+                              new Value(record.getAlarmClass().getNode().getName()),
                               new Value(createdTime),
                               new Value(AlarmState.encode(record.getAlarmType())),
                               new Value(normalTime), new Value(ackTime),
@@ -94,16 +94,16 @@ public class AlarmUtil implements AlarmConstants {
      * Encodes the columns for an action that returns a table of alarms.
      */
     public static void encodeAlarmColumns(Action action) {
-        action.addResult(new Parameter("UUID_STR", ValueType.STRING));
+        action.addResult(new Parameter(UUID_STR, ValueType.STRING));
         action.addResult(new Parameter(SOURCE_PATH, ValueType.STRING));
-        action.addResult(new Parameter("Alarm Class", ValueType.STRING));
-        action.addResult(new Parameter("Created Time", ValueType.STRING));
-        action.addResult(new Parameter("Created State", ENUM_ALARM_TYPE));
-        action.addResult(new Parameter("Normal Time", ValueType.STRING));
-        action.addResult(new Parameter("Ack Time", ValueType.STRING));
-        action.addResult(new Parameter("Ack User", ValueType.STRING));
+        action.addResult(new Parameter(ALARM_CLASS, ValueType.STRING));
+        action.addResult(new Parameter(CREATED_TIME, ValueType.STRING));
+        action.addResult(new Parameter(ALARM_TYPE, ENUM_ALARM_TYPE));
+        action.addResult(new Parameter(NORMAL_TIME, ValueType.STRING));
+        action.addResult(new Parameter(ACK_TIME, ValueType.STRING));
+        action.addResult(new Parameter(ACK_USER, ValueType.STRING));
         action.addResult(new Parameter(MESSAGE, ValueType.STRING));
-        action.addResult(new Parameter("Has Notes", ValueType.BOOL));
+        action.addResult(new Parameter(HAS_NOTES, ValueType.BOOL));
     }
 
     /**

@@ -1,5 +1,6 @@
 Next
 ====
+- Sanity check algorithms and watches.
 - Logging
     - All alarm state changes
     - All add/delete objects
@@ -9,7 +10,7 @@ Next
 
 Issues
 ======
-- Should source path in the be the watch path?
+- Should source path be the watch path?
 - RemoteJdbcAlarmService
     - How change remote jdbc provider in running instance?
     - How protect password.
@@ -17,7 +18,6 @@ Issues
     - @alarm - each should check the source to see if it's priority is higher than
       the current alarm?
     - Will allow multiple watches of the same node.
-- Should I be encoding node names?
 - How send errors in response to action invocations?
 - How have multiple alarm sources monitoring a node?
 - What if link crashes

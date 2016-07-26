@@ -231,7 +231,7 @@ public class AlarmRecord {
     }
 
     /**
-     * True if the create state is not alert.
+     * True if the alarm type is not alert.
      */
     public boolean isAckRequired() {
         return alarmType != AlarmState.ALERT;
@@ -240,15 +240,13 @@ public class AlarmRecord {
     /**
      * True if the ack time is greater than zero.
      */
-    public boolean isAcknowledged() {
-        return ackTime >= 0;
-    }
+    public boolean isAcknowledged() { return ackTime > 0; }
 
     /**
      * True if normal and acknowledged (if acknowledgment is required).
      */
     public boolean isClosed() {
-        if (isNormal()) {
+        if (!isNormal()) {
             return false;
         }
         if (isAckRequired() && !isAcknowledged()) {

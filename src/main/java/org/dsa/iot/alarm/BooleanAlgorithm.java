@@ -43,29 +43,25 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Subclass callback for whenever a configuration variable changes.
-     */
-    protected void onConfigChanged(final NodeListener.ValueUpdate update) {
-        if (update.name().equals(ALARM_VALUE)) {
-            AlarmUtil.enqueue(this);
-        }
-    }
-
-    @Override protected String getAlarmMessage(AlarmWatch watch) {
+   @Override protected String getAlarmMessage(AlarmWatch watch) {
         return "Value: " + watch.getNode().getValue().toString();
     }
 
     @Override protected void initProperties() {
         super.initProperties();
-        Node node = getNode();
-        if (node.getConfig(ALARM_VALUE) == null) {
-            node.setConfig(ALARM_VALUE, new Value(true));
-        }
+        initProperty(ALARM_VALUE, new Value(true)).setWritable(Writable.CONFIG);
     }
 
     @Override protected boolean isAlarm(AlarmWatch watch) {
         return getProperty(ALARM_VALUE).getBool() == watch.getNode().getValue().getBool();
     }
 
+    @Override protected void onPropertyChange(Node child, ValuePair valuePair) {
+        if (child.getName().equals(ALARM_VALUE)) {
+            AlarmUtil.enqueue(this);
+        }
+    }
+
 }
+
+

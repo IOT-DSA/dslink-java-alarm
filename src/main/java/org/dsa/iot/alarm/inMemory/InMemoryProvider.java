@@ -30,10 +30,10 @@ public class InMemoryProvider extends AbstractProvider {
     ///////////////////////////////////////////////////////////////////////////
 
     private static Comparator<AlarmRecord> alarmComparator = new AlarmComparator();
-    private Set<AlarmRecord> alarmCache = new TreeSet<>(alarmComparator);
+    private Set<AlarmRecord> alarmCache = null;
     private Map<UUID, AlarmRecord> alarmMap = new TreeMap<>();
     private Set<AlarmRecord> alarmSet = new TreeSet<>(alarmComparator);
-    private List<Note> noteCache = new LinkedList<>();
+    private List<Note> noteCache = null;
     private List<Note> noteList = new LinkedList<>();
 
     ///////////////////////////////////////////////////////////////////////////
@@ -49,21 +49,21 @@ public class InMemoryProvider extends AbstractProvider {
 
     @Override public synchronized void addAlarm(AlarmRecord record) {
         alarmSet.add(record);
-        alarmCache = new TreeSet<>(alarmComparator);
         alarmMap.put(record.getUuid(), record);
+        alarmCache = null;
     }
 
     @Override protected synchronized void addNote(Note note) {
         noteList.add(note);
-        noteCache = new LinkedList<>();
+        noteCache = null;
     }
 
     @Override public void deleteAllRecords() {
         alarmSet.clear();
         alarmMap.clear();
         noteList.clear();
-        alarmCache = new TreeSet<>(alarmComparator);
-        noteCache = new LinkedList<>();
+        alarmCache = null;
+        noteCache = null;
     }
 
     @Override public synchronized void deleteRecord(UUID uuid) {
@@ -77,8 +77,8 @@ public class InMemoryProvider extends AbstractProvider {
                 it.remove();
             }
         }
-        alarmCache = new TreeSet<>(alarmComparator);
-        noteCache = new LinkedList<>();
+        alarmCache = null;
+        noteCache = null;
     }
 
     @Override public synchronized AlarmRecord getAlarm(UUID uuid) {

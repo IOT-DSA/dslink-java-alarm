@@ -222,30 +222,22 @@ public class AlarmWatch extends AbstractAlarmObject
      * Adds the necessary data to the alarm service node.
      */
     @Override protected void initProperties() {
-        Node node = getNode();
-        if (node.getConfig(ENABLED) == null) {
-            node.setConfig(ENABLED, new Value(false));
-        }
-        if (node.getRoConfig(SOURCE_PATH) == null) {
-            node.setRoConfig(SOURCE_PATH, new Value("/path/to/node"));
-        }
-        if (node.getRoConfig(ALARM_STATE) == null) {
-            node.setRoConfig(ALARM_STATE, new Value(NORMAL));
-        }
+        initProperty(ENABLED, new Value(true));
+        initProperty(SOURCE_PATH, new Value("/path/to/node")).setWritable(Writable.NEVER);
+        initProperty(ALARM_STATE, new Value(NORMAL)).setWritable(Writable.NEVER);
         Calendar cal = Calendar.getInstance();
-        if (node.getRoConfig(ALARM_STATE_TIME) == null) {
-            node.setRoConfig(ALARM_STATE_TIME,
-                             new Value(TimeUtils.encode(cal, true, null).toString()));
-        } else {
-            TimeUtils.decode(node.getRoConfig(ALARM_STATE_TIME).getString(), cal);
+        if (!hasProperty(ALARM_STATE_TIME)) {
+            initProperty(ALARM_STATE_TIME,
+                         new Value(TimeUtils.encode(cal, true, null).toString()))
+                    .setWritable(Writable.NEVER);
+        }
+        else {
+            initProperty(ALARM_STATE_TIME, null, null).setWritable(Writable.NEVER);
+            TimeUtils.decode(getProperty(ALARM_STATE_TIME).getString(), cal);
         }
         lastStateTime = cal.getTimeInMillis();
-        if (node.getRoConfig(LAST_ALARM_RECORD) == null) {
-            node.setRoConfig(LAST_ALARM_RECORD, new Value(""));
-        }
-        if (node.getRoConfig(LAST_COV) == null) {
-            node.setRoConfig(LAST_COV, new Value("null"));
-        }
+        initProperty(LAST_ALARM_RECORD, new Value("")).setWritable(Writable.NEVER);
+        initProperty(LAST_COV, new Value("null")).setWritable(Writable.NEVER);
     }
 
     /**

@@ -37,7 +37,6 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private final Object uuidMutex = new Object();
     private AlarmLinkHandler alarmLinkHandler;
     private ScheduledFuture executeFuture;
     private boolean executing = false;
@@ -129,14 +128,16 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         checkSteady();
         long now = System.currentTimeMillis();
         UUID uuid = null;
-        synchronized (uuidMutex) {
-            int num = getNode().getRoConfig(RECORD_COUNT).getNumber().intValue();
-            getNode().setRoConfig(RECORD_COUNT, new Value(++num));
+        synchronized (this) {
             uuid = java.util.UUID.randomUUID();
         }
-        AlarmRecord alarmRecord = Alarming.getProvider().newAlarmRecord().setUuid(uuid)
-                .setAlarmClass(alarmClass).setAlarmType(createState).setCreatedTime(now)
-                .setMessage(message).setSourcePath(sourcePath);
+        AlarmRecord alarmRecord = Alarming.getProvider().newAlarmRecord()
+                .setUuid(uuid)
+                .setAlarmClass(alarmClass)
+                .setAlarmType(createState)
+                .setCreatedTime(now)
+                .setMessage(message)
+                .setSourcePath(sourcePath);
         Alarming.getProvider().addAlarm(alarmRecord);
         return alarmRecord;
     }
@@ -318,10 +319,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     @Override protected void initProperties() {
-        Node node = getNode();
-        if (node.getConfig(ENABLED) == null) {
-            node.setConfig(ENABLED, new Value(false));
-        }
+        initProperty(ENABLED, new Value(true)).setWritable(Writable.CONFIG);
     }
 
     /**
