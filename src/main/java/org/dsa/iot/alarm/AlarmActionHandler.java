@@ -11,7 +11,7 @@ package org.dsa.iot.alarm;
 import org.dsa.iot.dslink.util.handler.*;
 
 /**
- * Can be used for async processing of action invocations.  Just implement the
+ * Can be used for async processing of action invocations.  Simply implement the
  * run method and call isOpen to verify the stream is still viable.
  *
  * @author Aaron Hansen

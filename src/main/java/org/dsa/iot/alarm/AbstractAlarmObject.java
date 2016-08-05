@@ -15,8 +15,8 @@ import java.util.*;
 
 /**
  * Basic implementation of the AlarmObject interface.  Subclasses are not required to
- * implement anything, this class simply provides a bunch of callbacks while managing
- * the lifecycle of the instance.
+ * implement anything, this class simply provides callbacks while managing the lifecycle
+ * of the instance.
  *
  * @author Aaron Hansen
  */
@@ -33,6 +33,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     private ArrayList<AlarmObject> children;
     private Node node;
     private AlarmObject parent;
+    private AlarmService service;
     private boolean started = false;
     private boolean steady = false;
 
@@ -40,14 +41,12 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public AbstractAlarmObject() {
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
     @Override public synchronized void addChild(AlarmObject child) {
+        AlarmUtil.logTrace("Add " + child.getNode().getPath());
         if (children == null) {
             children = new ArrayList<>();
         }
@@ -130,6 +129,45 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     }
 
     /**
+     * The alarm service, or null if this isn't mounted.
+     */
+    public AlarmService getService() {
+        if (service == null) {
+            AlarmObject tmp = getParent();
+            while (tmp != null) {
+                if (tmp instanceof AlarmService) {
+                    service = (AlarmService) tmp;
+                    break;
+                }
+                tmp = tmp.getParent();
+            }
+        }
+        return service;
+    }
+
+    /**
+     * A convenience that looks for the readonly config and if not found, checks
+     * for the writable config.
+     *
+     * @return Possibly null.
+     */
+    public Value getConfig(String name) {
+        Value value = node.getRoConfig(name);
+        if (value == null) {
+            value = node.getConfig(name);
+        }
+        return value;
+    }
+
+    @Override public int getHandle() {
+        Value value = getConfig(HANDLE);
+        if (value == null) {
+            return 0;
+        }
+        return value.getNumber().intValue();
+    }
+
+    /**
      * Returns the value of the named child of the inner node.
      *
      * @return Possibly null.
@@ -161,20 +199,18 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
         this.node = node;
         node.setRoConfig(JAVA_TYPE, new Value(getClass().getName()));
+        initActions();
+        initData();
         AlarmObject alarmObject;
-        if (node != null) {
-            Map<String, Node> children = node.getChildren();
-            if (children != null) {
-                for (Node child : children.values()) {
-                    alarmObject = AlarmUtil.tryCreateAlarmObject(child);
-                    if (alarmObject != null) {
-                        addChild(alarmObject);
-                    }
+        Map<String, Node> children = node.getChildren();
+        if (children != null) {
+            for (Node child : children.values()) {
+                alarmObject = AlarmUtil.tryCreateAlarmObject(child);
+                if (alarmObject != null) {
+                    addChild(alarmObject);
                 }
             }
         }
-        initProperties();
-        initActions();
     }
 
     /**
@@ -185,10 +221,29 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     }
 
     /**
-     * Subclass hook for adding configs and attributes, called by init(node) after the
-     * subtree has been loaded.
+     * Only adds a config that isn't already present, otherwise does nothing.
+     *
+     * @param name     The name of the config.
+     * @param value    Only used when the config is not present.
+     * @param readOnly Whether or not the config is writable or not.
      */
-    protected void initProperties() {
+    protected void initConfig(String name, Value value, boolean readOnly) {
+        Value tmp = getConfig(name);
+        if (tmp != null) {
+            return;
+        }
+        if (readOnly) {
+            node.setRoConfig(name, value);
+        } else {
+            node.setConfig(name, value);
+        }
+    }
+
+    /**
+     * Subclass hook for initializing data on the inner node, called by init(node) after
+     * the subtree has been loaded.
+     */
+    protected void initData() {
     }
 
     /**
@@ -202,7 +257,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      */
     public Node initProperty(String name, Value value) {
         if (value == null) {
-            return initProperty(name, null, value);
+            return initProperty(name, null, null);
         }
         return initProperty(name, value.getType(), value);
     }
@@ -286,7 +341,6 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * must have been calling initProperty.
      */
     protected void onPropertyChange(Node child, ValuePair valuePair) {
-        System.out.println("Property change!"); //TODO - remove
     }
 
     /**
@@ -296,7 +350,6 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      */
     @Override public void removed() {
         removeAllDescendants();
-        node.getParent().removeChild(node);
     }
 
     /**
@@ -309,15 +362,19 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     }
 
     @Override public synchronized void removeChild(AlarmObject child) {
-        if (child.getParent() == this) {
-            child.removed();
-            if (child.isSteady()) {
-                child.stop();
-            }
-            child.setParent(null);
-            children.remove(child);
-        } else {
+        AlarmUtil.logTrace("Remove " + child.getNode().getPath());
+        if (child.getParent() != this) {
             throw new IllegalStateException("Child not parented by this object");
+        }
+        child.removed();
+        if (child.isSteady()) {
+            child.stop();
+        }
+        child.setParent(null);
+        children.remove(child);
+        Node tmp = child.getNode();
+        if (tmp != null) {
+            node.removeChild(tmp);
         }
     }
 
@@ -340,11 +397,16 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     }
 
     /**
-     * Calls doStart on this, then starts all children.
+     * Registers the instance with the service, calls doStart on this, then starts all
+     * children.
      * <p/>{@inheritDoc}
      */
     @Override public final void start() {
         started = true;
+        AlarmService svc = getService();
+        if (svc != null) {
+            svc.register(this);
+        }
         doStart();
         if (children != null) {
             for (AlarmObject child : children) {
@@ -368,16 +430,23 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     }
 
     /**
-     * Calls doStop on this, then stops all children.
+     * Calls doStop on this, stops all children, then unregisters with the service.
      * <p/>{@inheritDoc}
      */
     @Override public final void stop() {
-        started = false;
-        steady = false;
-        doStop();
-        if (children != null) {
-            for (AlarmObject child : children) {
-                child.stop();
+        try {
+            started = false;
+            steady = false;
+            doStop();
+            if (children != null) {
+                for (AlarmObject child : children) {
+                    child.stop();
+                }
+            }
+        } finally {
+            AlarmService svc = getService();
+            if (svc != null) {
+                svc.unregister(this);
             }
         }
     }

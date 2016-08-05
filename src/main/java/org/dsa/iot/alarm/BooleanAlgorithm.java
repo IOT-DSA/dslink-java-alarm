@@ -10,7 +10,6 @@ package org.dsa.iot.alarm;
 
 import org.dsa.iot.dslink.node.*;
 import org.dsa.iot.dslink.node.value.*;
-import org.slf4j.*;
 
 /**
  * This algorithm creates alarms when boolean data sources turn true.  This will allow
@@ -26,8 +25,6 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
 
     private static final String ALARM_VALUE = "Alarm Value";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BooleanAlgorithm.class);
-
     ///////////////////////////////////////////////////////////////////////////
     // Fields
     ///////////////////////////////////////////////////////////////////////////
@@ -36,24 +33,25 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public BooleanAlgorithm() {
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-   @Override protected String getAlarmMessage(AlarmWatch watch) {
+    @Override protected String getAlarmMessage(AlarmWatch watch) {
         return "Value: " + watch.getNode().getValue().toString();
     }
 
-    @Override protected void initProperties() {
-        super.initProperties();
+    @Override protected void initData() {
+        super.initData();
         initProperty(ALARM_VALUE, new Value(true)).setWritable(Writable.CONFIG);
     }
 
     @Override protected boolean isAlarm(AlarmWatch watch) {
-        return getProperty(ALARM_VALUE).getBool() == watch.getNode().getValue().getBool();
+        Value value = watch.getCurrentValue();
+        if (value != null) {
+            return getProperty(ALARM_VALUE).getBool().equals(value);
+        }
+        return false;
     }
 
     @Override protected void onPropertyChange(Node child, ValuePair valuePair) {

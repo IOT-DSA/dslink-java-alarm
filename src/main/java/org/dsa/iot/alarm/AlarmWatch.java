@@ -8,14 +8,12 @@
 
 package org.dsa.iot.alarm;
 
+import org.dsa.iot.dslink.*;
 import org.dsa.iot.dslink.link.*;
-import org.dsa.iot.dslink.methods.requests.*;
 import org.dsa.iot.dslink.node.*;
 import org.dsa.iot.dslink.node.value.*;
 import org.dsa.iot.dslink.util.*;
 import org.dsa.iot.dslink.util.handler.*;
-import org.dsa.iot.dslink.util.json.*;
-import org.slf4j.*;
 import java.util.*;
 
 /**
@@ -34,25 +32,22 @@ public class AlarmWatch extends AbstractAlarmObject
 
     private static final String ALARM_STATE = "Alarm State";
     private static final String ALARM_STATE_TIME = "Alarm State Time";
+    protected static final String CURRENT_VALUE = "Current Value";
     private static final String LAST_ALARM_RECORD = "Last Alarm Record";
     private static final String LAST_COV = "Last COV";
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlarmWatch.class);
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private static Calendar cachedCalendar = null;
-    private boolean firstCallback = true;
+    //private boolean firstCallback = true;
     private long lastStateTime = System.currentTimeMillis();
     private AlarmAlgorithm parentAlgorithm;
+    private String subscribedPath;
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
-
-    public AlarmWatch() {
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -62,20 +57,8 @@ public class AlarmWatch extends AbstractAlarmObject
      * Subscribes to the path.
      */
     @Override protected void doSteady() {
-        firstCallback = true;
-        Requester requester = getRequester();
-        requester.subscribe(getSourcePath(), this);
-        //TODO - I think this should be done on alarm
-        //Add @@alarm to source
-        String myPath = getAlgorithm().getAlarmClass().getService().getLinkHandler()
-                .getRequesterLink().getPath() + '/' + getNode().getPath();
-        JsonObject obj = new JsonObject();
-        obj.put("@", "merge");
-        obj.put("type", "paths");
-        obj.put("val", new JsonArray().add(myPath));
-        Value pathList = new Value(obj);
-        String path = getSourcePath() + "/@@alarm";
-        requester.set(new SetRequest(path, pathList), null);
+        //firstCallback = true;
+        AlarmUtil.enqueue(this::subscribePath);
         super.doSteady();
     }
 
@@ -83,7 +66,7 @@ public class AlarmWatch extends AbstractAlarmObject
      * Un-subscribes the path.
      */
     @Override protected void doStop() {
-        getRequester().unsubscribe(getSourcePath(), null);
+        unsubscribePath();
         parentAlgorithm = null;
     }
 
@@ -108,25 +91,10 @@ public class AlarmWatch extends AbstractAlarmObject
     }
 
     /**
-     * Attempts to return a calendar instance without instantiating a new one.  Call
-     * returnCachedCalendar when complete.  This is thread-safe.
-     *
-     * @param millis The time to set in the returned instance.
-     * @return A calendar, never null, with its internal time set to the parameter.
+     * The current value of the watch, or null if that doesn't make sense.
      */
-    protected static Calendar getCachedCalendar(long millis) {
-        Calendar ret = null;
-        synchronized (AlarmWatch.class) {
-            ret = cachedCalendar;
-            cachedCalendar = null;
-        }
-        if (ret == null) {
-            ret = Calendar.getInstance();
-        }
-        if (ret.getTimeInMillis() != millis) {
-            ret.setTimeInMillis(millis);
-        }
-        return ret;
+    public Value getCurrentValue() {
+        return getProperty(CURRENT_VALUE);
     }
 
     /**
@@ -159,9 +127,15 @@ public class AlarmWatch extends AbstractAlarmObject
         return UUID.fromString(uuidStr);
     }
 
+    /**
+     * This could return null if the requester isn't connected.
+     */
     protected Requester getRequester() {
-        return getAlgorithm().getAlarmClass().getService().getLinkHandler()
-                .getRequesterLink().getRequester();
+        DSLink link = getService().getLinkHandler().getRequesterLink();
+        if (link != null) {
+            return link.getRequester();
+        }
+        return null;
     }
 
     /**
@@ -191,23 +165,35 @@ public class AlarmWatch extends AbstractAlarmObject
      * then calls AlarmAlgorithm.update(this) asynchronously.
      */
     public void handle(SubscriptionValue subValue) {
-        if (subValue.getValue().equals(getNode().getValue())) {
+        try {
+            if (subValue.getValue().equals(getNode().getValue())) {
+                if (isValid()) {
+                    AlarmUtil.enqueue(this);
+                }
+                return;
+            }
+            Calendar cal = AlarmUtil.getCalendar(System.currentTimeMillis());
+            setProperty(LAST_COV,
+                        new Value(TimeUtils.encode(cal, true, null).toString()));
+            AlarmUtil.recycle(cal);
+            Value value = subValue.getValue();
+            if (value != null) {
+                Value curVal = getCurrentValue();
+                if (curVal == null) {
+                    initProperty(CURRENT_VALUE,value).setWritable(Writable.NEVER);
+                } else {
+                    if (curVal.getType() != subValue.getValue().getType()) {
+                        Node child = getNode().getChild(CURRENT_VALUE);
+                        child.setValueType(subValue.getValue().getType());
+                    }
+                    setProperty(CURRENT_VALUE,value);
+                }
+            }
             if (isValid()) {
                 AlarmUtil.enqueue(this);
             }
-            return;
-        }
-        long time = subValue.getValue().getTime();
-        if (time == 0) {
-            time = System.currentTimeMillis();
-        }
-        Calendar cal = getCachedCalendar(time);
-        getNode().setRoConfig(LAST_COV,
-                              new Value(TimeUtils.encode(cal, true, null).toString()));
-        returnCachedCalendar(cal);
-        getNode().setValue(subValue.getValue());
-        if (isValid()) {
-            AlarmUtil.enqueue(this);
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(),x);
         }
     }
 
@@ -221,41 +207,30 @@ public class AlarmWatch extends AbstractAlarmObject
     /**
      * Adds the necessary data to the alarm service node.
      */
-    @Override protected void initProperties() {
+    @Override protected void initData() {
         initProperty(ENABLED, new Value(true));
-        initProperty(SOURCE_PATH, new Value("/path/to/node")).setWritable(Writable.NEVER);
+        initProperty(SOURCE_PATH, new Value("")).setWritable(Writable.NEVER);
         initProperty(ALARM_STATE, new Value(NORMAL)).setWritable(Writable.NEVER);
-        Calendar cal = Calendar.getInstance();
+        Calendar cal = AlarmUtil.getCalendar(System.currentTimeMillis());
         if (!hasProperty(ALARM_STATE_TIME)) {
             initProperty(ALARM_STATE_TIME,
                          new Value(TimeUtils.encode(cal, true, null).toString()))
                     .setWritable(Writable.NEVER);
-        }
-        else {
+        } else {
             initProperty(ALARM_STATE_TIME, null, null).setWritable(Writable.NEVER);
             TimeUtils.decode(getProperty(ALARM_STATE_TIME).getString(), cal);
         }
+        AlarmUtil.recycle(cal);
         lastStateTime = cal.getTimeInMillis();
         initProperty(LAST_ALARM_RECORD, new Value("")).setWritable(Writable.NEVER);
         initProperty(LAST_COV, new Value("null")).setWritable(Writable.NEVER);
     }
 
-    /**
-     * Removes @@alarm from the target.
-     */
-    @Override public void removed() {
-        Requester requester = getRequester();
-        String path = getSourcePath() + "/@@alarm";
-        requester.remove(new RemoveRequest(path), null);
-    }
-
-    /**
-     * Callers of getCachedCalendar should call this when they are finished with
-     * the instance.
-     */
-    protected static void returnCachedCalendar(Calendar cal) {
-        synchronized (AlarmWatch.class) {
-            cachedCalendar = cal;
+    @Override protected void onPropertyChange(Node node, ValuePair valuePair) {
+        if (isSteady()) {
+            if (SOURCE_PATH.equals(node.getName())) {
+                AlarmUtil.enqueue(this::subscribePath);
+            }
         }
     }
 
@@ -275,12 +250,12 @@ public class AlarmWatch extends AbstractAlarmObject
         if (stateStr.equals(currentState.getString())) {
             return;
         }
-        getNode().setRoConfig(ALARM_STATE, new Value(stateStr));
+        setProperty(ALARM_STATE, new Value(stateStr));
         lastStateTime = System.currentTimeMillis();
-        Calendar cal = getCachedCalendar(lastStateTime);
-        getNode().setRoConfig(ALARM_STATE_TIME,
+        Calendar cal = AlarmUtil.getCalendar(lastStateTime);
+        setProperty(ALARM_STATE_TIME,
                               new Value(TimeUtils.encode(cal, true, null).toString()));
-        returnCachedCalendar(cal);
+        AlarmUtil.recycle(cal);
     }
 
     /**
@@ -288,6 +263,54 @@ public class AlarmWatch extends AbstractAlarmObject
      */
     protected void setLastAlarmUuid(UUID uuid) {
         getNode().setRoConfig(LAST_ALARM_RECORD, new Value(uuid.toString()));
+    }
+
+    /**
+     * Subscribes to the path.
+     */
+    protected void subscribePath() {
+        try {
+            if ((subscribedPath != null) && !subscribedPath.isEmpty()) {
+                unsubscribePath();
+            }
+            subscribedPath = getSourcePath();
+            if ((subscribedPath == null) || subscribedPath.isEmpty()) {
+                return;
+            }
+            AlarmUtil.logTrace(getNode().getPath() + " subscribing to " + subscribedPath);
+            Requester requester = getRequester();
+            requester.subscribe(subscribedPath, this);
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(),x);
+        }
+        /* This will probably change to on alarm, but it's complex...
+        //Add @@alarm to source
+        String myPath = getService().getLinkHandler().getRequesterLink()
+                .getPath() + '/' + getNode().getPath();
+        JsonObject obj = new JsonObject();
+        obj.put("@", "merge");
+        obj.put("type", "paths");
+        obj.put("val", new JsonArray().add(myPath));
+        Value pathList = new Value(obj);
+        String path = getSourcePath() + "/@@alarm";
+        requester.set(new SetRequest(path, pathList), null);
+        */
+    }
+
+    /**
+     * Un-subscribes the path that was last subscribed, not the current value of
+     * the source path property.
+     */
+    protected void unsubscribePath() {
+        try {
+            if ((subscribedPath != null) && !subscribedPath.isEmpty()) {
+                getRequester().unsubscribe(subscribedPath, null);
+                subscribedPath = null;
+            }
+        }
+        catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(),x);
+        }
     }
 
 }

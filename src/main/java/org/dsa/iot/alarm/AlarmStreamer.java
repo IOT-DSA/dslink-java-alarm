@@ -30,7 +30,7 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     private boolean closedLocally = false;
-    private Collection container;
+    private Collection listenerContainer;
     private AlarmCursor initialSet;
     private ActionResult request;
     private Table table;
@@ -42,17 +42,21 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
 
     /**
      * Will set this as the close handler on the given request and will add and
-     * remove itself from the given container.
+     * remove itself from the given listenerContainer.
      *
-     * @param container  Where to add and remove this instnace.
-     * @param initialSet Optional.
+     * @param listenerContainer  Optional, where to add and remove this instance.  If
+     *                           this is null, then no updates will be sent (ie only the
+     *                           initial set will be sent).
+     * @param initialSet Optional, initial table to send.
      */
-    public AlarmStreamer(Collection container, ActionResult request,
-            AlarmCursor initialSet) {
+    public AlarmStreamer(Collection listenerContainer, ActionResult request,
+                         AlarmCursor initialSet) {
         request.setCloseHandler(this);
-        this.container = container;
-        synchronized (container) {
-            container.add(this);
+        this.listenerContainer = listenerContainer;
+        if (listenerContainer != null) {
+            synchronized (listenerContainer) {
+                listenerContainer.add(this);
+            }
         }
         this.request = request;
         this.initialSet = initialSet;
@@ -128,15 +132,17 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
         }
         initialSet = null;
         AlarmRecord record;
-        while (isValid()) {
-            record = getNextUpdate();
-            if (record != null) {
-                AlarmUtil.encodeAlarm(record, table, null, null);
-            }
-            if (isValid()) {
-                Thread.yield();
-                if (!hasUpdates()) {
-                    table.sendReady();
+        if (listenerContainer != null) {
+            while (isValid()) {
+                record = getNextUpdate();
+                if (record != null) {
+                    AlarmUtil.encodeAlarm(record, table, null, null);
+                }
+                if (isValid()) {
+                    Thread.yield();
+                    if (!hasUpdates()) {
+                        table.sendReady();
+                    }
                 }
             }
         }
@@ -144,8 +150,10 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
             request.setStreamState(StreamState.CLOSED);
         }
         updates = null;
-        synchronized (container) {
-            container.remove(this);
+        if (listenerContainer != null) {
+            synchronized (listenerContainer) {
+                listenerContainer.remove(this);
+            }
         }
     }
 

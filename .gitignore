@@ -2,15 +2,14 @@
 **/.gradle
 **/build
 
-# Project files
-**/.iml
-**/.idea
-
 # Misc
 **.bak
 **.class
+**.old
 **/.classpath
 **/.DS_Store
+**/.idea
+**/.iml
 **/.metadata
 **/.project
 **/.settings
@@ -22,3 +21,4 @@
 **/.key
 db
 nodes.json
+nodes.json.bak

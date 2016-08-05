@@ -1,26 +1,14 @@
 Next
 ====
-- Sanity check algorithms and watches.
-- Logging
-    - All alarm state changes
-    - All add/delete objects
-    - All errors
-- dslink-java-alarm-h2
-
+- AlarmClass.onSteady - get open alarms and update all watches
 
 Issues
 ======
-- Should source path be the watch path?
 - RemoteJdbcAlarmService
-    - How change remote jdbc provider in running instance?
     - How protect password.
 - Priority
+    - Allow *multiple watches* on the same node.
     - @alarm - each should check the source to see if it's priority is higher than
       the current alarm?
-    - Will allow multiple watches of the same node.
-- How send errors in response to action invocations?
-- How have multiple alarm sources monitoring a node?
-- What if link crashes
-  - How re-establish open alarm uuid?
-    - source path be the watch, then on database open, query all open alarms
+    - in memory alarm source map that resolved priority?
 

@@ -8,12 +8,10 @@
 
 package org.dsa.iot.alarm;
 
-import org.slf4j.*;
 import java.util.*;
 
 /**
- * Skeletal Alarming.Provider.  Subclasses are only required to implement addNote and
- * saveRecord.
+ * Skeletal Alarming.Provider.
  *
  * @author Aaron Hansen
  */
@@ -22,8 +20,6 @@ public abstract class AbstractProvider implements Alarming.Provider {
     ///////////////////////////////////////////////////////////////////////////
     // Constants
     ///////////////////////////////////////////////////////////////////////////
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractProvider.class);
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -34,9 +30,6 @@ public abstract class AbstractProvider implements Alarming.Provider {
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
-
-    public AbstractProvider() {
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -51,6 +44,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
         if (user == null) {
             throw new NullPointerException("User");
         }
+        AlarmUtil.logInfo("Acknowledge " + uuid + " by " + user);
         if (rec.getAckTime() <= 0) {
             rec.setAckTime(System.currentTimeMillis());
             rec.setAckUser(user);
@@ -69,7 +63,8 @@ public abstract class AbstractProvider implements Alarming.Provider {
             rec.setHasNotes(true);
             saveRecord(rec);
         }
-        addNote(new Note(uuid).setUser(user).setText(note));
+        addNote(new Note(uuid).setUser(user).setText(note)
+                        .setTimestamp(System.currentTimeMillis()));
     }
 
     /**
@@ -84,7 +79,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * core alarm sdk.
      */
     @Override public Map<String, Class> getAlarmAlgorithms() {
-        TreeMap ret = new TreeMap();
+        TreeMap<String,Class> ret = new TreeMap<>();
         ret.put("Boolean Algorithm", BooleanAlgorithm.class);
         ret.put("Out of Range Algorithm", OutOfRangeAlgorithm.class);
         ret.put("Stale Algorithm", StaleAlgorithm.class);
@@ -131,6 +126,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
         if (uuid == null) {
             throw new NullPointerException("UUID");
         }
+        AlarmUtil.logInfo("Return to normal " + uuid);
         if (rec.getNormalTime() <= 0) {
             rec.setNormalTime(System.currentTimeMillis());
             saveRecord(rec);

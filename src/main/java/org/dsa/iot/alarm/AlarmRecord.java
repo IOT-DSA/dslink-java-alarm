@@ -35,13 +35,11 @@ public class AlarmRecord {
     private long normalTime;
     private String sourcePath;
     private UUID uuid;
+    private AlarmWatch watch;
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
-
-    public AlarmRecord() {
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Getters and Setters
@@ -65,7 +63,7 @@ public class AlarmRecord {
     }
 
     /**
-     * If the ack time is greater than zero, there should be a user name representing
+     * If the ack time is greater than zero, there should be a entity name representing
      * the acknowledging entity.
      */
     public String getAckUser() {
@@ -73,7 +71,7 @@ public class AlarmRecord {
     }
 
     /**
-     * If the ack time is greater than zero, there should be a user name representing
+     * If the ack time is greater than zero, there should be a entity name representing
      * the acknowledging entity.
      */
     public AlarmRecord setAckUser(String ackUser) {
@@ -113,6 +111,23 @@ public class AlarmRecord {
             throw new IllegalArgumentException("Normal is not an alarm type");
         }
         this.alarmType = alarmType;
+        return this;
+    }
+
+    /**
+     * The alarm watch responsible for the alarm, or null.
+     * @return Possibly null.
+     */
+    public AlarmWatch getAlarmWatch() {
+        return watch;
+    }
+
+    /**
+     * The alarm watch responsible for the alarm, or null.
+     * @return Possibly null.
+     */
+    public AlarmRecord setAlarmWatch(AlarmWatch watch) {
+        this.watch = watch;
         return this;
     }
 
@@ -180,7 +195,7 @@ public class AlarmRecord {
         return this;
     }
 
-    /**
+   /**
      * The path to the alarmable entity.
      */
     public String getSourcePath() {
@@ -228,6 +243,18 @@ public class AlarmRecord {
         normalTime = record.normalTime;
         sourcePath = record.sourcePath;
         uuid = record.uuid;
+        watch = record.watch;
+    }
+
+    /**
+     * If the alarm watch is non-null, that will be returned, otherwise the alarm
+     * class will be returned.
+     */
+    public AlarmObject getOwner() {
+        if (watch != null) {
+            return watch;
+        }
+        return alarmClass;
     }
 
     /**
@@ -240,7 +267,9 @@ public class AlarmRecord {
     /**
      * True if the ack time is greater than zero.
      */
-    public boolean isAcknowledged() { return ackTime > 0; }
+    public boolean isAcknowledged() {
+        return ackTime > 0;
+    }
 
     /**
      * True if normal and acknowledged (if acknowledgment is required).
@@ -292,6 +321,7 @@ public class AlarmRecord {
         normalTime = 0;
         sourcePath = null;
         uuid = null;
+        watch = null;
     }
 
     ///////////////////////////////////////////////////////////////////////////

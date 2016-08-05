@@ -11,8 +11,8 @@ package org.dsa.iot.alarm;
 import java.util.*;
 
 /**
- * Each custom link will implement its own Provider and set that instance here.  There
- * can only be one provider per process.
+ * Each alarm link will implement its own Alarming.Provider and set that instance here.
+ * There can only be one provider per process.
  *
  * @author Aaron Hansen
  */
@@ -47,6 +47,7 @@ public class Alarming {
      * Each link must set it's provider here before the link is started.
      */
     public static void setProvider(Provider arg) {
+        AlarmUtil.logInfo("Alarm provider: " + arg.getClass().getName());
         provider = arg;
     }
 
@@ -57,7 +58,7 @@ public class Alarming {
     /**
      * The provider interface.
      */
-    public static interface Provider {
+    public interface Provider {
 
         /**
          * Acknowledge the specified alarm using the give user.
@@ -137,6 +138,7 @@ public class Alarming {
          * time range.  Implementors should expect concurrent queries and database
          * updates.
          *
+         * @param alarmClass If null, return all alarm classes.
          * @param from Inclusive start time, can be null.
          * @param to   First excluded end time, can be null.
          */
@@ -145,6 +147,8 @@ public class Alarming {
         /**
          * Returns a cursor of open alarms for the given alarm class.  Implementors
          * should expect concurrent queries and database updates.
+         *
+         * @param alarmClass If null, return all alarm classes.
          */
         public AlarmCursor queryOpenAlarms(AlarmClass alarmClass);
 

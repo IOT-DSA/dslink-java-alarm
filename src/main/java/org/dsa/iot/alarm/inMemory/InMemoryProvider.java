@@ -8,8 +8,8 @@
 
 package org.dsa.iot.alarm.inMemory;
 
+import edu.umd.cs.findbugs.annotations.*;
 import org.dsa.iot.alarm.*;
-import org.slf4j.*;
 import java.util.*;
 
 /**
@@ -17,13 +17,12 @@ import java.util.*;
  *
  * @author Aaron Hansen
  */
+@SuppressFBWarnings("IS2_INCONSISTENT_SYNC")
 public class InMemoryProvider extends AbstractProvider {
 
     ///////////////////////////////////////////////////////////////////////////
     // Constants
     ///////////////////////////////////////////////////////////////////////////
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryProvider.class);
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -134,6 +133,7 @@ public class InMemoryProvider extends AbstractProvider {
     /**
      * Sorts by created time, only returns 0 when UUIDs are equal.
      */
+    @SuppressFBWarnings("SE_COMPARATOR_SHOULD_BE_SERIALIZABLE")
     private static class AlarmComparator implements Comparator<AlarmRecord> {
         public AlarmComparator() {
         }
@@ -211,7 +211,6 @@ public class InMemoryProvider extends AbstractProvider {
      */
     private class MyNoteCursor extends NoteCursor {
         private Iterator<Note> iterator;
-        private Note next;
         private UUID uuid;
 
         MyNoteCursor(UUID uuid) {

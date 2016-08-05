@@ -8,10 +8,9 @@
 
 package org.dsa.iot.alarm.jdbc;
 
+import edu.umd.cs.findbugs.annotations.*;
 import org.dsa.iot.alarm.*;
-import org.slf4j.*;
 import java.sql.*;
-import java.text.*;
 import java.util.*;
 
 /**
@@ -26,24 +25,29 @@ public abstract class JdbcProvider extends AbstractProvider {
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
-    protected static final SimpleDateFormat dateFormat = new SimpleDateFormat(
-            "yyyy-MM-dd HH:mm:ss");
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JdbcProvider.class);
-
     private static final String createAlarmTable =
-            "create table if not exists Alarm_Records (" + "Uuid varchar(36) not null, "
-                    + "SourcePath varchar(254), " + "AlarmClass varchar(254), "
-                    + "AlarmState varchar(9), " + "CreatedTime timestamp not null, "
-                    + "NormalTime timestamp, " + "AckTime timestamp, "
-                    + "AckUser varchar(256), " + "Message varchar(256), "
-                    + "HasNotes boolean not null," + "IsOpen boolean not null, "
-                    + "primary key (Uuid))";
+            "create table if not exists Alarm_Records ("
+                    + "Uuid varchar(36) not null, "
+                    + "SourcePath varchar(254), "
+                    + "AlarmClass varchar(254), "
+                    + "AlarmType varchar(9), "
+                    + "CreatedTime timestamp not null, "
+                    + "NormalTime timestamp, "
+                    + "AckTime timestamp, "
+                    + "AckUser varchar(256), "
+                    + "Message varchar(256), "
+                    + "HasNotes boolean not null,"
+                    + "IsOpen boolean not null, "
+                    + "Watch integer, "
+                    + "primary key (Uuid));";
 
     private static final String createNoteTable =
-            "create table if not exists Alarm_Notes (" + "Uuid varchar(36) not null, "
-                    + "Timestamp timestamp not null, " + "User varchar(256), "
-                    + "Note longvarchar, " + "primary key (Uuid,Timestamp))";
+            "create table if not exists Alarm_Notes ("
+                    + "Uuid varchar(36) not null, "
+                    + "Timestamp timestamp not null, "
+                    + "User varchar(256), "
+                    + "Note longvarchar, "
+                    + "primary key (Uuid,Timestamp));";
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -52,9 +56,6 @@ public abstract class JdbcProvider extends AbstractProvider {
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
-
-    public JdbcProvider() {
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -65,13 +66,21 @@ public abstract class JdbcProvider extends AbstractProvider {
         PreparedStatement stmt = null;
         try {
             conn = getConnection();
-            //insert the note
             stmt = conn.prepareStatement(
-                    "insert into Alarm_Records " + "(Uuid, " + "SourcePath, "
-                            + "AlarmClass, " + "AlarmState, " + "CreatedTime, "
-                            + "NormalTime, " + "AckTime, " + "AckUser, " + "Message, "
-                            + "HasNotes," + "IsOpen) "
-                            + "VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+                    "insert into Alarm_Records "
+                            + "(Uuid, "
+                            + "SourcePath, "
+                            + "AlarmClass, "
+                            + "AlarmType, "
+                            + "CreatedTime, "
+                            + "NormalTime, "
+                            + "AckTime, "
+                            + "AckUser, "
+                            + "Message, "
+                            + "HasNotes,"
+                            + "IsOpen, "
+                            + "Watch) "
+                            + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?);");
             stmt.setString(1, arg.getUuid().toString());
             stmt.setString(2, arg.getSourcePath());
             stmt.setString(3, arg.getAlarmClass().getNode().getName());
@@ -83,6 +92,11 @@ public abstract class JdbcProvider extends AbstractProvider {
             stmt.setString(9, arg.getMessage());
             stmt.setBoolean(10, arg.getHasNotes());
             stmt.setBoolean(11, arg.isOpen());
+            if (arg.getAlarmWatch() != null) {
+                stmt.setInt(12, arg.getAlarmWatch().getHandle());
+            } else {
+                stmt.setInt(12, 0);
+            }
             stmt.executeUpdate();
             conn.commit();
         } catch (Exception x) {
@@ -98,9 +112,8 @@ public abstract class JdbcProvider extends AbstractProvider {
         try {
             conn = getConnection();
             //insert the note
-            stmt = conn.prepareStatement(
-                    "insert into Alarm_Notes " + "(Uuid, Timestamp, User, Note) "
-                            + "VALUES (?,?,?,?)");
+            stmt = conn.prepareStatement("insert into Alarm_Notes "
+                            + "(Uuid, Timestamp, User, Note) VALUES (?,?,?,?);");
             stmt.setString(1, arg.getUUID().toString());
             stmt.setTimestamp(2, new Timestamp(arg.getTimestamp()));
             stmt.setString(3, arg.getUser());
@@ -109,7 +122,7 @@ public abstract class JdbcProvider extends AbstractProvider {
             stmt.close();
             //update the alarm record
             stmt = conn.prepareStatement(
-                    "update Alarm_Records set HasNotes = true " + "where Uuid = ?");
+                    "update Alarm_Records set HasNotes = true where Uuid = ?;");
             stmt.setString(1, arg.getUUID().toString());
             stmt.executeUpdate();
             conn.commit();
@@ -151,8 +164,8 @@ public abstract class JdbcProvider extends AbstractProvider {
         try {
             conn = getConnection();
             statement = conn.createStatement();
-            statement.executeUpdate("delete from Alarm_Records");
-            statement.executeUpdate("delete from Alarm_Notes");
+            statement.executeUpdate("delete from Alarm_Records;");
+            statement.executeUpdate("delete from Alarm_Notes;");
         } catch (Exception x) {
             AlarmUtil.throwRuntime(x);
         } finally {
@@ -169,13 +182,14 @@ public abstract class JdbcProvider extends AbstractProvider {
                 return;
             }
             conn = getConnection();
-            statement = conn.prepareStatement("delete from Alarm_Records where Uuid = ?");
+            statement = conn.prepareStatement(
+                    "delete from Alarm_Records where Uuid = ?;");
             statement.setString(1, uuid.toString());
             statement.executeUpdate();
             if (rec.getHasNotes()) {
                 statement.close();
                 statement = conn.prepareStatement(
-                        "delete from Alarm_Notes where Uuid = ?");
+                        "delete from Alarm_Notes where Uuid = ?;");
                 statement.setString(1, uuid.toString());
                 statement.executeUpdate();
             }
@@ -194,7 +208,7 @@ public abstract class JdbcProvider extends AbstractProvider {
         try {
             conn = getConnection();
             statement = conn.prepareStatement(
-                    "select * from Alarm_Records where Uuid = ?");
+                    "select * from Alarm_Records where Uuid = ?;");
             statement.setString(1, uuid.toString());
             results = statement.executeQuery();
             cursor = new MyAlarmCursor(conn, statement, results);
@@ -220,13 +234,6 @@ public abstract class JdbcProvider extends AbstractProvider {
      */
     protected abstract Connection getConnection();
 
-    /**
-     * Returns "Alarms" by default.
-     */
-    protected String getDatabaseName() {
-        return "Alarms";
-    }
-
     @Override public NoteCursor getNotes(UUID uuid) {
         Connection conn = null;
         PreparedStatement statement = null;
@@ -234,7 +241,7 @@ public abstract class JdbcProvider extends AbstractProvider {
         try {
             conn = getConnection();
             statement = conn.prepareStatement(
-                    "select * from Alarm_Notes where Uuid = ? order by Timestamp");
+                    "select * from Alarm_Notes where Uuid = ? order by Timestamp;");
             statement.setString(1, uuid.toString());
             results = statement.executeQuery();
             return new MyNoteCursor(conn, statement, results);
@@ -250,24 +257,15 @@ public abstract class JdbcProvider extends AbstractProvider {
      */
     public void initializeDatabase() {
         Connection conn = null;
-        PreparedStatement preparedStatement = null;
         Statement statement = null;
         try {
             conn = getConnection();
-            preparedStatement = conn.prepareStatement("create database ? if not exist");
-            preparedStatement.setString(1, getDatabaseName());
-            preparedStatement.executeUpdate();
             statement = conn.createStatement();
             statement.executeUpdate(createAlarmTable);
             statement.executeUpdate(createNoteTable);
         } catch (Exception x) {
             AlarmUtil.throwRuntime(x);
         } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (Exception ignore) {}
-            }
             close(conn, statement, null);
         }
     }
@@ -305,8 +303,9 @@ public abstract class JdbcProvider extends AbstractProvider {
      * {@inheritDoc}
      * <p>This only updates NormalTime, AckTime, AckUser, and IsOpen</p>
      */
+    @SuppressFBWarnings("SQL_BAD_PREPARED_STATEMENT_ACCESS")
     @Override protected void saveRecord(AlarmRecord arg) {
-        StringBuffer buf = new StringBuffer("update Alarm_Records");
+        StringBuffer buf = new StringBuffer("update Alarm_Records set");
         //Indexes in prepared statements start at 1.
         int normalIdx = 0;
         int ackTimeIdx = 0;
@@ -314,19 +313,19 @@ public abstract class JdbcProvider extends AbstractProvider {
         int currentIdx = 0;
         if (arg.getNormalTime() > 0) {
             normalIdx = ++currentIdx;
-            buf.append(" set NormalTime = ?,");
+            buf.append(" NormalTime = ?,");
         }
         if (arg.getAckTime() > 0) {
             ackTimeIdx = ++currentIdx;
-            buf.append(" set AckTime = ?");
+            buf.append(" AckTime = ?,");
         }
         if (arg.getAckUser() != null) {
             ackUserIdx = ++currentIdx;
-            buf.append(" set AckUser = ?,");
+            buf.append(" AckUser = ?,");
         }
         int isOpenIdx = ++currentIdx;
         int uuidIdx = ++currentIdx;
-        buf.append(" set IsOpen = ? where Uuid = ?");
+        buf.append(" IsOpen = ? where Uuid = ?");
         Connection conn = null;
         PreparedStatement stmt = null;
         try {
@@ -368,24 +367,29 @@ public abstract class JdbcProvider extends AbstractProvider {
         boolean hasWhere = false;
         if (alarmClass != null) {
             hasWhere = true;
-            buf.append(" where AlarmClass = ");
+            buf.append(" where AlarmClass = '");
             buf.append(alarmClass.getNode().getName());
+            buf.append('\'');
         }
         if ((from != null) && (from.getTimeInMillis() > 0)) {
-            buf.append(hasWhere ? " where " : " and ");
+            buf.append(hasWhere ? " and " : " where ");
             hasWhere = true;
-            buf.append("CreatedTime >= " + dateFormat.format(from.getTime()));
+            buf.append("CreatedTime >= '");
+            buf.append(new Timestamp(from.getTimeInMillis()));
+            buf.append('\'');
         }
         if ((to != null) && (to.getTimeInMillis() > 0)) {
-            buf.append(hasWhere ? " where " : " and ");
+            buf.append(hasWhere ? " and " : " where ");
             hasWhere = true;
-            buf.append("CreatedTime < " + dateFormat.format(to.getTime()));
+            buf.append("CreatedTime < '");
+            buf.append(new Timestamp(to.getTimeInMillis()));
+            buf.append('\'');
         }
         if (mustBeOpen) {
-            buf.append(hasWhere ? " where " : " and ");
+            buf.append(hasWhere ? " and " : " where ");
             buf.append("IsOpen = true");
         }
-        buf.append(" order by CreatedTime");
+        buf.append(" order by CreatedTime;");
         return buf.toString();
     }
 
@@ -401,25 +405,30 @@ public abstract class JdbcProvider extends AbstractProvider {
         rec.setUuid(UUID.fromString(res.getString("Uuid")));
         rec.setSourcePath(res.getString("SourcePath"));
         String str = res.getString("AlarmClass");
-        if ((rec.getAlarmClass() == null) || !rec.getAlarmClass().getNode().getName()
-                .equals(str)) {
+        if ((rec.getAlarmClass() == null)
+                || !rec.getAlarmClass().getNode().getName().equals(str)) {
             rec.setAlarmClass(getService().getAlarmClass(str));
         }
-        rec.setAlarmType(AlarmState.decode(res.getString("AlarmState")));
+        rec.setAlarmType(AlarmState.decode(res.getString("AlarmType")));
         Timestamp ts = res.getTimestamp("CreatedTime");
         if (ts != null) {
             rec.setCreatedTime(ts.getTime());
         }
         ts = res.getTimestamp("NormalTime");
         if (ts != null) {
-            rec.setCreatedTime(ts.getTime());
+            rec.setNormalTime(ts.getTime());
         }
+        ts = res.getTimestamp("AckTime");
         if (ts != null) {
-            rec.setCreatedTime(ts.getTime());
+            rec.setAckTime(ts.getTime());
         }
         rec.setAckUser(res.getString("AckUser"));
         rec.setMessage(res.getString("Message"));
         rec.setHasNotes(res.getBoolean("HasNotes"));
+        int handle = res.getInt("Watch");
+        if (handle > 0) {
+            rec.setAlarmWatch((AlarmWatch) getService().getByHandle(handle));
+        }
     }
 
     /**
@@ -469,6 +478,7 @@ public abstract class JdbcProvider extends AbstractProvider {
                     close();
                 }
             } catch (Exception x) {
+                AlarmUtil.logError("AlarmCursor.next",x);
                 close();
                 AlarmUtil.throwRuntime(x);
             }
@@ -506,6 +516,7 @@ public abstract class JdbcProvider extends AbstractProvider {
                     close();
                 }
             } catch (Exception x) {
+                AlarmUtil.logError("NoteCursor.next",x);
                 close();
                 AlarmUtil.throwRuntime(x);
             }

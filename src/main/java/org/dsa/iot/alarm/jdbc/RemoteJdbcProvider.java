@@ -24,9 +24,6 @@ public class RemoteJdbcProvider extends JdbcProvider {
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(
-            RemoteJdbcProvider.class);
-
     ///////////////////////////////////////////////////////////////////////////
     // Fields
     ///////////////////////////////////////////////////////////////////////////
@@ -34,9 +31,6 @@ public class RemoteJdbcProvider extends JdbcProvider {
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
-
-    public RemoteJdbcProvider() {
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -60,16 +54,6 @@ public class RemoteJdbcProvider extends JdbcProvider {
             AlarmUtil.throwRuntime(x);
         }
         return null; //this will never be reached.
-    }
-
-    /**
-     * {@inheritDoc} <p/>
-     *
-     * @return Database name from the service.
-     */
-    @Override protected String getDatabaseName() {
-        RemoteJdbcAlarmService svc = (RemoteJdbcAlarmService) getService();
-        return svc.getDatabaseName();
     }
 
     /**

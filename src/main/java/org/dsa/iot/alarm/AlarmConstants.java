@@ -24,6 +24,7 @@ public interface AlarmConstants {
 
     String ACK_TIME = "Ack Time";
     String ACK_USER = "Ack User";
+    String ACKNOWLEDGE_ALL = "Acknowledge All";
     String ALARM_CLASS = "Alarm Class";
     String ALARM_TYPE = "Alarm Type";
     String ALERT = "Alert";
@@ -33,6 +34,7 @@ public interface AlarmConstants {
     String CREATED_TIME = "Created Time";
     String FAULT = "Fault";
     String HAS_NOTES = "Has Notes";
+    String HANDLE = "Handle";
     String JAVA_TYPE = "javaType";
     String MESSAGE = "Message";
     String NAME = "Name";
@@ -43,6 +45,7 @@ public interface AlarmConstants {
     String PATH = "Path";
     String SOURCE_PATH = "Source Path";
     String TIMESTAMP = "Timestamp";
+    String TIME_RANGE = "Time Range";
     String TYPE = "Type";
     String USER = "User";
     String UUID_STR = "UUID";
@@ -52,6 +55,8 @@ public interface AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     ValueType ENUM_ALARM_TYPE = ValueType.makeEnum(ALERT, FAULT, OFFNORMAL);
+
+    ValueType ENUM_LOG_LEVEL = ValueType.makeEnum("trace","info","warn","error");
 
     ///////////////////////////////////////////////////////////////////////////
     // Tuning

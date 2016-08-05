@@ -12,14 +12,16 @@ import org.dsa.iot.alarm.*;
 import org.dsa.iot.dslink.*;
 
 /**
- * This launches a remote jdbc alarm link.
+ * Launches a remote jdbc alarm link.
  *
  * @author Aaron Hansen
  */
 public class Main extends AlarmLinkHandler {
 
-    // Yes, extending AlarmLinkHandler is messed up.  DSLinkFactory has an
-    // issue...
+    // The provider needs to be specified before the link handler is started.
+    static {
+        Alarming.setProvider(new RemoteJdbcProvider());
+    }
 
     /**
      * Command line bootstrap.
@@ -27,7 +29,6 @@ public class Main extends AlarmLinkHandler {
      * @param args Should supply --broker host/conn
      */
     public static void main(String[] args) {
-        Alarming.setProvider(new RemoteJdbcProvider());
         DSLinkFactory.start(args, new Main());
     }
 

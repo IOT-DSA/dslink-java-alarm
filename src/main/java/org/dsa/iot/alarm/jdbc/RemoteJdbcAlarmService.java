@@ -26,13 +26,10 @@ public class RemoteJdbcAlarmService extends AlarmService {
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
-    static final String DATABASE_NAME = "Database Name";
     static final String DATABASE_PASS = "Database Password";
     static final String DATABASE_URL = "Database URL";
     static final String DATABASE_USER = "Database User";
     static final String JDBC_DRIVER = "JDBC Driver";
-
-    static final Logger LOGGER = LoggerFactory.getLogger(RemoteJdbcAlarmService.class);
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -42,15 +39,13 @@ public class RemoteJdbcAlarmService extends AlarmService {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public RemoteJdbcAlarmService() {
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    public String getDatabaseName() {
-        return getProperty(DATABASE_NAME).getString();
+    @Override public void doStart() {
+        loadDriverClass();
+        super.doStart();
     }
 
     public String getDatabasePass() {
@@ -69,23 +64,35 @@ public class RemoteJdbcAlarmService extends AlarmService {
         return getProperty(JDBC_DRIVER).getString();
     }
 
-    @Override protected void initProperties() {
-        super.initProperties();
-        Node node = getNode();
-        if (node.getConfig(JDBC_DRIVER) == null) {
-            node.setConfig(JDBC_DRIVER, new Value("com.driver.ClassName"));
+    @Override protected void initData() {
+        super.initData();
+        initProperty(JDBC_DRIVER, new Value("com.driver.ClassName"))
+                .setWritable(Writable.CONFIG);
+        initProperty(DATABASE_URL, new Value("jdbc://localhost:1527"))
+                .setWritable(Writable.CONFIG);
+        initProperty(DATABASE_USER, new Value("userName"))
+                .setWritable(Writable.CONFIG);
+        initProperty(DATABASE_PASS, new Value("userPass"))
+                .setWritable(Writable.CONFIG);
+    }
+
+    /**
+     * Calls Class.forName on the value of the JDBC_DRIVER property.
+     */
+    protected void loadDriverClass() {
+        String className = getJdbcDriver();
+        if (className.length() > 0) {
+            try {
+                Class.forName(className);
+            } catch (Exception x) {
+                AlarmUtil.logError("Cannot load JDBC driver",x);
+            }
         }
-        if (node.getConfig(DATABASE_URL) == null) {
-            node.setConfig(DATABASE_URL, new Value("jdbc://localhost:1527"));
-        }
-        if (node.getConfig(DATABASE_NAME) == null) {
-            node.setConfig(DATABASE_NAME, new Value("Alarms"));
-        }
-        if (node.getConfig(DATABASE_USER) == null) {
-            node.setConfig(DATABASE_USER, new Value("userName"));
-        }
-        if (node.getConfig(DATABASE_PASS) == null) {
-            node.setConfig(DATABASE_PASS, new Value("userPass"));
+    }
+
+    @Override protected void onPropertyChange(Node node, ValuePair valuePair) {
+        if (JDBC_DRIVER.equals(node.getName())) {
+            loadDriverClass();
         }
     }
 

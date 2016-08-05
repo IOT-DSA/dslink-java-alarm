@@ -8,6 +8,7 @@
 
 package org.dsa.iot.alarm;
 
+import edu.umd.cs.findbugs.annotations.*;
 import org.dsa.iot.dslink.node.*;
 import org.dsa.iot.dslink.node.actions.*;
 import org.dsa.iot.dslink.node.value.*;
@@ -15,8 +16,8 @@ import org.dsa.iot.dslink.util.*;
 import java.util.concurrent.*;
 
 /**
- * Alarm algorithms evaluate the state of AlarmWatch objects, and generate alarms for
- * each when the conditions of the algorithm are met.
+ * Alarm algorithms evaluate the state of children AlarmWatch objects, and generate
+ * alarms for them when the conditions of the algorithm are met.
  * <p/>
  * Subclasses should override the following methods:
  * <ul>
@@ -26,6 +27,7 @@ import java.util.concurrent.*;
  *
  * @author Aaron Hansen
  */
+@SuppressFBWarnings("IS2_INCONSISTENT_SYNC")
 public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runnable {
 
     ///////////////////////////////////////////////////////////////////////////
@@ -40,16 +42,13 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private AlarmState alarmState; //alert, fault or offnormal
+    private AlarmState alarmState; //only subset: alert, fault or offnormal
     private ScheduledFuture autoUpdateFuture;
     private boolean updatingAll = false;
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
-
-    public AlarmAlgorithm() {
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -76,8 +75,9 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
                 throw new NullPointerException("Missing path");
             }
             AlarmWatch watch = (AlarmWatch) newChild(nameString, watchType());
-            watch.getNode().setRoConfig(PATH, path);
+            watch.setProperty(SOURCE_PATH, path);
         } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(),x);
             AlarmUtil.throwRuntime(x);
         }
     }
@@ -157,9 +157,9 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         //Add Watch
         Action action = new Action(Permission.WRITE, this::addWatch);
         action.addParameter(
-                new Parameter(NAME, ValueType.STRING, new Value("Unique name")));
+                new Parameter(NAME, ValueType.STRING, new Value("")));
         action.addParameter(
-                new Parameter(PATH, ValueType.STRING, new Value("/path/to/node")));
+                new Parameter(PATH, ValueType.STRING, new Value("")));
         node.createChild("Add Watch").setSerializable(false).setAction(action).build();
         //Delete
         addDeleteAction("Delete Algorithm");
@@ -168,8 +168,8 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         node.createChild("Update All").setSerializable(false).setAction(action).build();
     }
 
-    @Override protected void initProperties() {
-        initProperty(ENABLED, new Value(true));
+    @Override protected void initData() {
+        initProperty(ENABLED, new Value(true)).setWritable(Writable.CONFIG);
         initProperty(ALARM_TYPE, ENUM_ALARM_TYPE, new Value(ALERT))
                 .setWritable(Writable.CONFIG);
         initProperty(AUTO_UPDATE_INTERVAL, new Value(0)).createFakeBuilder()
@@ -189,6 +189,13 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
      */
     protected abstract boolean isAlarm(AlarmWatch watch);
 
+    @Override protected void onPropertyChange(Node node, ValuePair valuePair) {
+        if (isSteady()) {
+            if (AUTO_UPDATE_INTERVAL.equals(node.getName())) {
+                rescheduleAutoUpdate();
+            }
+        }
+    }
     /**
      * Cancels an existing timer, then schedules a new one if the auto update interval
      * is greater than zero.
@@ -198,7 +205,7 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
             autoUpdateFuture.cancel(false);
             autoUpdateFuture = null;
         }
-        int interval = getNode().getRoConfig(AUTO_UPDATE_INTERVAL).getNumber().intValue();
+        int interval = getProperty(AUTO_UPDATE_INTERVAL).getNumber().intValue();
         if (interval > 0) {
             int delay = Math.min(5, interval);
             autoUpdateFuture = Objects.getDaemonThreadPool()
@@ -211,38 +218,6 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
      */
     public void run() {
         updateAll();
-    }
-
-    /**
-     * Set the alarm type config which is used to determine the alarm state
-     * when alarms are first created.
-     */
-    protected void setAlarmType(final ActionResult event) {
-        try {
-            Value type = event.getParameter(TYPE);
-            if (type == null) {
-                throw new IllegalArgumentException("Type name");
-            }
-            getNode().setRoConfig(ALARM_TYPE, type);
-        } catch (Exception x) {
-            AlarmUtil.throwRuntime(x);
-        }
-    }
-
-    /**
-     * Set the config and reconfigures auto updating.
-     */
-    protected void setAutoUpdateInterval(final ActionResult event) {
-        try {
-            Value interval = event.getParameter(AUTO_UPDATE_INTERVAL);
-            if (interval == null) {
-                throw new IllegalArgumentException(AUTO_UPDATE_INTERVAL);
-            }
-            getNode().setRoConfig(AUTO_UPDATE_INTERVAL, interval);
-            rescheduleAutoUpdate();
-        } catch (Exception x) {
-            AlarmUtil.throwRuntime(x);
-        }
     }
 
     /**
@@ -318,10 +293,11 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
                 alarmClass.notifyAllUpdates(rec);
             }
         } else {
-            AlarmRecord rec = alarmClass.getService().createAlarm(getAlarmClass(),
-                                                                  watch.getSourcePath(),
-                                                                  state,
-                                                                  getAlarmMessage(watch));
+            AlarmRecord rec = getService().createAlarm(getAlarmClass(),
+                                                       watch,
+                                                       watch.getSourcePath(),
+                                                       state,
+                                                       getAlarmMessage(watch));
             watch.setLastAlarmUuid(rec.getUuid());
             alarmClass.notifyNewRecord(rec);
             alarmClass.notifyAllUpdates(rec);

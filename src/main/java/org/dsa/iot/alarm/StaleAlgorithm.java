@@ -11,7 +11,6 @@ package org.dsa.iot.alarm;
 import org.dsa.iot.dslink.node.*;
 import org.dsa.iot.dslink.node.value.*;
 import org.dsa.iot.dslink.util.*;
-import org.slf4j.*;
 import java.util.*;
 
 /**
@@ -26,8 +25,6 @@ public class StaleAlgorithm extends AlarmAlgorithm {
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StaleAlgorithm.class);
-
     private static final String STALE_DAYS = "Stale Days";
     private static final String STALE_HOURS = "Stale Hours";
     private static final String STALE_MINUTES = "Stale Minutes";
@@ -36,14 +33,9 @@ public class StaleAlgorithm extends AlarmAlgorithm {
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private static Calendar calendarCache;
-
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
-
-    public StaleAlgorithm() {
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -53,47 +45,21 @@ public class StaleAlgorithm extends AlarmAlgorithm {
         return "Stale value";
     }
 
-    /**
-     * Attempts to reuse a cached instance.  Return the calendar with the recycle method.
-     *
-     * @return Never null, will create a new calendar if necessary.
-     */
-    private static Calendar getCalendar(long arg) {
-        Calendar calendar = null;
-        synchronized (StaleAlgorithm.class) {
-            if (calendarCache != null) {
-                calendar = calendarCache;
-                calendarCache = null;
-            }
-        }
-        if (calendar == null) {
-            calendar = Calendar.getInstance();
-        }
-        calendar.setTimeInMillis(arg);
-        return calendar;
-    }
-
-    @Override protected void initProperties() {
-        super.initProperties();
-        if (!hasProperty(STALE_DAYS)) {
-            initProperty(STALE_DAYS, new Value(1)).setWritable(Writable.CONFIG);
-        }
-        if (!hasProperty(STALE_HOURS)) {
-            initProperty(STALE_HOURS, new Value(0)).setWritable(Writable.CONFIG);
-        }
-        if (!hasProperty(STALE_MINUTES)) {
-            initProperty(STALE_MINUTES, new Value(0)).setWritable(Writable.CONFIG);
-        }
+    @Override protected void initData() {
+        super.initData();
+        initProperty(STALE_DAYS, new Value(1)).setWritable(Writable.CONFIG);
+        initProperty(STALE_HOURS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(STALE_MINUTES, new Value(0)).setWritable(Writable.CONFIG);
     }
 
     @Override protected boolean isAlarm(AlarmWatch watch) {
         long start = watch.getStateTime();
-        Calendar from = getCalendar(start);
+        Calendar from = AlarmUtil.getCalendar(start);
         TimeUtils.addDays(getProperty(STALE_DAYS).getNumber().intValue(), from);
-        TimeUtils.addDays(getProperty(STALE_HOURS).getNumber().intValue(), from);
-        TimeUtils.addDays(getProperty(STALE_MINUTES).getNumber().intValue(), from);
+        TimeUtils.addHours(getProperty(STALE_HOURS).getNumber().intValue(), from);
+        TimeUtils.addMinutes(getProperty(STALE_MINUTES).getNumber().intValue(), from);
         long end = from.getTimeInMillis();
-        recycle(from);
+        AlarmUtil.recycle(from);
         return ((end - start) > watch.getTimeInCurrentState());
     }
 
@@ -106,13 +72,6 @@ public class StaleAlgorithm extends AlarmAlgorithm {
         } else if (name.equals(STALE_MINUTES)) {
             AlarmUtil.enqueue(this);
         }
-    }
-
-    /**
-     * Returns the calendar for reuse.
-     */
-    private static void recycle(Calendar arg) {
-        calendarCache = arg;
     }
 
 }

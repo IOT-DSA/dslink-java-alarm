@@ -14,7 +14,6 @@ import org.dsa.iot.dslink.node.actions.*;
 import org.dsa.iot.dslink.node.actions.table.*;
 import org.dsa.iot.dslink.node.value.*;
 import org.dsa.iot.dslink.util.*;
-import org.slf4j.*;
 import java.util.*;
 
 /**
@@ -37,14 +36,9 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     private static final String ESCALATION1_DYS = "Escalation 1 Days";
     private static final String ESCALATION1_HRS = "Escalation 1 Hours";
     private static final String ESCALATION1_MNS = "Escalation 1 Minutes";
-
     private static final String ESCALATION2_DYS = "Escalation 2 Days";
     private static final String ESCALATION2_HRS = "Escalation 2 Hours";
     private static final String ESCALATION2_MNS = "Escalation 2 Minutes";
-
-    private static final String TIME_RANGE = "Time Range";
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AlarmClass.class);
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -64,12 +58,33 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public AlarmClass() {
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Acknowledges all open alarms that require acknowledgement.
+     */
+    private void acknowledgeAllOpen(ActionResult event) {
+        try {
+            Value user = event.getParameter(USER);
+            if (user == null) {
+                throw new NullPointerException("Missing " + USER);
+            }
+            Alarming.Provider provider = Alarming.getProvider();
+            AlarmCursor cur = Alarming.getProvider().queryOpenAlarms(this);
+            while (cur.next()) {
+                if (cur.isAckRequired() && !cur.isAcknowledged()) {
+                    provider.acknowledge(cur.getUuid(),user.getString());
+                    AlarmRecord rec = Alarming.getProvider().getAlarm(cur.getUuid());
+                    notifyAllUpdates(rec);
+                }
+            }
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(),x);
+            AlarmUtil.throwRuntime(x);
+        }
+    }
 
     /**
      * Action handler for adding child nodes representing algorithms.
@@ -94,11 +109,28 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             String typeString = type.getString();
             Class typeClass = Alarming.getProvider().getAlarmAlgorithms().get(typeString);
             newChild(nameString, typeClass);
-            LOGGER.info("Added alarm class: " + name.getString());
         } catch (Exception x) {
-            LOGGER.error("addAlarmClass", x);
+            AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
         }
+    }
+
+    /**
+     * Adds the duration to the calendar and returns it.
+     *
+     * @param from  The calendar to add the duration which is also returned.
+     * @param days  Number of days to add (not simply 24 hours).
+     * @param hours Number of hours to add to the given calendar.
+     * @param mins  Number of minutes to add to the given calendar.
+     * @return The provided calendar.
+     */
+    private Calendar applyEscalation(Calendar from, int days, int hours, int mins) {
+        if ((days != 0) || (hours != 0) || (mins != 0)) {
+            TimeUtils.addDays(days, from);
+            TimeUtils.addHours(hours, from);
+            TimeUtils.addMinutes(mins, from);
+        }
+        return from;
     }
 
     /**
@@ -127,22 +159,24 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(this);
             while (cursor.next()) {
                 if (cursor.isAckRequired() && !cursor.isAcknowledged()) {
+                    calendar.setTimeInMillis(cursor.getCreatedTime());
                     if (checkEs1) {
-                        calendar.setTimeInMillis(cursor.getCreatedTime());
-                        if (shouldEscalate(calendar, e1dys, e1hrs, e1mns, now)) {
+                        applyEscalation(calendar, e1dys, e1hrs, e1mns);
+                        if (shouldEscalate(calendar.getTimeInMillis(), now)) {
                             notifyEscalation1(cursor.newCopy());
                         }
                     }
                     if (checkEs2) {
-                        calendar.setTimeInMillis(cursor.getCreatedTime());
-                        if (shouldEscalate(calendar, e2dys, e2hrs, e2mns, now)) {
+                        //escalation 2 is relative to escalation 1.
+                        applyEscalation(calendar, e2dys, e2hrs, e2mns);
+                        if (shouldEscalate(calendar.getTimeInMillis(), now)) {
                             notifyEscalation2(cursor.newCopy());
                         }
                     }
                 }
             }
         } catch (Exception x) {
-            LOGGER.error("execute", x);
+            AlarmUtil.logError(getNode().getPath(), x);
         } finally {
             lastEscalationCheck = now;
         }
@@ -160,7 +194,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         Value message = event.getParameter(MESSAGE, new Value(""));
         AlarmState alarmState = AlarmState.decode(createState.getString());
         AlarmRecord alarmRecord = ((AlarmService) getParent()).createAlarm(
-                this, sourcePath.getString(), alarmState, message.toString());
+                this, null, sourcePath.getString(), alarmState, message.toString());
         event.setStreamState(StreamState.INITIALIZED);
         Table table = event.getTable();
         table.setMode(Table.Mode.APPEND);
@@ -199,6 +233,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             String[] parts = timeRange.getString().split("/");
             TimeUtils.decode(parts[0], from);
             TimeUtils.decode(parts[1], to);
+            to.setTimeInMillis(to.getTimeInMillis() + 1); //dglux uses inclusive end
         } else {
             //Default to today.
             TimeUtils.alignDay(from);
@@ -206,27 +241,8 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             TimeUtils.alignDay(to);
         }
         final AlarmCursor cursor = Alarming.getProvider().queryAlarms(this, from, to);
-        event.setStreamState(StreamState.INITIALIZED);
-        final Table table = event.getTable();
-        table.setMode(Table.Mode.APPEND);
-        table.sendReady();
-        AlarmActionHandler runnable = new AlarmActionHandler() {
-            public void run() {
-                table.waitForStream(WAIT_FOR_STREAM, true);
-                int count = 0;
-                while (isOpen() && cursor.next()) {
-                    AlarmUtil.encodeAlarm(cursor, table, null, null);
-                    if ((++count % ALARM_RECORD_CHUNK) == 0) {
-                        table.sendReady();
-                    }
-                }
-                if (isOpen()) {
-                    event.setStreamState(StreamState.CLOSED);
-                }
-            }
-        };
-        event.setCloseHandler(runnable);
-        AlarmUtil.enqueue(runnable);
+        AlarmStreamer streamer = new AlarmStreamer(null, event, cursor);
+        AlarmUtil.run(streamer, "Get Alarms");
     }
 
     /**
@@ -238,19 +254,17 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         AlarmUtil.run(streamer, "Open Alarms");
     }
 
-    /**
-     * A convenience that casts the parent.
-     */
-    protected AlarmService getService() {
-        return (AlarmService) getParent();
-    }
-
     @Override protected void initActions() {
+        //Acknowledge All
+        Action action = new Action(Permission.READ, this::acknowledgeAllOpen);
+        action.addParameter(new Parameter(USER, ValueType.STRING));
+        getNode().createChild(ACKNOWLEDGE_ALL).setSerializable(false)
+                .setAction(action).build();
         //Add Algorithm
         Node node = getNode();
-        Action action = new Action(Permission.WRITE, this::addAlgorithm);
+        action = new Action(Permission.WRITE, this::addAlgorithm);
         action.addParameter(
-                new Parameter(NAME, ValueType.STRING, new Value("Unique Name")));
+                new Parameter(NAME, ValueType.STRING, new Value("")));
         Set<String> algos = Alarming.getProvider().getAlarmAlgorithms().keySet();
         action.addParameter(new Parameter(TYPE, ValueType.makeEnum(algos),
                                           new Value(algos.iterator().next())));
@@ -260,11 +274,11 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         action = new Action(Permission.WRITE, this::createAlarm);
         action.setResultType(ResultType.TABLE);
         action.addParameter(new Parameter(SOURCE_PATH, ValueType.STRING,
-                                          new Value("/path/in/broker")));
+                                          new Value("")));
         action.addParameter(
                 new Parameter(CREATE_STATE, ENUM_ALARM_TYPE, new Value(ALERT)));
         action.addParameter(
-                new Parameter(MESSAGE, ValueType.STRING, new Value("Max 80 Chars")));
+                new Parameter(MESSAGE, ValueType.STRING, new Value("80 Characters Max")));
         AlarmUtil.encodeAlarmColumns(action);
         node.createChild(CREATE_ALARM).setSerializable(false).setAction(action).build();
         //Get Alarms
@@ -272,7 +286,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         action.addParameter(
                 new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
                         .setEditorType(EditorType.DATE_RANGE));
-        action.setResultType(ResultType.TABLE);
+        action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         node.createChild("Get Alarms").setSerializable(false).setAction(action).build();
         //Get Open Alarms
@@ -302,8 +316,8 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         addDeleteAction("Delete Alarm Class");
     }
 
-    @Override protected void initProperties() {
-        initProperty(ENABLED, new Value(true));
+    @Override protected void initData() {
+        initProperty(ENABLED, new Value(true)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION1_DYS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION1_HRS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION1_MNS, new Value(0)).setWritable(Writable.CONFIG);
@@ -327,12 +341,14 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         for (int i = list.size(); --i >= 0; ) {
             list.get(i).update(record);
         }
+        getService().notifyOpenAlarmStreams(record);
     }
 
     /**
      * Adds the record to all the streams in the corresponding collection.
      */
     private void notifyEscalation1(AlarmRecord record) {
+        AlarmUtil.logInfo("Escalation 1: " + record.getOwner().getNode().getPath());
         ArrayList<AlarmStreamer> list = escalation1ListenerCache;
         synchronized (escalation1Listeners) {
             if (escalation1Listeners.size() != list.size()) {
@@ -350,6 +366,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
      * Adds the record to all the streams in the corresponding collection.
      */
     private void notifyEscalation2(AlarmRecord record) {
+        AlarmUtil.logInfo("Escalation 2: " + record.getOwner().getNode().getPath());
         ArrayList<AlarmStreamer> list = escalation2ListenerCache;
         synchronized (escalation2Listeners) {
             if (escalation2Listeners.size() != list.size()) {
@@ -381,29 +398,14 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     }
 
     /**
-     * Whether or not to escalate.  If days, hours, and mins are all zero or
-     * less this will return false.
+     * Whether or not escalation is needed.
      *
-     * @param from      This should be the create timestamp of the alarm record.
-     * @param days      Only values greater than zero are considered.
-     * @param hours     Only values greater than zero are considered.
-     * @param mins      Only values greater than zero are considered.
-     * @param checkTime The 'now' time, will be the lastEscalation time in the next cycle.
+     * @param escalationTime The time escalation should occur.
+     * @param now            The time to evaluate.
      * @return Whether or not an escalation is needed.
      */
-    private boolean shouldEscalate(Calendar from, int days, int hours, int mins,
-                                   long checkTime) {
-        if ((days <= 0) && (hours <= 0) && (mins <= 0)) {
-            return false;
-        }
-        TimeUtils.addDays(days, from);
-        TimeUtils.addHours(hours, from);
-        TimeUtils.addMinutes(mins, from);
-        long escalate = from.getTimeInMillis();
-        if ((lastEscalationCheck < escalate) && (escalate <= checkTime)) {
-            return true;
-        }
-        return false;
+    private boolean shouldEscalate(long escalationTime, long now) {
+        return ((lastEscalationCheck < escalationTime) && (escalationTime <= now));
     }
 
     /**

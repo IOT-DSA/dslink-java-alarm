@@ -66,7 +66,7 @@ public class Note {
     }
 
     /**
-     * The user who added the current note.
+     * The user or entity who added the current note.
      */
     public String getUser() {
         return user;
@@ -96,7 +96,7 @@ public class Note {
     }
 
     /**
-     * The user who added the current note, returns this.
+     * The user or entity who added the current note.
      */
     public Note setUser(String arg) {
         user = arg;

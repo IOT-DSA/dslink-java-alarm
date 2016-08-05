@@ -1,8 +1,8 @@
 {
   "name": "dslink-java-alarm",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Alarming Link",
-  "license": "Apache",
+  "license": "ISC",
   "author": {
     "name": "Aaron Hansen",
     "email": "aaron@comfortanalytics.com"
@@ -18,7 +18,7 @@
   "configs": {
     "name": {
       "type": "string",
-      "default": "alarm"
+      "default": "alarming"
     },
     "broker": {
       "type": "url"

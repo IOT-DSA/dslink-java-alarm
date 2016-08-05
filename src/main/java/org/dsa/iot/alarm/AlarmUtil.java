@@ -8,12 +8,14 @@
 
 package org.dsa.iot.alarm;
 
+import edu.umd.cs.findbugs.annotations.*;
 import org.dsa.iot.dslink.node.*;
 import org.dsa.iot.dslink.node.actions.*;
 import org.dsa.iot.dslink.node.actions.table.*;
 import org.dsa.iot.dslink.node.value.*;
 import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.dslink.util.*;
+import org.slf4j.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -28,11 +30,13 @@ public class AlarmUtil implements AlarmConstants {
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
+    private static final Logger LOG = LoggerFactory.getLogger(AlarmService.class);
+
     ///////////////////////////////////////////////////////////////////////////
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private AlarmAlgorithm parentAlgorithm;
+    private static Calendar calendarCache;
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -56,9 +60,6 @@ public class AlarmUtil implements AlarmConstants {
      */
     public static void encodeAlarm(AlarmRecord record, Table table, Calendar cacheCal,
             StringBuilder cacheBuf) {
-        if (cacheCal == null) {
-            cacheCal = Calendar.getInstance();
-        }
         if (cacheBuf == null) {
             cacheBuf = new StringBuilder();
         } else {
@@ -67,10 +68,14 @@ public class AlarmUtil implements AlarmConstants {
         String createdTime = null;
         String normalTime = null;
         String ackTime = null;
-        if (record.getCreatedTime() > 0) {
+        boolean recycleCal = false;
+        if (cacheCal == null) {
+            cacheCal = getCalendar(record.getCreatedTime());
+            recycleCal = true;
+        } else {
             cacheCal.setTimeInMillis(record.getCreatedTime());
-            createdTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         }
+        createdTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         if (record.getNormalTime() > 0) {
             cacheCal.setTimeInMillis(record.getNormalTime());
             normalTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
@@ -88,6 +93,9 @@ public class AlarmUtil implements AlarmConstants {
                               new Value(record.getAckUser()),
                               new Value(record.getMessage()),
                               new Value(record.getHasNotes())));
+        if (recycleCal) {
+            recycle(cacheCal);
+        }
     }
 
     /**
@@ -109,6 +117,7 @@ public class AlarmUtil implements AlarmConstants {
     /**
      * Enqueues the parameter into the alarming thread pool.
      */
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
     public static void enqueue(Callable callable) {
         Objects.getDaemonThreadPool().submit(callable);
     }
@@ -118,6 +127,55 @@ public class AlarmUtil implements AlarmConstants {
      */
     public static void enqueue(Runnable runnable) {
         Objects.getDaemonThreadPool().submit(runnable);
+    }
+
+    /** Abstracts the implementation as that is likely to change in the future. */
+    public static void logError(String msg, Throwable x) {
+        LOG.error(msg,x);
+    }
+
+    /** Abstracts the implementation as that is likely to change in the future. */
+    public static void logInfo(String msg) {
+        LOG.info(msg);
+    }
+
+    /** Abstracts the implementation as that is likely to change in the future. */
+    public static void logTrace(String msg) {
+        LOG.trace(msg);
+    }
+
+    /** Abstracts the implementation as that is likely to change in the future. */
+    public static void logWarning(String msg) {
+        LOG.warn(msg);
+    }
+
+    /**
+     * Attempts to reuse a cached instance.  Callers should return the calendar with the
+     * recycle method.
+     *
+     * @param arg Time to set in the calendar.
+     * @return Never null, will create a new calendar if necessary.
+     */
+    public static Calendar getCalendar(long arg) {
+        Calendar calendar = null;
+        synchronized (StaleAlgorithm.class) {
+            if (calendarCache != null) {
+                calendar = calendarCache;
+                calendarCache = null;
+            }
+        }
+        if (calendar == null) {
+            calendar = Calendar.getInstance();
+        }
+        calendar.setTimeInMillis(arg);
+        return calendar;
+    }
+
+    /**
+     * Submit a calendar for reuse.
+     */
+    public static void recycle(Calendar arg) {
+        calendarCache = arg;
     }
 
     /**
@@ -171,7 +229,7 @@ public class AlarmUtil implements AlarmConstants {
             ret.init(node);
             return ret;
         } catch (Exception x) {
-            AlarmService.LOGGER.error("Error creating " + typeName, x);
+            logError(node.getPath(), x);
             throwRuntime(x);
         }
         return ret;

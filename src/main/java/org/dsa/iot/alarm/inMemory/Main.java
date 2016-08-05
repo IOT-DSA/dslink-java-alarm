@@ -18,8 +18,10 @@ import org.dsa.iot.dslink.*;
  */
 public class Main extends AlarmLinkHandler {
 
-    // Yes, extending AlarmLinkHandler is messed up.  DSLinkFactory has an
-    // issue...
+    // The provider needs to be specified before the link handler is started.
+    static {
+        Alarming.setProvider(new InMemoryProvider());
+    }
 
     /**
      * Command line bootstrap.
@@ -27,7 +29,6 @@ public class Main extends AlarmLinkHandler {
      * @param args Should supply --broker host/conn
      */
     public static void main(String[] args) {
-        Alarming.setProvider(new InMemoryProvider());
         DSLinkFactory.start(args, new Main());
     }
 

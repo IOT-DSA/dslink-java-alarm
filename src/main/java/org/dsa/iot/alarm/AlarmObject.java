@@ -38,6 +38,13 @@ public interface AlarmObject {
     public AlarmObject getChild(int i);
 
     /**
+     * The handle assigned to the inner node when AlarmService.register is called.
+     *
+     * @return 0 if the object hasn't been assigned a handle.
+     */
+    public int getHandle();
+
+    /**
      * The SDK node this object represents.
      */
     public Node getNode();
@@ -50,8 +57,8 @@ public interface AlarmObject {
     /**
      * Sets the SDK node this object represents and can only be called once.  This
      * method will load the entire subtree of alarm objects for the corresponding
-     * subtree of SDK nodes.  After loading the subtree, it will call initProperties
-     * and initActions.
+     * subtree of SDK nodes.  Will call initData and initActions on this object
+     * before loading children.
      */
     public void init(Node node);
 
@@ -81,7 +88,8 @@ public interface AlarmObject {
 
     /**
      * Called after start is called on the parent.  Will be called when added to an
-     * already started parent, or when start is called on the parent.
+     * already started parent, or when start is called on the parent.  Custom
+     * implementations should call register on their associate alarm service.
      */
     public void start();
 
@@ -92,7 +100,8 @@ public interface AlarmObject {
     public void steady();
 
     /**
-     * Called upon removal from the parent, or the parent is stopped.
+     * Called upon removal from the parent, or the parent is stopped.  Customer
+     * implementations should call unregister on their associate alarm service.
      */
     public void stop();
 

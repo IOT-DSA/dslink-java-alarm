@@ -15,7 +15,8 @@ import org.dsa.iot.dslink.node.actions.table.*;
 import org.dsa.iot.dslink.node.value.*;
 import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.dslink.util.*;
-import org.slf4j.*;
+import org.dsa.iot.dslink.util.log.*;
+import sun.reflect.generics.reflectiveObjects.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -31,7 +32,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
-    static final Logger LOGGER = LoggerFactory.getLogger(AlarmService.class);
+    static final String LOG_LEVEL = "Log Level";
+    static final String NEXT_HANDLE = "nextHandle";
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -40,13 +42,13 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     private AlarmLinkHandler alarmLinkHandler;
     private ScheduledFuture executeFuture;
     private boolean executing = false;
+    private HashMap<Number, AlarmObject> handles = new HashMap<>();
+    private HashSet<AlarmStreamer> openAlarmStreamListeners = new HashSet<>();
+    private ArrayList<AlarmStreamer> openAlarmStreamListenerCache = new ArrayList<>();
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
-
-    public AlarmService() {
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
@@ -56,18 +58,47 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
      * Action handler for getting alarms for a table of alarm uuids.
      */
     private void acknowledge(ActionResult event) {
-        Value uuid = event.getParameter(UUID_STR);
-        if (uuid == null) {
-            throw new NullPointerException("Missing UUID");
+        try {
+            Value uuid = event.getParameter(UUID_STR);
+            if (uuid == null) {
+                throw new NullPointerException("Missing UUID");
+            }
+            Value user = event.getParameter(USER);
+            if (user == null) {
+                throw new NullPointerException("Missing User");
+            }
+            UUID uuidObj = UUID.fromString(uuid.getString());
+            Alarming.getProvider().acknowledge(uuidObj, user.getString());
+            AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
+            rec.getAlarmClass().notifyAllUpdates(rec);
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(), x);
+            AlarmUtil.throwRuntime(x);
         }
-        Value user = event.getParameter(USER);
-        if (user == null) {
-            throw new NullPointerException("Missing User");
+    }
+
+    /**
+     * Acknowledges all open alarms that require acknowledgement.
+     */
+    private void acknowledgeAllOpen(ActionResult event) {
+        try {
+            Value user = event.getParameter(USER);
+            if (user == null) {
+                throw new NullPointerException("Missing " + USER);
+            }
+            Alarming.Provider provider = Alarming.getProvider();
+            AlarmCursor cur = Alarming.getProvider().queryOpenAlarms(null);
+            while (cur.next()) {
+                if (cur.isAckRequired() && !cur.isAcknowledged()) {
+                    provider.acknowledge(cur.getUuid(),user.getString());
+                    AlarmRecord rec = Alarming.getProvider().getAlarm(cur.getUuid());
+                    rec.getAlarmClass().notifyAllUpdates(rec);
+                }
+            }
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(),x);
+            AlarmUtil.throwRuntime(x);
         }
-        UUID uuidObj = UUID.fromString(uuid.getString());
-        Alarming.getProvider().acknowledge(uuidObj, user.getString());
-        AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
-        rec.getAlarmClass().notifyAllUpdates(rec);
     }
 
     /**
@@ -91,9 +122,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             AlarmClass alarmClass = Alarming.getProvider().newAlarmClass(nameString);
             alarmClass.init(alarmClassNode);
             addChild(alarmClass);
-            LOGGER.info("Added alarm class: " + name.getString());
         } catch (Exception x) {
-            LOGGER.error("addAlarmClass", x);
+            AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
         }
     }
@@ -102,29 +132,42 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
      * Action handler for getting alarms for a table of alarm uuids.
      */
     private void addNote(ActionResult event) {
-        Value uuid = event.getParameter(UUID_STR);
-        if (uuid == null) {
-            throw new NullPointerException("Missing UUID");
+        try {
+            Value uuid = event.getParameter(UUID_STR);
+            if (uuid == null) {
+                throw new NullPointerException("Missing UUID");
+            }
+            Value user = event.getParameter(USER);
+            if (user == null) {
+                throw new NullPointerException("Missing User");
+            }
+            Value note = event.getParameter(NOTE);
+            if (note == null) {
+                throw new NullPointerException("Missing User");
+            }
+            UUID uuidObj = UUID.fromString(uuid.getString());
+            AlarmUtil.logInfo(user.getString() +
+                                       " adding note to " +
+                                       uuid.getString() +
+                                       ": " +
+                                       note.getString());
+            Alarming.getProvider().addNote(uuidObj, user.getString(), note.getString());
+            AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
+            rec.getAlarmClass().notifyAllUpdates(rec);
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(), x);
+            AlarmUtil.throwRuntime(x);
         }
-        Value user = event.getParameter(USER);
-        if (user == null) {
-            throw new NullPointerException("Missing User");
-        }
-        Value note = event.getParameter(NOTE);
-        if (note == null) {
-            throw new NullPointerException("Missing User");
-        }
-        UUID uuidObj = UUID.fromString(uuid.getString());
-        Alarming.getProvider().addNote(uuidObj, user.getString(), note.getString());
-        AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
-        rec.getAlarmClass().notifyAllUpdates(rec);
     }
 
     /**
      * Creates a new alarm record and returns it.
      */
-    protected AlarmRecord createAlarm(AlarmClass alarmClass, String sourcePath,
-            AlarmState createState, String message) {
+    protected AlarmRecord createAlarm(AlarmClass alarmClass,
+                                      AlarmWatch watch,
+                                      String sourcePath,
+                                      AlarmState createState,
+                                      String message) {
         checkSteady();
         long now = System.currentTimeMillis();
         UUID uuid = null;
@@ -134,10 +177,15 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         AlarmRecord alarmRecord = Alarming.getProvider().newAlarmRecord()
                 .setUuid(uuid)
                 .setAlarmClass(alarmClass)
+                .setAlarmWatch(watch)
                 .setAlarmType(createState)
                 .setCreatedTime(now)
                 .setMessage(message)
                 .setSourcePath(sourcePath);
+        AlarmUtil.logInfo("New alarm: " +
+                                  alarmRecord.getOwner().getNode().getPath()
+                                  + "= "
+                                  + uuid);
         Alarming.getProvider().addAlarm(alarmRecord);
         return alarmRecord;
     }
@@ -146,21 +194,30 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
      * Remove all traces of the alarm record for the given UUID_STR.
      */
     protected void deleteRecord(ActionResult event) {
-        Value uuid = event.getParameter(UUID_STR);
-        if (uuid == null) {
-            throw new NullPointerException("Missing UUID_STR");
+        try {
+            Value uuid = event.getParameter(UUID_STR);
+            if (uuid == null) {
+                throw new NullPointerException("Missing " + UUID_STR);
+            }
+            AlarmUtil.logTrace(getNode().getPath() + " deleting alarm " + uuid);
+            Alarming.getProvider().deleteRecord(UUID.fromString(uuid.getString()));
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(), x);
+            AlarmUtil.throwRuntime(x);
         }
-        Alarming.getProvider().deleteRecord(UUID.fromString(uuid.getString()));
     }
 
     /**
      * Schedules execute in the daemon thread pool.
      */
     @Override protected void doSteady() {
-        executeFuture = Objects.getDaemonThreadPool().scheduleAtFixedRate(this::execute,
-                                                                          10, 10,
-                                                                          TimeUnit.SECONDS);
-        Alarming.getProvider().start(this);
+        try {
+            executeFuture = Objects.getDaemonThreadPool()
+                    .scheduleAtFixedRate(this::execute, 10, 10, TimeUnit.SECONDS);
+            Alarming.getProvider().start(this);
+        } catch (Exception x) {
+            AlarmUtil.logError("Starting provider",x);
+        }
     }
 
     /**
@@ -195,7 +252,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                 }
             }
         } catch (Exception x) {
-            LOGGER.error("execute", x);
+            AlarmUtil.logError(getNode().getPath(), x);
         } finally {
             executing = false;
         }
@@ -205,17 +262,22 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
      * Action handler for getting alarms for a table of alarm uuids.
      */
     private void getAlarm(final ActionResult event) {
-        Value uuid = event.getParameter(UUID_STR);
-        if (uuid == null) {
-            throw new NullPointerException("Missing UUID_STR");
+        try {
+            Value uuid = event.getParameter(UUID_STR);
+            if (uuid == null) {
+                throw new NullPointerException("Missing UUID_STR");
+            }
+            AlarmRecord record = Alarming.getProvider().getAlarm(
+                    UUID.fromString(uuid.getString()));
+            event.setStreamState(StreamState.INITIALIZED);
+            Table table = event.getTable();
+            table.setMode(Table.Mode.APPEND);
+            AlarmUtil.encodeAlarm(record, table, null, null);
+            event.setStreamState(StreamState.CLOSED);
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(), x);
+            AlarmUtil.throwRuntime(x);
         }
-        AlarmRecord record = Alarming.getProvider().getAlarm(
-                UUID.fromString(uuid.getString()));
-        event.setStreamState(StreamState.INITIALIZED);
-        Table table = event.getTable();
-        table.setMode(Table.Mode.APPEND);
-        AlarmUtil.encodeAlarm(record, table, null, null);
-        event.setStreamState(StreamState.CLOSED);
     }
 
     /**
@@ -233,6 +295,37 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
+     * Action handler for getting alarms for a time range.
+     */
+    private void getAlarms(final ActionResult event) {
+        Calendar from = Calendar.getInstance();
+        Calendar to = Calendar.getInstance();
+        Value timeRange = event.getParameter(TIME_RANGE);
+        if (timeRange != null) {
+            //just fail fast if invalid time range
+            String[] parts = timeRange.getString().split("/");
+            TimeUtils.decode(parts[0], from);
+            TimeUtils.decode(parts[1], to);
+            to.setTimeInMillis(to.getTimeInMillis() + 1); //dglux uses inclusive end
+        } else {
+            //Default to today.
+            TimeUtils.alignDay(from);
+            TimeUtils.addDays(1, to);
+            TimeUtils.alignDay(to);
+        }
+        final AlarmCursor cursor = Alarming.getProvider().queryAlarms(null, from, to);
+        AlarmStreamer streamer = new AlarmStreamer(null, event, cursor);
+        AlarmUtil.run(streamer, "Get Alarms");
+    }
+
+    /**
+     * Returns the object mapped to the given handle.
+     */
+    public synchronized AlarmObject getByHandle(int handle) {
+        return handles.get(handle);
+    }
+
+    /**
      * Returns the DSLinkHandler
      */
     public AlarmLinkHandler getLinkHandler() {
@@ -243,24 +336,40 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
      * Action handler for getting the notes for a specific alarm record.
      */
     private void getNotes(final ActionResult event) {
-        Value uuid = event.getParameter(UUID_STR);
-        if (uuid == null) {
-            throw new NullPointerException("Missing UUID_STR");
+        try {
+            Value uuid = event.getParameter(UUID_STR);
+            if (uuid == null) {
+                throw new NullPointerException("Missing UUID_STR");
+            }
+            NoteCursor cursor = Alarming.getProvider().getNotes(
+                    UUID.fromString(uuid.getString()));
+            event.setStreamState(StreamState.INITIALIZED);
+            Table table = event.getTable();
+            table.setMode(Table.Mode.APPEND);
+            StringBuilder buf = new StringBuilder();
+            Calendar calendar = Calendar.getInstance();
+            while (cursor.next()) {
+                calendar.setTimeInMillis(cursor.getTimestamp());
+                TimeUtils.encode(calendar, true, buf);
+                table.addRow(
+                        Row.make(new Value(buf.toString()), new Value(cursor.getUser()),
+                                 new Value(cursor.getText())));
+            }
+            event.setStreamState(StreamState.CLOSED);
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(), x);
+            AlarmUtil.throwRuntime(x);
         }
-        NoteCursor cursor = Alarming.getProvider().getNotes(
-                UUID.fromString(uuid.getString()));
-        event.setStreamState(StreamState.INITIALIZED);
-        Table table = event.getTable();
-        table.setMode(Table.Mode.APPEND);
-        StringBuilder buf = new StringBuilder();
-        Calendar calendar = Calendar.getInstance();
-        while (cursor.next()) {
-            calendar.setTimeInMillis(cursor.getTimestamp());
-            TimeUtils.encode(calendar, true, buf);
-            table.addRow(Row.make(new Value(buf.toString()), new Value(cursor.getUser()),
-                                  new Value(cursor.getText())));
-        }
-        event.setStreamState(StreamState.CLOSED);
+    }
+
+    /**
+     * Action handler for getting all open alarms followed by a stream of
+     * all upates.
+     */
+    private void getOpenAlarms(final ActionResult event) {
+        final AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(null);
+        AlarmStreamer streamer = new AlarmStreamer(openAlarmStreamListeners, event, cursor);
+        AlarmUtil.run(streamer, "Open Alarms");
     }
 
     /**
@@ -273,6 +382,11 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action.addParameter(new Parameter(USER, ValueType.STRING));
         getNode().createChild("Acknowledge").setSerializable(false).setAction(action)
                 .build();
+        //Acknowledge All
+        action = new Action(Permission.READ, this::acknowledgeAllOpen);
+        action.addParameter(new Parameter(USER, ValueType.STRING));
+        getNode().createChild(ACKNOWLEDGE_ALL).setSerializable(false)
+                .setAction(action).build();
         //Add Alarm Class action
         action = new Action(Permission.WRITE, this::addAlarmClass);
         action.addParameter(new Parameter(NAME, ValueType.STRING));
@@ -302,6 +416,21 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         AlarmUtil.encodeAlarmColumns(action);
         getNode().createChild("Get Alarm").setSerializable(false).setAction(action)
                 .build();
+        //Get Alarms
+        action = new Action(Permission.READ, this::getAlarms);
+        action.addParameter(
+                new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
+                        .setEditorType(EditorType.DATE_RANGE));
+        action.setResultType(ResultType.STREAM);
+        AlarmUtil.encodeAlarmColumns(action);
+        getNode().createChild("Get Alarms").setSerializable(false).setAction(action)
+                .build();
+        //Get Open Alarms
+        action = new Action(Permission.READ, this::getOpenAlarms);
+        action.setResultType(ResultType.STREAM);
+        AlarmUtil.encodeAlarmColumns(action);
+        getNode().createChild("Get Open Alarms").setSerializable(false).setAction(action)
+                .build();
         //Get Notes
         action = new Action(Permission.READ, this::getNotes);
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
@@ -316,24 +445,112 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         getNode().createChild("Return To Normal").setSerializable(false).setAction(action)
                 .build();
+        //Set Log Level
+        action = new Action(Permission.CONFIG, this::setLogLevel);
+        action.addParameter(new Parameter(LOG_LEVEL, ENUM_LOG_LEVEL, new Value("info")));
+        getNode().createChild("Set Log Level").setSerializable(false).setAction(action)
+                .build();
     }
 
-    @Override protected void initProperties() {
+    @Override protected void initData() {
         initProperty(ENABLED, new Value(true)).setWritable(Writable.CONFIG);
+        initConfig(NEXT_HANDLE, new Value(1), true);
+        initProperty("Build", new Value("2016-08-05 12:00pm")).createFakeBuilder()
+                .setSerializable(false)
+                .setWritable(Writable.NEVER);
+    }
+
+    private int nextHandle() {
+        Value value = getConfig(NEXT_HANDLE);
+        int handle = value.getNumber().intValue();
+        value.set(handle + 1);
+        return handle;
     }
 
     /**
-     * Calls  Alarming.getProvider().returnToNormal()
+     * Notify all getOpenAlarms streams of the given record.
+     */
+    void notifyOpenAlarmStreams(AlarmRecord record) {
+        ArrayList<AlarmStreamer> list = openAlarmStreamListenerCache;
+        synchronized (openAlarmStreamListeners) {
+            if (openAlarmStreamListeners.size() != list.size()) {
+                openAlarmStreamListenerCache = new ArrayList<>();
+                list = openAlarmStreamListenerCache;
+                list.addAll(openAlarmStreamListeners);
+            }
+        }
+        for (int i = list.size(); --i >= 0; ) {
+            list.get(i).update(record);
+        }
+    }
+
+    /**
+     * This will assign a persistent read-only int config to the inner node.  AlarmObjects
+     * can then be quickly retrieved by calling getByHandle(int).  AbstractAlarmObject
+     * calls this in the start method; custom implementations that do not subclass
+     * it would need to call in their start implementation, even if they already have
+     * a handle.
+     */
+    public synchronized void register(AlarmObject obj) {
+        Value handle = obj.getNode().getRoConfig(HANDLE);
+        if (handle == null) {
+            int val = nextHandle();
+            handle = new Value(val);
+            obj.getNode().setRoConfig(HANDLE, handle);
+        }
+        handles.put(handle.getNumber(), obj);
+    }
+
+    /**
+     * Calls  Alarming.getProvider().returnToNormal() and notifies all update streams.
      */
     protected void returnToNormal(ActionResult event) {
-        Value uuid = event.getParameter(UUID_STR);
-        if (uuid == null) {
-            throw new NullPointerException("Missing UUID");
+        try {
+            Value uuid = event.getParameter(UUID_STR);
+            if (uuid == null) {
+                throw new NullPointerException("Missing UUID");
+            }
+            UUID uuidObj = UUID.fromString(uuid.getString());
+            Alarming.getProvider().returnToNormal(uuidObj);
+            AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
+            rec.getAlarmClass().notifyAllUpdates(rec);
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(), x);
+            AlarmUtil.throwRuntime(x);
         }
-        UUID uuidObj = UUID.fromString(uuid.getString());
-        Alarming.getProvider().returnToNormal(uuidObj);
-        AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
-        rec.getAlarmClass().notifyAllUpdates(rec);
+    }
+
+    void setLinkHandler(AlarmLinkHandler arg) {
+        alarmLinkHandler = arg;
+    }
+
+    /**
+     * Action handler for dynamically (and transiently) changing the log level.
+     */
+    private void setLogLevel(ActionResult event) {
+        try {
+            Value level = event.getParameter(LOG_LEVEL);
+            if (level == null) {
+                throw new NullPointerException("Missing log level");
+            }
+            LogManager.setLevel(level.getString());
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(), x);
+            AlarmUtil.throwRuntime(x);
+        }
+    }
+
+    /**
+     * Clears the instance mapped to the handle.
+     */
+    public synchronized void unregister(AlarmObject obj) {
+        Value handle = obj.getNode().getRoConfig(HANDLE);
+        if (handle != null) {
+            if (handles.get(handle.getNumber()) != obj) {
+                throw new IllegalStateException("Invalid handle");
+            }
+            handles.remove(handle.getNumber());
+        }
     }
 
 } //class

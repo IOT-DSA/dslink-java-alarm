@@ -10,7 +10,6 @@ package org.dsa.iot.alarm;
 
 import org.dsa.iot.dslink.node.*;
 import org.dsa.iot.dslink.node.value.*;
-import org.slf4j.*;
 
 /**
  * This algorithm creates alarms for sources whose numeric value is less than a minimum
@@ -24,9 +23,6 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(
-            OutOfRangeAlgorithm.class);
-
     private static final String MAX_VALUE = "Max Value";
     private static final String MIN_VALUE = "Min Value";
 
@@ -38,9 +34,6 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public OutOfRangeAlgorithm() {
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
@@ -49,21 +42,24 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
         return "Value out of range: " + watch.getNode().getValue().toString();
     }
 
-    @Override protected void initProperties() {
-        super.initProperties();
+    @Override protected void initData() {
+        super.initData();
         initProperty(MIN_VALUE, new Value(0.0d)).setWritable(Writable.CONFIG);
         initProperty(MAX_VALUE, new Value(100.0d)).setWritable(Writable.CONFIG);
     }
 
     @Override protected boolean isAlarm(AlarmWatch watch) {
-        double val = watch.getNode().getValue().getNumber().doubleValue();
-        double tmp = getProperty(MIN_VALUE).getNumber().doubleValue();
-        if (val < tmp) {
-            return true;
-        }
-        tmp = getProperty(MAX_VALUE).getNumber().doubleValue();
-        if (val > tmp) {
-            return true;
+        Value value = watch.getCurrentValue();
+        if (value != null) {
+            double val = value.getNumber().doubleValue();
+            double tmp = getProperty(MIN_VALUE).getNumber().doubleValue();
+            if (val < tmp) {
+                return true;
+            }
+            tmp = getProperty(MAX_VALUE).getNumber().doubleValue();
+            if (val > tmp) {
+                return true;
+            }
         }
         return false;
     }
