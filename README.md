@@ -17,7 +17,7 @@ This link was serves two purposes.
 can be developed.  
 2. It has three implementations, one of which, the default, can be deployed as-is.
 
-To understand link usage, view the [Alarm Link User Guide](https://github.com/IOT-DSA/dslink-java-alarm/raw/master/Alarm-Link-User-Guide.pdf).
+To understand link usage, view the [Alarm Link User Guide](https://github.com/IOT-DSA/dslink-java-alarm/blob/master/Alarm-Link-User-Guide.pdf).
 
 
 Using the Provided Implementations
