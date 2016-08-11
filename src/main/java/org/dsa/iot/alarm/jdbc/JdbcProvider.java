@@ -253,7 +253,7 @@ public abstract class JdbcProvider extends AbstractProvider {
     }
 
     /**
-     * Creates the database and tables.
+     * Creates the database and tables if needed.
      */
     public void initializeDatabase() {
         Connection conn = null;
@@ -305,7 +305,7 @@ public abstract class JdbcProvider extends AbstractProvider {
      */
     @SuppressFBWarnings("SQL_BAD_PREPARED_STATEMENT_ACCESS")
     @Override protected void saveRecord(AlarmRecord arg) {
-        StringBuffer buf = new StringBuffer("update Alarm_Records set");
+        StringBuilder buf = new StringBuilder("update Alarm_Records set");
         //Indexes in prepared statements start at 1.
         int normalIdx = 0;
         int ackTimeIdx = 0;
@@ -358,7 +358,6 @@ public abstract class JdbcProvider extends AbstractProvider {
      * @param from       Earliest inclusive created time, may be null.
      * @param to         First excluded created time, may be null.
      * @param mustBeOpen Whether or not to only return only open records.
-     * @return
      */
     protected String selectStatement(AlarmClass alarmClass, Calendar from, Calendar to,
             boolean mustBeOpen) {

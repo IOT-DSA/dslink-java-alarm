@@ -5,7 +5,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 
 group 'org.iot-dsa'
-version '0.0.4-SNAPSHOT'
+version '0.1.0-SNAPSHOT'
 
 mainClassName = 'org.dsa.iot.alarm.Main'
 sourceCompatibility = 1.8
@@ -39,6 +39,7 @@ findbugsMain {
 dependencies {
     provided 'com.google.code.findbugs:annotations:3.0.1'
     compile 'org.iot-dsa:dslink:0.16.0-SNAPSHOT'
+    compile 'com.h2database:h2:1.4.192'
 }
 
 compileJava {

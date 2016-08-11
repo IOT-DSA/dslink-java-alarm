@@ -1,33 +1,48 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Aug 5, 2016
-* Version: 0.0.4
+* Date: Aug 11, 2016
+* Version: 0.1.0
 
 
 Overview
 --------
 
-This is a [DSA link](https://github.com/IOT-DSA).  It records details about interesting 
-events so they may be considered by humans.  The underlying model is influenced by the 
-BACnet alarming design.  
+This is a [DSA link](https://github.com/IOT-DSA).  It records details
+ about interesting events so they may be considered by humans.  The 
+ underlying model is influenced by the BACnet alarming design.  
 
-This link was designed as a framework upon which alarm links for different data stores 
-can be developed.  It includes two functional implementations:  
-* org.dsa.iot.alarm.inMemory.MainA - Uses java collections for transient storage.
-* org.dsa.iot.alarm.jdbc.Main - Uses JDBC for persistence.
-
-There is also a separate implementation that uses an embedded instance
-of H2: [dslink-java-alarm-h2](https://github.com/IOT-DSA/dslink-java-alarm-h2).
+This link was serves two purposes.  
+1. It is a framework upon which alarm links for different data stores 
+can be developed.  
+2. It has three implementations, one of which, the default, can be deployed as-is.
 
 To understand link usage, view the [Alarm Link User Guide](https://github.com/IOT-DSA/dslink-java-alarm/raw/master/Alarm-Link-User-Guide.pdf).
+
+
+Using the Provided Implementations
+----------------------------------
+
+To use an implementation, one has the change the handler_class in
+dslink.json.
+
+The provided implementations are:
+* org.dsa.iot.alarm.jdbc.H2Main - Uses an embedded instance of the H2
+database for persistence.  This is default handler_class in dslink.json.
+* org.dsa.iot.alarm.jdbc.JdbcMain - Uses remote JDBC connections for 
+persistence.  The JDBC driver jar file will need to be added to the 
+deployment.
+* org.dsa.iot.alarm.inMemory.Main - Uses Java collections for transient
+storage.  This was developed primarily for testing purposes and may
+help with development of additional alarm links.
 
 
 Creating Custom Alarm Links
 ---------------------------
 
-Creating a custom alarm link primarily requires implementing a single interface.  After 
-that, plenty of hooks exist if customization of other types are required.
+Creating a custom alarm link primarily requires implementing a single 
+interface.  After that, plenty of hooks exist if customization of other 
+types is required.
 
 1.	Create an implementation of org.iot.dsa.alarm.Alarming.Provider.
 2.	Create a "main" class that subclasses org.iot.dsa.alarm.AlarmLinkHandler.
@@ -47,13 +62,26 @@ public static void main(String[] args) {
 ```
 
 
+Attributions
+------------
+This software contains unmodified binary redistributions for H2 database 
+engine (http://www.h2database.com/), which is dual licensed and 
+available under the MPL 2.0 (Mozilla Public License) or under the 
+EPL 1.0 (Eclipse Public License). An original copy of the license 
+agreement can be found at: http://www.h2database.com/html/license.html
+
+
 History
 -------
+_0.1.0 - 2016-8-11_
+  - Moved the H2 implementation into this project and made it the
+  default handler class.
+  
 _0.0.4 - 2016-8-5_
   - Many bug fixes while implementing [dslink-java-alarm-h2](https://github.com/IOT-DSA/dslink-java-alarm-h2).
   - Added acknowledge all actions to both alarm class and alarm service.
   - Added get alarms and get open alarms actions to the alarm service.
-  - Escalation 2 is no relative to escalation 1.
+  - Escalation 2 is now relative to escalation 1.
   - Added a setLogLevel action to the service.
   - More code cleanup.
   
