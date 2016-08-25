@@ -7,7 +7,7 @@ apply plugin: 'maven'
 group 'org.iot-dsa'
 version '0.1.1-SNAPSHOT'
 
-mainClassName = 'org.dsa.iot.alarm.Main'
+mainClassName = 'org.dsa.iot.alarm.jdbc.H2Main'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
