@@ -446,16 +446,18 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         getNode().createChild("Return To Normal").setSerializable(false).setAction(action)
                 .build();
         //Set Log Level
+        /* For local testing.
         action = new Action(Permission.CONFIG, this::setLogLevel);
         action.addParameter(new Parameter(LOG_LEVEL, ENUM_LOG_LEVEL, new Value("info")));
         getNode().createChild("Set Log Level").setSerializable(false).setAction(action)
                 .build();
+        */
     }
 
     @Override protected void initData() {
         initProperty(ENABLED, new Value(true)).setWritable(Writable.CONFIG);
         initConfig(NEXT_HANDLE, new Value(1), true);
-        initProperty("Build", new Value("2016-08-05 12:00pm")).createFakeBuilder()
+        initProperty("Documentation", new Value("https://github.com/IOT-DSA/dslink-java-alarm/blob/master/Alarm-Link-User-Guide.pdf")).createFakeBuilder()
                 .setSerializable(false)
                 .setWritable(Writable.NEVER);
     }
