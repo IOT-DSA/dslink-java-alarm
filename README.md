@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Aug 11, 2016
-* Version: 0.1.0
+* Date: Aug 25, 2016
+* Version: 0.1.1
 
 
 Overview
@@ -12,10 +12,10 @@ This is a [DSA link](https://github.com/IOT-DSA).  It records details
  about interesting events so they may be considered by humans.  The 
  underlying model is influenced by the BACnet alarming design.  
 
-This link serves two purposes.  
-1. It is a framework upon which alarm links for different data stores 
-can be developed.  
-2. It has three implementations, one of which, the default, can be deployed as-is.
+This link serves two purposes:  
+
+1.  It is a framework upon which alarm links for different data stores can be developed.  
+2.  It has three implementations, one of which, the default, can be deployed as-is.
 
 To understand link usage, view the [Alarm Link User Guide](https://github.com/IOT-DSA/dslink-java-alarm/blob/master/Alarm-Link-User-Guide.pdf).
 
