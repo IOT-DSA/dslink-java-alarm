@@ -39,7 +39,7 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
     ///////////////////////////////////////////////////////////////////////////
 
    @Override protected String getAlarmMessage(AlarmWatch watch) {
-        return "Value out of range: " + watch.getNode().getValue().toString();
+        return "Value out of range: " + watch.getCurrentValue().toString();
     }
 
     @Override protected void initData() {
