@@ -12,7 +12,7 @@ This is a [DSA link](https://github.com/IOT-DSA).  It records details
  about interesting events so they may be considered by humans.  The 
  underlying model is influenced by the BACnet alarming design.  
 
-This link was serves two purposes.  
+This link serves two purposes.  
 1. It is a framework upon which alarm links for different data stores 
 can be developed.  
 2. It has three implementations, one of which, the default, can be deployed as-is.
