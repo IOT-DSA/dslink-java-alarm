@@ -13,9 +13,9 @@ This is a [DSA link](https://github.com/IOT-DSA).  It records details
  underlying model is influenced by the BACnet alarming design.  
 
 This link serves two purposes:  
-1. It is a framework upon which alarm links for different data stores 
-can be developed.  
-2. It has three implementations, one of which, the default, can be deployed as-is.
+
+1.  It is a framework upon which alarm links for different data stores can be developed.  
+2.  It has three implementations, one of which, the default, can be deployed as-is.
 
 To understand link usage, view the [Alarm Link User Guide](https://github.com/IOT-DSA/dslink-java-alarm/blob/master/Alarm-Link-User-Guide.pdf).
 
