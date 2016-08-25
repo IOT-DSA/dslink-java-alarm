@@ -2,7 +2,7 @@ DSLINK-JAVA-ALARM
 =================
 
 * Date: Aug 25, 2016
-* Version: 0.1.1
+* Version: 0.1.2
 
 
 Overview
@@ -73,6 +73,15 @@ agreement can be found at: http://www.h2database.com/html/license.html
 
 History
 -------
+_0.1.2 - 2016-8-25
+  - Boolean Algorithm wasn't working.
+  - Last Alarm Record property on watches wasn't being updated.
+  - More documentation refinements.
+  
+_0.1.1 - 2016-8-25
+  - Fixed main class in build.gradle.
+  - More documentation cleanup.
+  
 _0.1.0 - 2016-8-11_
   - Moved the H2 implementation into this project and made it the
   default handler class.

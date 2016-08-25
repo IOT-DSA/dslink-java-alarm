@@ -262,7 +262,7 @@ public class AlarmWatch extends AbstractAlarmObject
      * Sets the corresponding config.
      */
     protected void setLastAlarmUuid(UUID uuid) {
-        getNode().setRoConfig(LAST_ALARM_RECORD, new Value(uuid.toString()));
+        setProperty(LAST_ALARM_RECORD, new Value(uuid.toString()));
     }
 
     /**

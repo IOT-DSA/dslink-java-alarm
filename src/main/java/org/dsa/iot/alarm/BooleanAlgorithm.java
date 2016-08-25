@@ -38,7 +38,7 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
     ///////////////////////////////////////////////////////////////////////////
 
     @Override protected String getAlarmMessage(AlarmWatch watch) {
-        return "Value: " + watch.getNode().getValue().toString();
+        return "Value: " + watch.getCurrentValue().toString();
     }
 
     @Override protected void initData() {
@@ -49,7 +49,7 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
     @Override protected boolean isAlarm(AlarmWatch watch) {
         Value value = watch.getCurrentValue();
         if (value != null) {
-            return getProperty(ALARM_VALUE).getBool().equals(value);
+            return getProperty(ALARM_VALUE).getBool().equals(value.getBool());
         }
         return false;
     }
