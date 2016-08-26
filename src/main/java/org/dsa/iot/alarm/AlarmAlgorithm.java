@@ -275,12 +275,12 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         }
         if (state == AlarmState.NORMAL) {
             long inhibit = getToNormalInhibit();
-            if ((inhibit > 0) && (watch.getTimeInCurrentState() > inhibit)) {
+            if ((inhibit > 0) && (watch.getTimeInCurrentState() < inhibit)) {
                 return;
             }
         } else {
             long inhibit = getToAlarmInhibit();
-            if ((inhibit > 0) && (watch.getTimeInCurrentState() > inhibit)) {
+            if ((inhibit > 0) && (watch.getTimeInCurrentState() < inhibit)) {
                 return;
             }
         }

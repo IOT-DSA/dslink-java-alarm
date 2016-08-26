@@ -116,7 +116,7 @@ public class AlarmWatch extends AbstractAlarmObject
      * @return Possibly null.
      */
     protected UUID getLastAlarmUuid() {
-        Value lastAlarmRecord = getNode().getRoConfig(LAST_ALARM_RECORD);
+        Value lastAlarmRecord = getProperty(LAST_ALARM_RECORD);
         if (lastAlarmRecord == null) {
             return null;
         }
