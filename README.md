@@ -2,7 +2,7 @@ DSLINK-JAVA-ALARM
 =================
 
 * Date: Aug 25, 2016
-* Version: 0.1.2
+* Version: 0.1.3
 
 
 Overview
@@ -14,8 +14,10 @@ This is a [DSA link](https://github.com/IOT-DSA).  It records details
 
 This link serves two purposes:  
 
-1.  It is a framework upon which alarm links for different data stores can be developed.  
-2.  It has three implementations, one of which, the default, can be deployed as-is.
+1.  It is a framework upon which alarm links for different data stores 
+can be developed.  
+2.  It has three implementations, one of which, the default, can be 
+deployed as-is.
 
 To understand link usage, view the [Alarm Link User Guide](https://github.com/IOT-DSA/dslink-java-alarm/blob/master/Alarm-Link-User-Guide.pdf).
 
@@ -73,12 +75,16 @@ agreement can be found at: http://www.h2database.com/html/license.html
 
 History
 -------
-_0.1.2 - 2016-8-25
+_0.1.3 - 2016-8-25_
+  - Fix algorithmic return to normal.
+  - Fix inhibit logic.
+  
+_0.1.2 - 2016-8-25_
   - Boolean Algorithm wasn't working.
   - Last Alarm Record property on watches wasn't being updated.
   - More documentation refinements.
   
-_0.1.1 - 2016-8-25
+_0.1.1 - 2016-8-25_
   - Fixed main class in build.gradle.
   - More documentation cleanup.
   
