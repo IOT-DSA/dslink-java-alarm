@@ -77,7 +77,7 @@ History
 -------
 _0.2.0 - 2016-8-26_
   - Added StringAlgorithm.
-  - Boolean algorithms will now evaluate numbers a strings.
+  - Boolean algorithms will now evaluate numbers and strings.
   - User guide now has Initial Setup.
   
 _0.1.3 - 2016-8-25_
