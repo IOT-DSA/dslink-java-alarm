@@ -2,7 +2,7 @@ DSLINK-JAVA-ALARM
 =================
 
 * Date: Aug 26, 2016
-* Version: 0.1.4
+* Version: 0.2.0
 
 
 Overview
@@ -75,8 +75,8 @@ agreement can be found at: http://www.h2database.com/html/license.html
 
 History
 -------
-_0.1.4 - 2016-8-26_
-  - Added a String Algorithm.
+_0.2.0 - 2016-8-26_
+  - Added StringAlgorithm.
   - Boolean algorithms will now evaluate numbers a strings.
   - User guide now has Initial Setup.
   
