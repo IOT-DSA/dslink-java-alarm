@@ -426,7 +426,12 @@ public abstract class JdbcProvider extends AbstractProvider {
         rec.setHasNotes(res.getBoolean("HasNotes"));
         int handle = res.getInt("Watch");
         if (handle > 0) {
-            rec.setAlarmWatch((AlarmWatch) getService().getByHandle(handle));
+            Object obj = getService().getByHandle(handle);
+            //If the configuration database is deleted, but the database isn't
+            //cleared, then there could be bad handles.
+            if (obj instanceof AlarmWatch) {
+                rec.setAlarmWatch((AlarmWatch) obj);
+            }
         }
     }
 

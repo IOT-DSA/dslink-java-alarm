@@ -61,7 +61,7 @@ public class Alarming {
     public interface Provider {
 
         /**
-         * Acknowledge the specified alarm using the give user.
+         * Acknowledge the specified alarm using the given user.
          */
         public void acknowledge(UUID uuid, String user);
 

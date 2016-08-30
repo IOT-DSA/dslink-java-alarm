@@ -83,6 +83,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
         ret.put("Boolean Algorithm", BooleanAlgorithm.class);
         ret.put("Out of Range Algorithm", OutOfRangeAlgorithm.class);
         ret.put("Stale Algorithm", StaleAlgorithm.class);
+        ret.put("String Algorithm", StringAlgorithm.class);
         return ret;
     }
 

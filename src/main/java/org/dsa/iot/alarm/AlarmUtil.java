@@ -62,8 +62,6 @@ public class AlarmUtil implements AlarmConstants {
             StringBuilder cacheBuf) {
         if (cacheBuf == null) {
             cacheBuf = new StringBuilder();
-        } else {
-            cacheBuf.setLength(0);
         }
         String createdTime = null;
         String normalTime = null;
@@ -75,21 +73,31 @@ public class AlarmUtil implements AlarmConstants {
         } else {
             cacheCal.setTimeInMillis(record.getCreatedTime());
         }
+        cacheBuf.setLength(0);
         createdTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         if (record.getNormalTime() > 0) {
+            cacheBuf.setLength(0);
             cacheCal.setTimeInMillis(record.getNormalTime());
             normalTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         }
         if (record.getAckTime() > 0) {
+            cacheBuf.setLength(0);
             cacheCal.setTimeInMillis(record.getAckTime());
             ackTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         }
+        //Alarm classes can be deleted.
+        String alarmClassName = "";
+        AlarmClass alarmClass = record.getAlarmClass();
+        if (alarmClass != null) {
+            alarmClassName = alarmClass.getNode().getName();
+        }
         table.addRow(Row.make(new Value(record.getUuid().toString()),
                               new Value(record.getSourcePath()),
-                              new Value(record.getAlarmClass().getNode().getName()),
+                              new Value(alarmClassName),
                               new Value(createdTime),
                               new Value(AlarmState.encode(record.getAlarmType())),
-                              new Value(normalTime), new Value(ackTime),
+                              new Value(normalTime),
+                              new Value(ackTime),
                               new Value(record.getAckUser()),
                               new Value(record.getMessage()),
                               new Value(record.getHasNotes())));

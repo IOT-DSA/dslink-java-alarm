@@ -13,6 +13,8 @@ import org.dsa.iot.dslink.node.*;
 import org.dsa.iot.dslink.node.actions.*;
 import org.dsa.iot.dslink.node.value.*;
 import org.dsa.iot.dslink.util.*;
+import org.dsa.iot.dslink.util.Objects;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -275,12 +277,12 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         }
         if (state == AlarmState.NORMAL) {
             long inhibit = getToNormalInhibit();
-            if ((inhibit > 0) && (watch.getTimeInCurrentState() > inhibit)) {
+            if ((inhibit > 0) && (watch.getTimeInCurrentState() < inhibit)) {
                 return;
             }
         } else {
             long inhibit = getToAlarmInhibit();
-            if ((inhibit > 0) && (watch.getTimeInCurrentState() > inhibit)) {
+            if ((inhibit > 0) && (watch.getTimeInCurrentState() < inhibit)) {
                 return;
             }
         }
@@ -289,8 +291,9 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         if (state == AlarmState.NORMAL) {
             AlarmRecord rec = watch.getLastAlarmRecord();
             if (rec != null) {
-                Alarming.getProvider().returnToNormal(rec.getUuid());
-                alarmClass.notifyAllUpdates(rec);
+                UUID uuid = rec.getUuid();
+                Alarming.getProvider().returnToNormal(uuid);
+                alarmClass.notifyAllUpdates(Alarming.getProvider().getAlarm(uuid));
             }
         } else {
             AlarmRecord rec = getService().createAlarm(getAlarmClass(),
