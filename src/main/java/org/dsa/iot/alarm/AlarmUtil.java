@@ -62,8 +62,6 @@ public class AlarmUtil implements AlarmConstants {
             StringBuilder cacheBuf) {
         if (cacheBuf == null) {
             cacheBuf = new StringBuilder();
-        } else {
-            cacheBuf.setLength(0);
         }
         String createdTime = null;
         String normalTime = null;
@@ -75,12 +73,15 @@ public class AlarmUtil implements AlarmConstants {
         } else {
             cacheCal.setTimeInMillis(record.getCreatedTime());
         }
+        cacheBuf.setLength(0);
         createdTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         if (record.getNormalTime() > 0) {
+            cacheBuf.setLength(0);
             cacheCal.setTimeInMillis(record.getNormalTime());
             normalTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         }
         if (record.getAckTime() > 0) {
+            cacheBuf.setLength(0);
             cacheCal.setTimeInMillis(record.getAckTime());
             ackTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         }
@@ -95,7 +96,8 @@ public class AlarmUtil implements AlarmConstants {
                               new Value(alarmClassName),
                               new Value(createdTime),
                               new Value(AlarmState.encode(record.getAlarmType())),
-                              new Value(normalTime), new Value(ackTime),
+                              new Value(normalTime),
+                              new Value(ackTime),
                               new Value(record.getAckUser()),
                               new Value(record.getMessage()),
                               new Value(record.getHasNotes())));
