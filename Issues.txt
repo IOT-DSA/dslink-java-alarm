@@ -1,5 +1,7 @@
 Next
 ====
+- How handle deleted alarm classes?
+    - Would be nice to show alarm class name in table.
 - AlarmClass.onSteady - get open alarms and update all watches
 
 Issues
@@ -10,5 +12,5 @@ Issues
     - Allow *multiple watches* on the same node.
     - @alarm - each should check the source to see if it's priority is higher than
       the current alarm?
-    - in memory alarm source map that resolved priority?
+    - in memory alarm source map that resolves priority?
 

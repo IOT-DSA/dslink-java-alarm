@@ -84,9 +84,15 @@ public class AlarmUtil implements AlarmConstants {
             cacheCal.setTimeInMillis(record.getAckTime());
             ackTime = TimeUtils.encode(cacheCal, true, cacheBuf).toString();
         }
+        //Alarm classes can be deleted.
+        String alarmClassName = "";
+        AlarmClass alarmClass = record.getAlarmClass();
+        if (alarmClass != null) {
+            alarmClassName = alarmClass.getNode().getName();
+        }
         table.addRow(Row.make(new Value(record.getUuid().toString()),
                               new Value(record.getSourcePath()),
-                              new Value(record.getAlarmClass().getNode().getName()),
+                              new Value(alarmClassName),
                               new Value(createdTime),
                               new Value(AlarmState.encode(record.getAlarmType())),
                               new Value(normalTime), new Value(ackTime),
