@@ -55,7 +55,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * Action handler for getting alarms for a table of alarm uuids.
+     * Action handler for acknowledging a single alarm by UUID.
      */
     private void acknowledge(ActionResult event) {
         try {
@@ -78,7 +78,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
-     * Acknowledges all open alarms that require acknowledgement.
+     * Action handler for Acknowledging all open alarms of all alarm classes.
      */
     private void acknowledgeAllOpen(ActionResult event) {
         try {
@@ -89,7 +89,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             Alarming.Provider provider = Alarming.getProvider();
             AlarmCursor cur = Alarming.getProvider().queryOpenAlarms(null);
             while (cur.next()) {
-                if (cur.isAckRequired() && !cur.isAcknowledged()) {
+                if (!cur.isAcknowledged()) {
                     provider.acknowledge(cur.getUuid(),user.getString());
                     AlarmRecord rec = Alarming.getProvider().getAlarm(cur.getUuid());
                     rec.getAlarmClass().notifyAllUpdates(rec);
@@ -129,7 +129,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
-     * Action handler for getting alarms for a table of alarm uuids.
+     * Action handler for adding a note to a specific alarm record.
      */
     private void addNote(ActionResult event) {
         try {
@@ -161,7 +161,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
-     * Creates a new alarm record and returns it.
+     * Creates a new alarm record, adds it to the provider, and returns it.
      */
     protected AlarmRecord createAlarm(AlarmClass alarmClass,
                                       AlarmWatch watch,
@@ -259,7 +259,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
-     * Action handler for getting alarms for a table of alarm uuids.
+     * Action handler for getting a single alarm by UUID.
      */
     private void getAlarm(final ActionResult event) {
         try {
@@ -350,6 +350,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             Calendar calendar = Calendar.getInstance();
             while (cursor.next()) {
                 calendar.setTimeInMillis(cursor.getTimestamp());
+                buf.setLength(0);
                 TimeUtils.encode(calendar, true, buf);
                 table.addRow(
                         Row.make(new Value(buf.toString()), new Value(cursor.getUser()),

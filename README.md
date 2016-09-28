@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Aug 26, 2016
-* Version: 0.2.0
+* Date: Sep 28, 2016
+* Version: 0.2.1
 
 
 Overview
@@ -75,6 +75,11 @@ agreement can be found at: http://www.h2database.com/html/license.html
 
 History
 -------
+_0.2.1 - 2016-9-28_
+  - If a stream such as open alarms was closed and another opened
+    soon afterwards, the new stream would not receive any updates.
+  - Acknowledge all now acks alerts even though they don't require it.
+  
 _0.2.0 - 2016-8-26_
   - Added StringAlgorithm.
   - Boolean algorithms will now evaluate numbers and strings.

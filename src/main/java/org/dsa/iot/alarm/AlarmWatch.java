@@ -71,18 +71,21 @@ public class AlarmWatch extends AbstractAlarmObject
     }
 
     /**
-     * Override hook, called periodically on the entire tree, this does nothing.
+     * Override hook, called periodically on the entire tree; this does nothing.
      */
     protected void execute() {
     }
 
     /**
-     * Gets from the corresponding RoConfig.
+     * Gets from the corresponding property.
      */
     protected AlarmState getAlarmState() {
         return AlarmState.decode(getProperty(ALARM_STATE).getString());
     }
 
+    /**
+     * @return The parent algorithm node.
+     */
     protected AlarmAlgorithm getAlgorithm() {
         if (parentAlgorithm == null) {
             parentAlgorithm = (AlarmAlgorithm) getParent();
@@ -259,7 +262,7 @@ public class AlarmWatch extends AbstractAlarmObject
     }
 
     /**
-     * Sets the corresponding config.
+     * Sets the corresponding property.
      */
     protected void setLastAlarmUuid(UUID uuid) {
         setProperty(LAST_ALARM_RECORD, new Value(uuid.toString()));

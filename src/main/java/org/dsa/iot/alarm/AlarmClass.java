@@ -18,7 +18,7 @@ import java.util.*;
 
 /**
  * An alarm class represents a group of alarms that are related in some way.
- * Alarms can only be created with an alarm class but other alarm lifecycle
+ * Alarms can only be created with an alarm class but some alarm lifecycle
  * operations are handled on the service.
  * <p>
  * The alarm class offers many streams (as actions) for monitoring various states of
@@ -45,14 +45,14 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     private HashSet<AlarmStreamer> allUpdatesListeners = new HashSet<>();
-    private ArrayList<AlarmStreamer> allUpdatesListenerCache = new ArrayList<>();
+    private ArrayList<AlarmStreamer> allUpdatesListenerCache = null;
     private HashSet<AlarmStreamer> escalation1Listeners = new HashSet<>();
-    private ArrayList<AlarmStreamer> escalation1ListenerCache = new ArrayList<>();
+    private ArrayList<AlarmStreamer> escalation1ListenerCache = null;
     private HashSet<AlarmStreamer> escalation2Listeners = new HashSet<>();
-    private ArrayList<AlarmStreamer> escalation2ListenerCache = new ArrayList<>();
+    private ArrayList<AlarmStreamer> escalation2ListenerCache = null;
     private long lastEscalationCheck = System.currentTimeMillis();
     private HashSet<AlarmStreamer> newAlarmListeners = new HashSet<>();
-    private ArrayList<AlarmStreamer> newAlarmListenerCache = new ArrayList<>();
+    private ArrayList<AlarmStreamer> newAlarmListenerCache = null;
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -63,7 +63,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * Acknowledges all open alarms that require acknowledgement.
+     * Action handler for acknowledging all open alarms.
      */
     private void acknowledgeAllOpen(ActionResult event) {
         try {
@@ -74,7 +74,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             Alarming.Provider provider = Alarming.getProvider();
             AlarmCursor cur = Alarming.getProvider().queryOpenAlarms(this);
             while (cur.next()) {
-                if (cur.isAckRequired() && !cur.isAcknowledged()) {
+                if (!cur.isAcknowledged()) {
                     provider.acknowledge(cur.getUuid(),user.getString());
                     AlarmRecord rec = Alarming.getProvider().getAlarm(cur.getUuid());
                     notifyAllUpdates(rec);
@@ -87,7 +87,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     }
 
     /**
-     * Action handler for adding child nodes representing algorithms.
+     * Action handler for adding child algorithm nodes.
      */
     private void addAlgorithm(final ActionResult event) {
         try {
@@ -118,7 +118,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     /**
      * Adds the duration to the calendar and returns it.
      *
-     * @param from  The calendar to add the duration which is also returned.
+     * @param from  The calendar to add the duration, this is also returned.
      * @param days  Number of days to add (not simply 24 hours).
      * @param hours Number of hours to add to the given calendar.
      * @param mins  Number of minutes to add to the given calendar.
@@ -183,7 +183,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     }
 
     /**
-     * Action handler for adding child nodes representing algorithms.
+     * Action handler for creating a new alarm record.
      */
     private void createAlarm(final ActionResult event) {
         if (!isEnabled() || !getService().isEnabled()) {
@@ -246,11 +246,13 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     }
 
     /**
-     * Action handler for getting all open alarms followed by a stream of allUpdatesListeners.
+     * Action handler for getting all open alarms followed by a stream of 
+     * updates.
      */
     private void getOpenAlarms(final ActionResult event) {
         final AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(this);
         AlarmStreamer streamer = new AlarmStreamer(allUpdatesListeners, event, cursor);
+        allUpdatesListenerCache = null;
         AlarmUtil.run(streamer, "Open Alarms");
     }
 
@@ -332,7 +334,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     void notifyAllUpdates(AlarmRecord record) {
         ArrayList<AlarmStreamer> list = allUpdatesListenerCache;
         synchronized (allUpdatesListeners) {
-            if (allUpdatesListeners.size() != list.size()) {
+            if ((list == null) || (list.size() != allUpdatesListeners.size())) {
                 allUpdatesListenerCache = new ArrayList<>();
                 list = allUpdatesListenerCache;
                 list.addAll(allUpdatesListeners);
@@ -351,7 +353,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         AlarmUtil.logInfo("Escalation 1: " + record.getOwner().getNode().getPath());
         ArrayList<AlarmStreamer> list = escalation1ListenerCache;
         synchronized (escalation1Listeners) {
-            if (escalation1Listeners.size() != list.size()) {
+            if ((list == null) || (escalation1Listeners.size() != list.size())) {
                 escalation1ListenerCache = new ArrayList<>();
                 list = escalation1ListenerCache;
                 list.addAll(escalation1Listeners);
@@ -369,7 +371,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         AlarmUtil.logInfo("Escalation 2: " + record.getOwner().getNode().getPath());
         ArrayList<AlarmStreamer> list = escalation2ListenerCache;
         synchronized (escalation2Listeners) {
-            if (escalation2Listeners.size() != list.size()) {
+            if ((list == null) || (escalation2Listeners.size() != list.size())) {
                 escalation2ListenerCache = new ArrayList<>();
                 list = escalation2ListenerCache;
                 list.addAll(escalation2Listeners);
@@ -386,7 +388,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     void notifyNewRecord(AlarmRecord record) {
         ArrayList<AlarmStreamer> list = newAlarmListenerCache;
         synchronized (newAlarmListeners) {
-            if (newAlarmListeners.size() != list.size()) {
+            if ((list == null) || (newAlarmListeners.size() != list.size())) {
                 newAlarmListenerCache = new ArrayList<>();
                 list = newAlarmListenerCache;
                 list.addAll(newAlarmListeners);
@@ -413,6 +415,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
      */
     private void streamEscalation1(final ActionResult event) {
         startStream(event, escalation1Listeners, getNode().getName() + " Escalation 1");
+        escalation1ListenerCache = null;
     }
 
     /**
@@ -420,6 +423,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
      */
     private void streamEscalation2(final ActionResult event) {
         startStream(event, escalation2Listeners, getNode().getName() + " Escalation 2");
+        escalation2ListenerCache = null;
     }
 
     /**
@@ -441,6 +445,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
      */
     private void streamNewAlarms(final ActionResult event) {
         startStream(event, newAlarmListeners, getNode().getName() + " New Alarms");
+        newAlarmListenerCache = null;
     }
 
     ///////////////////////////////////////////////////////////////////////////
