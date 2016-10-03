@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Sep 28, 2016
-* Version: 0.2.1
+* Date: Oct 7, 2016
+* Version: 0.3.0
 
 
 Overview
@@ -20,6 +20,12 @@ can be developed.
 deployed as-is.
 
 To understand link usage, view the [Alarm Link User Guide](https://github.com/IOT-DSA/dslink-java-alarm/blob/master/Alarm-Link-User-Guide.pdf).
+
+
+Requirements
+------------
+
+Java 1.7 or higher is required.
 
 
 Using the Provided Implementations
@@ -75,10 +81,13 @@ agreement can be found at: http://www.h2database.com/html/license.html
 
 History
 -------
-_0.2.1 - 2016-9-28_
+_0.3.0 - 2016-10-03
+  - Now compatible with JDK 1.7
   - If a stream such as open alarms was closed and another opened
     soon afterwards, the new stream would not receive any updates.
   - Acknowledge all now acks alerts even though they don't require it.
+  - Fix property change handlers in algorithms to call super and
+    only react while in the steady state.
   
 _0.2.0 - 2016-8-26_
   - Added StringAlgorithm.

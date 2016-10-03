@@ -40,7 +40,6 @@ public class AlarmWatch extends AbstractAlarmObject
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    //private boolean firstCallback = true;
     private long lastStateTime = System.currentTimeMillis();
     private AlarmAlgorithm parentAlgorithm;
     private String subscribedPath;
@@ -57,8 +56,11 @@ public class AlarmWatch extends AbstractAlarmObject
      * Subscribes to the path.
      */
     @Override protected void doSteady() {
-        //firstCallback = true;
-        AlarmUtil.enqueue(this::subscribePath);
+        AlarmUtil.enqueue(new Runnable() {
+            @Override public void run() {
+                subscribePath();
+            }
+        });
         super.doSteady();
     }
 
@@ -232,7 +234,11 @@ public class AlarmWatch extends AbstractAlarmObject
     @Override protected void onPropertyChange(Node node, ValuePair valuePair) {
         if (isSteady()) {
             if (SOURCE_PATH.equals(node.getName())) {
-                AlarmUtil.enqueue(this::subscribePath);
+                AlarmUtil.enqueue(new Runnable() {
+                    @Override public void run() {
+                        subscribePath();
+                    }
+                });
             }
         }
     }

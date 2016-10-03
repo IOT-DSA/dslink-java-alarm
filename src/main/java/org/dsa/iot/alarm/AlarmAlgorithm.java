@@ -14,6 +14,7 @@ import org.dsa.iot.dslink.node.actions.*;
 import org.dsa.iot.dslink.node.value.*;
 import org.dsa.iot.dslink.util.*;
 import org.dsa.iot.dslink.util.Objects;
+import org.dsa.iot.dslink.util.handler.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -157,7 +158,11 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
     @Override protected void initActions() {
         Node node = getNode();
         //Add Watch
-        Action action = new Action(Permission.WRITE, this::addWatch);
+        Action action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                addWatch(event);
+            }
+        });
         action.addParameter(
                 new Parameter(NAME, ValueType.STRING, new Value("")));
         action.addParameter(
@@ -166,7 +171,11 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         //Delete
         addDeleteAction("Delete Algorithm");
         //Update All
-        action = new Action(Permission.WRITE, this::updateAll);
+        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                updateAll(event);
+            }
+        });
         node.createChild("Update All").setSerializable(false).setAction(action).build();
     }
 

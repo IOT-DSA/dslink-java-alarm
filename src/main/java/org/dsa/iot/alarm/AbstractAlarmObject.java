@@ -11,6 +11,7 @@ package org.dsa.iot.alarm;
 import org.dsa.iot.dslink.node.*;
 import org.dsa.iot.dslink.node.actions.*;
 import org.dsa.iot.dslink.node.value.*;
+import org.dsa.iot.dslink.util.handler.*;
 import java.util.*;
 
 /**
@@ -65,7 +66,11 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * @param actionName Node name for the action.
      */
     public void addDeleteAction(String actionName) {
-        Action action = new Action(Permission.WRITE, p -> deleteSelf());
+        Action action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                deleteSelf();
+            }
+        });
         node.createChild(actionName).setSerializable(false).setAction(action).build();
     }
 
@@ -281,7 +286,11 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
         child.setHasChildren(false);
         final Node tmp = child;
-        child.getListener().setValueHandler(p -> onPropertyChange(tmp, p));
+        child.getListener().setValueHandler(new Handler<ValuePair>() {
+            @Override public void handle(ValuePair event) {
+                onPropertyChange(tmp,event);
+            }
+        });
         return child;
     }
 

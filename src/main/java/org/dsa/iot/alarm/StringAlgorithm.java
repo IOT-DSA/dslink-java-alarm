@@ -79,12 +79,14 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
     }
 
     @Override protected void onPropertyChange(Node child, ValuePair valuePair) {
-        if (ALARM_VALUE.equals(child.getName())) {
-            AlarmUtil.enqueue(this);
+        if (isSteady()) {
+            if (ALARM_VALUE.equals(child.getName())) {
+                AlarmUtil.enqueue(this);
+            } else if (ALARM_VALUE_MODE.equals(child.getName())) {
+                AlarmUtil.enqueue(this);
+            }
         }
-        if (ALARM_VALUE_MODE.equals(child.getName())) {
-            AlarmUtil.enqueue(this);
-        }
+        super.onPropertyChange(child, valuePair);
     }
 
 }
