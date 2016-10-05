@@ -40,7 +40,6 @@ public class AlarmWatch extends AbstractAlarmObject
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    //private boolean firstCallback = true;
     private long lastStateTime = System.currentTimeMillis();
     private AlarmAlgorithm parentAlgorithm;
     private String subscribedPath;
@@ -57,8 +56,11 @@ public class AlarmWatch extends AbstractAlarmObject
      * Subscribes to the path.
      */
     @Override protected void doSteady() {
-        //firstCallback = true;
-        AlarmUtil.enqueue(this::subscribePath);
+        AlarmUtil.enqueue(new Runnable() {
+            @Override public void run() {
+                subscribePath();
+            }
+        });
         super.doSteady();
     }
 
@@ -71,18 +73,21 @@ public class AlarmWatch extends AbstractAlarmObject
     }
 
     /**
-     * Override hook, called periodically on the entire tree, this does nothing.
+     * Override hook, called periodically on the entire tree; this does nothing.
      */
     protected void execute() {
     }
 
     /**
-     * Gets from the corresponding RoConfig.
+     * Gets from the corresponding property.
      */
     protected AlarmState getAlarmState() {
         return AlarmState.decode(getProperty(ALARM_STATE).getString());
     }
 
+    /**
+     * @return The parent algorithm node.
+     */
     protected AlarmAlgorithm getAlgorithm() {
         if (parentAlgorithm == null) {
             parentAlgorithm = (AlarmAlgorithm) getParent();
@@ -229,7 +234,11 @@ public class AlarmWatch extends AbstractAlarmObject
     @Override protected void onPropertyChange(Node node, ValuePair valuePair) {
         if (isSteady()) {
             if (SOURCE_PATH.equals(node.getName())) {
-                AlarmUtil.enqueue(this::subscribePath);
+                AlarmUtil.enqueue(new Runnable() {
+                    @Override public void run() {
+                        subscribePath();
+                    }
+                });
             }
         }
     }
@@ -259,7 +268,7 @@ public class AlarmWatch extends AbstractAlarmObject
     }
 
     /**
-     * Sets the corresponding config.
+     * Sets the corresponding property.
      */
     protected void setLastAlarmUuid(UUID uuid) {
         setProperty(LAST_ALARM_RECORD, new Value(uuid.toString()));

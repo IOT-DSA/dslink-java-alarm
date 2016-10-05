@@ -105,9 +105,12 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
     }
 
     @Override protected void onPropertyChange(Node child, ValuePair valuePair) {
-        if (ALARM_VALUE.equals(child.getName())) {
-            AlarmUtil.enqueue(this);
+        if (isSteady()) {
+            if (ALARM_VALUE.equals(child.getName())) {
+                AlarmUtil.enqueue(this);
+            }
         }
+        super.onPropertyChange(child,valuePair);
     }
 
 }

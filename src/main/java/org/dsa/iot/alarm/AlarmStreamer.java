@@ -41,8 +41,8 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * Will set this as the close handler on the given request and will add and
-     * remove itself from the given listenerContainer.
+     * Will set this as the close handler on the given request and will add/remove
+     * itself from the given listenerContainer.
      *
      * @param listenerContainer  Optional, where to add and remove this instance.  If
      *                           this is null, then no updates will be sent (ie only the
@@ -71,16 +71,16 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * Force close the stream.
+     * Force closes the stream.
      */
     public void close() {
         closedLocally = true;
     }
 
     /**
-     * Does not return until there is a record, or the stream is closedLocally.
+     * Does not return until there is a record, or the stream is closed.
      *
-     * @return Possibly null if the stream is closedLocally.
+     * @return Possibly null if the stream is closed.
      */
     public AlarmRecord getNextUpdate() {
         synchronized (updates) {
@@ -112,8 +112,8 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     }
 
     /**
-     * Sends the initial set of alarms if not null, then sends updates until the
-     * stream is closedLocally.
+     * Sends the initial set of alarms (if not null), then sends updates until the
+     * stream is closed.
      */
     public void run() {
         table.waitForStream(WAIT_FOR_STREAM, true);
@@ -158,7 +158,8 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     }
 
     /**
-     * Adds a record to the update queue.  Do not a record cursor.
+     * Adds a record to the update queue.
+     * @param record Do not use an AlarmCursor.
      */
     public void update(AlarmRecord record) {
         if (isValid()) {

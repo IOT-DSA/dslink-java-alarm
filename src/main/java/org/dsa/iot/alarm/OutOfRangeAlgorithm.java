@@ -65,12 +65,15 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
     }
 
     @Override protected void onPropertyChange(Node child, ValuePair valuePair) {
-        String name = child.getName();
-        if (name.equals(MIN_VALUE)) {
-            AlarmUtil.enqueue(this);
-        } else if (name.equals(MIN_VALUE)) {
-            AlarmUtil.enqueue(this);
+        if (isSteady()) {
+            String name = child.getName();
+            if (name.equals(MAX_VALUE)) {
+                AlarmUtil.enqueue(this);
+            } else if (name.equals(MIN_VALUE)) {
+                AlarmUtil.enqueue(this);
+            }
         }
+        super.onPropertyChange(child,valuePair);
     }
 
 }

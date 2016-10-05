@@ -15,6 +15,7 @@ import org.dsa.iot.dslink.node.actions.table.*;
 import org.dsa.iot.dslink.node.value.*;
 import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.dslink.util.*;
+import org.dsa.iot.dslink.util.handler.*;
 import org.dsa.iot.dslink.util.log.*;
 import sun.reflect.generics.reflectiveObjects.*;
 import java.util.*;
@@ -55,7 +56,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * Action handler for getting alarms for a table of alarm uuids.
+     * Action handler for acknowledging a single alarm by UUID.
      */
     private void acknowledge(ActionResult event) {
         try {
@@ -78,7 +79,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
-     * Acknowledges all open alarms that require acknowledgement.
+     * Action handler for Acknowledging all open alarms of all alarm classes.
      */
     private void acknowledgeAllOpen(ActionResult event) {
         try {
@@ -89,7 +90,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             Alarming.Provider provider = Alarming.getProvider();
             AlarmCursor cur = Alarming.getProvider().queryOpenAlarms(null);
             while (cur.next()) {
-                if (cur.isAckRequired() && !cur.isAcknowledged()) {
+                if (!cur.isAcknowledged()) {
                     provider.acknowledge(cur.getUuid(),user.getString());
                     AlarmRecord rec = Alarming.getProvider().getAlarm(cur.getUuid());
                     rec.getAlarmClass().notifyAllUpdates(rec);
@@ -129,7 +130,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
-     * Action handler for getting alarms for a table of alarm uuids.
+     * Action handler for adding a note to a specific alarm record.
      */
     private void addNote(ActionResult event) {
         try {
@@ -161,7 +162,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
-     * Creates a new alarm record and returns it.
+     * Creates a new alarm record, adds it to the provider, and returns it.
      */
     protected AlarmRecord createAlarm(AlarmClass alarmClass,
                                       AlarmWatch watch,
@@ -212,8 +213,12 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
      */
     @Override protected void doSteady() {
         try {
-            executeFuture = Objects.getDaemonThreadPool()
-                    .scheduleAtFixedRate(this::execute, 10, 10, TimeUnit.SECONDS);
+            executeFuture = Objects.getDaemonThreadPool().scheduleAtFixedRate(
+                    new Runnable() {
+                        @Override public void run() {
+                            execute();
+                        }
+                    }, 10, 10, TimeUnit.SECONDS);
             Alarming.getProvider().start(this);
         } catch (Exception x) {
             AlarmUtil.logError("Starting provider",x);
@@ -259,7 +264,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
-     * Action handler for getting alarms for a table of alarm uuids.
+     * Action handler for getting a single alarm by UUID.
      */
     private void getAlarm(final ActionResult event) {
         try {
@@ -350,6 +355,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             Calendar calendar = Calendar.getInstance();
             while (cursor.next()) {
                 calendar.setTimeInMillis(cursor.getTimestamp());
+                buf.setLength(0);
                 TimeUtils.encode(calendar, true, buf);
                 table.addRow(
                         Row.make(new Value(buf.toString()), new Value(cursor.getUser()),
@@ -377,47 +383,78 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
      */
     @Override protected void initActions() {
         //Acknowledge
-        Action action = new Action(Permission.WRITE, this::acknowledge);
+        Action action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                acknowledge(event);
+            }
+        });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         action.addParameter(new Parameter(USER, ValueType.STRING));
         getNode().createChild("Acknowledge").setSerializable(false).setAction(action)
                 .build();
         //Acknowledge All
-        action = new Action(Permission.READ, this::acknowledgeAllOpen);
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                acknowledgeAllOpen(event);
+            }
+        });
         action.addParameter(new Parameter(USER, ValueType.STRING));
         getNode().createChild(ACKNOWLEDGE_ALL).setSerializable(false)
                 .setAction(action).build();
         //Add Alarm Class action
-        action = new Action(Permission.WRITE, this::addAlarmClass);
+        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                addAlarmClass(event);
+            }
+        });
         action.addParameter(new Parameter(NAME, ValueType.STRING));
         getNode().createChild("Add Alarm Class").setSerializable(false).setAction(action)
                 .build();
         //Add Note
-        action = new Action(Permission.WRITE, this::addNote);
+        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                addNote(event);
+            }
+        });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         action.addParameter(new Parameter(USER, ValueType.STRING));
         action.addParameter(new Parameter(NOTE, ValueType.STRING));
         getNode().createChild("Add Note").setSerializable(false).setAction(action)
                 .build();
         //Delete All Records action
-        action = new Action(Permission.WRITE,
-                            (p) -> Alarming.getProvider().deleteAllRecords());
+        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                Alarming.getProvider().deleteAllRecords();
+            }
+        });
         getNode().createChild("Delete All Records").setSerializable(false).setAction(
                 action).build();
         //Delete Record
-        action = new Action(Permission.WRITE, this::deleteRecord);
+        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                deleteRecord(event);
+            }
+        });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         getNode().createChild("Delete Record").setSerializable(false).setAction(action)
                 .build();
         //Get Alarm
-        action = new Action(Permission.READ, this::getAlarm);
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                getAlarm(event);
+            }
+        });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         action.setResultType(ResultType.TABLE);
         AlarmUtil.encodeAlarmColumns(action);
         getNode().createChild("Get Alarm").setSerializable(false).setAction(action)
                 .build();
         //Get Alarms
-        action = new Action(Permission.READ, this::getAlarms);
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                getAlarms(event);
+            }
+        });
         action.addParameter(
                 new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
                         .setEditorType(EditorType.DATE_RANGE));
@@ -426,13 +463,21 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         getNode().createChild("Get Alarms").setSerializable(false).setAction(action)
                 .build();
         //Get Open Alarms
-        action = new Action(Permission.READ, this::getOpenAlarms);
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                getOpenAlarms(event);
+            }
+        });
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         getNode().createChild("Get Open Alarms").setSerializable(false).setAction(action)
                 .build();
         //Get Notes
-        action = new Action(Permission.READ, this::getNotes);
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                getNotes(event);
+            }
+        });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         action.setResultType(ResultType.TABLE);
         action.addResult(new Parameter(TIMESTAMP, ValueType.STRING));
@@ -441,7 +486,11 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         getNode().createChild("Get Notes").setSerializable(false).setAction(action)
                 .build();
         //Return To Normal
-        action = new Action(Permission.WRITE, this::returnToNormal);
+        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override public void handle(ActionResult event) {
+                returnToNormal(event);
+            }
+        });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         getNode().createChild("Return To Normal").setSerializable(false).setAction(action)
                 .build();

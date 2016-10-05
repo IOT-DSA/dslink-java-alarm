@@ -64,14 +64,17 @@ public class StaleAlgorithm extends AlarmAlgorithm {
     }
 
     @Override protected void onPropertyChange(Node node, ValuePair valuePair) {
-        String name = node.getName();
-        if (name.equals(STALE_DAYS)) {
-            AlarmUtil.enqueue(this);
-        } else if (name.equals(STALE_HOURS)) {
-            AlarmUtil.enqueue(this);
-        } else if (name.equals(STALE_MINUTES)) {
-            AlarmUtil.enqueue(this);
+        if (isSteady()) {
+            String name = node.getName();
+            if (name.equals(STALE_DAYS)) {
+                AlarmUtil.enqueue(this);
+            } else if (name.equals(STALE_HOURS)) {
+                AlarmUtil.enqueue(this);
+            } else if (name.equals(STALE_MINUTES)) {
+                AlarmUtil.enqueue(this);
+            }
         }
+        super.onPropertyChange(node, valuePair);
     }
 
 }
