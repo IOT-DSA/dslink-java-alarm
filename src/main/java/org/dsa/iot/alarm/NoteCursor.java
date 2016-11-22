@@ -8,7 +8,7 @@
 
 package org.dsa.iot.alarm;
 
-import java.util.*;
+import java.util.UUID;
 
 /**
  * A cursor for the notes of a specific alarm record.  Initially positioned before the

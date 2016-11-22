@@ -8,16 +8,20 @@
 
 package org.dsa.iot.alarm;
 
-import edu.umd.cs.findbugs.annotations.*;
-import org.dsa.iot.dslink.node.*;
-import org.dsa.iot.dslink.node.actions.*;
-import org.dsa.iot.dslink.node.actions.table.*;
-import org.dsa.iot.dslink.node.value.*;
+import java.util.Calendar;
+import java.util.concurrent.Callable;
+import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.actions.Action;
+import org.dsa.iot.dslink.node.actions.Parameter;
+import org.dsa.iot.dslink.node.actions.table.Row;
+import org.dsa.iot.dslink.node.actions.table.Table;
+import org.dsa.iot.dslink.node.value.Value;
+import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.Objects;
-import org.dsa.iot.dslink.util.*;
-import org.slf4j.*;
-import java.util.*;
-import java.util.concurrent.*;
+import org.dsa.iot.dslink.util.TimeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Misc utilities.
@@ -59,7 +63,7 @@ public class AlarmUtil implements AlarmConstants {
      * @param cacheBuf Optional but efficient if encoding many rows at once.
      */
     public static void encodeAlarm(AlarmRecord record, Table table, Calendar cacheCal,
-            StringBuilder cacheBuf) {
+                                   StringBuilder cacheBuf) {
         if (cacheBuf == null) {
             cacheBuf = new StringBuilder();
         }
@@ -137,22 +141,30 @@ public class AlarmUtil implements AlarmConstants {
         Objects.getDaemonThreadPool().submit(runnable);
     }
 
-    /** Abstracts the implementation as that is likely to change in the future. */
+    /**
+     * Abstracts the implementation as that is likely to change in the future.
+     */
     public static void logError(String msg, Throwable x) {
-        LOG.error(msg,x);
+        LOG.error(msg, x);
     }
 
-    /** Abstracts the implementation as that is likely to change in the future. */
+    /**
+     * Abstracts the implementation as that is likely to change in the future.
+     */
     public static void logInfo(String msg) {
         LOG.info(msg);
     }
 
-    /** Abstracts the implementation as that is likely to change in the future. */
+    /**
+     * Abstracts the implementation as that is likely to change in the future.
+     */
     public static void logTrace(String msg) {
         LOG.trace(msg);
     }
 
-    /** Abstracts the implementation as that is likely to change in the future. */
+    /**
+     * Abstracts the implementation as that is likely to change in the future.
+     */
     public static void logWarning(String msg) {
         LOG.warn(msg);
     }

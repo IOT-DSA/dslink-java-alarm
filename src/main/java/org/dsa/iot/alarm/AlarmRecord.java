@@ -8,7 +8,7 @@
 
 package org.dsa.iot.alarm;
 
-import java.util.*;
+import java.util.UUID;
 
 /**
  * Represents the details of a unique event.
@@ -116,6 +116,7 @@ public class AlarmRecord {
 
     /**
      * The alarm watch responsible for the alarm, or null.
+     *
      * @return Possibly null.
      */
     public AlarmWatch getAlarmWatch() {
@@ -124,6 +125,7 @@ public class AlarmRecord {
 
     /**
      * The alarm watch responsible for the alarm, or null.
+     *
      * @return Possibly null.
      */
     public AlarmRecord setAlarmWatch(AlarmWatch watch) {
@@ -195,7 +197,7 @@ public class AlarmRecord {
         return this;
     }
 
-   /**
+    /**
      * The path to the alarmable entity.
      */
     public String getSourcePath() {

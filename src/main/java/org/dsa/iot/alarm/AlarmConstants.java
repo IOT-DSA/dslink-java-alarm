@@ -8,7 +8,7 @@
 
 package org.dsa.iot.alarm;
 
-import org.dsa.iot.dslink.node.value.*;
+import org.dsa.iot.dslink.node.value.ValueType;
 
 /**
  * Common constants.  Names used in multiple files should be here.  Names used multiple
@@ -56,7 +56,7 @@ public interface AlarmConstants {
 
     ValueType ENUM_ALARM_TYPE = ValueType.makeEnum(ALERT, FAULT, OFFNORMAL);
 
-    ValueType ENUM_LOG_LEVEL = ValueType.makeEnum("trace","info","warn","error");
+    ValueType ENUM_LOG_LEVEL = ValueType.makeEnum("trace", "info", "warn", "error");
 
     ///////////////////////////////////////////////////////////////////////////
     // Tuning

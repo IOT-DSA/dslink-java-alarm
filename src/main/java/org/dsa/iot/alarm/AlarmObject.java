@@ -8,7 +8,7 @@
 
 package org.dsa.iot.alarm;
 
-import org.dsa.iot.dslink.node.*;
+import org.dsa.iot.dslink.node.Node;
 
 /**
  * The alarm link is a hierarchy of AlarmObjects that proxy the SDK node hierarchy.

@@ -8,13 +8,17 @@
 
 package org.dsa.iot.alarm;
 
-import org.dsa.iot.dslink.*;
-import org.dsa.iot.dslink.link.*;
-import org.dsa.iot.dslink.node.*;
-import org.dsa.iot.dslink.node.value.*;
-import org.dsa.iot.dslink.util.*;
-import org.dsa.iot.dslink.util.handler.*;
-import java.util.*;
+import java.util.Calendar;
+import java.util.UUID;
+import org.dsa.iot.dslink.DSLink;
+import org.dsa.iot.dslink.link.Requester;
+import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.Writable;
+import org.dsa.iot.dslink.node.value.SubscriptionValue;
+import org.dsa.iot.dslink.node.value.Value;
+import org.dsa.iot.dslink.node.value.ValuePair;
+import org.dsa.iot.dslink.util.TimeUtils;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 /**
  * Represents an alarm source that an algorithm will monitor for alarm conditions.
@@ -55,9 +59,11 @@ public class AlarmWatch extends AbstractAlarmObject
     /**
      * Subscribes to the path.
      */
-    @Override protected void doSteady() {
+    @Override
+    protected void doSteady() {
         AlarmUtil.enqueue(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 subscribePath();
             }
         });
@@ -67,7 +73,8 @@ public class AlarmWatch extends AbstractAlarmObject
     /**
      * Un-subscribes the path.
      */
-    @Override protected void doStop() {
+    @Override
+    protected void doStop() {
         unsubscribePath();
         parentAlgorithm = null;
     }
@@ -185,34 +192,37 @@ public class AlarmWatch extends AbstractAlarmObject
             if (value != null) {
                 Value curVal = getCurrentValue();
                 if (curVal == null) {
-                    initProperty(CURRENT_VALUE,value).setWritable(Writable.NEVER);
+                    initProperty(CURRENT_VALUE, value).setWritable(Writable.NEVER);
                 } else {
                     if (curVal.getType() != subValue.getValue().getType()) {
                         Node child = getNode().getChild(CURRENT_VALUE);
                         child.setValueType(subValue.getValue().getType());
                     }
-                    setProperty(CURRENT_VALUE,value);
+                    setProperty(CURRENT_VALUE, value);
                 }
             }
             if (isValid()) {
                 AlarmUtil.enqueue(this);
             }
         } catch (Exception x) {
-            AlarmUtil.logError(getNode().getPath(),x);
+            AlarmUtil.logError(getNode().getPath(), x);
         }
     }
 
     /**
      * Adds the necessary data to the alarm service node.
      */
-    @Override protected void initActions() {
+    @Override
+    protected void initActions() {
         addDeleteAction("Delete Watch");
     }
 
     /**
      * Adds the necessary data to the alarm service node.
      */
-    @Override protected void initData() {
+    @Override
+    protected void initData() {
+        initAttribute("icon", new Value("watch.png"));
         initProperty(ENABLED, new Value(true));
         initProperty(SOURCE_PATH, new Value("")).setWritable(Writable.NEVER);
         initProperty(ALARM_STATE, new Value(NORMAL)).setWritable(Writable.NEVER);
@@ -231,11 +241,13 @@ public class AlarmWatch extends AbstractAlarmObject
         initProperty(LAST_COV, new Value("null")).setWritable(Writable.NEVER);
     }
 
-    @Override protected void onPropertyChange(Node node, ValuePair valuePair) {
+    @Override
+    protected void onPropertyChange(Node node, ValuePair valuePair) {
         if (isSteady()) {
             if (SOURCE_PATH.equals(node.getName())) {
                 AlarmUtil.enqueue(new Runnable() {
-                    @Override public void run() {
+                    @Override
+                    public void run() {
                         subscribePath();
                     }
                 });
@@ -246,7 +258,8 @@ public class AlarmWatch extends AbstractAlarmObject
     /**
      * Used to call AlarmAlgorithm.update asynchronously.
      */
-    @Override public void run() {
+    @Override
+    public void run() {
         getAlgorithm().update(this);
     }
 
@@ -263,7 +276,7 @@ public class AlarmWatch extends AbstractAlarmObject
         lastStateTime = System.currentTimeMillis();
         Calendar cal = AlarmUtil.getCalendar(lastStateTime);
         setProperty(ALARM_STATE_TIME,
-                              new Value(TimeUtils.encode(cal, true, null).toString()));
+                    new Value(TimeUtils.encode(cal, true, null).toString()));
         AlarmUtil.recycle(cal);
     }
 
@@ -290,7 +303,7 @@ public class AlarmWatch extends AbstractAlarmObject
             Requester requester = getRequester();
             requester.subscribe(subscribedPath, this);
         } catch (Exception x) {
-            AlarmUtil.logError(getNode().getPath(),x);
+            AlarmUtil.logError(getNode().getPath(), x);
         }
         /* This will probably change to on alarm, but it's complex...
         //Add @@alarm to source
@@ -316,9 +329,8 @@ public class AlarmWatch extends AbstractAlarmObject
                 getRequester().unsubscribe(subscribedPath, null);
                 subscribedPath = null;
             }
-        }
-        catch (Exception x) {
-            AlarmUtil.logError(getNode().getPath(),x);
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(), x);
         }
     }
 

@@ -8,8 +8,10 @@
 
 package org.dsa.iot.alarm;
 
-import org.dsa.iot.dslink.node.*;
-import org.dsa.iot.dslink.node.value.*;
+import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.Writable;
+import org.dsa.iot.dslink.node.value.Value;
+import org.dsa.iot.dslink.node.value.ValuePair;
 
 /**
  * This algorithm creates alarms when boolean data sources turn true.  This will allow
@@ -37,16 +39,19 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override protected String getAlarmMessage(AlarmWatch watch) {
+    @Override
+    protected String getAlarmMessage(AlarmWatch watch) {
         return "Value = " + watch.getCurrentValue().toString();
     }
 
-    @Override protected void initData() {
+    @Override
+    protected void initData() {
         super.initData();
         initProperty(ALARM_VALUE, new Value(true)).setWritable(Writable.CONFIG);
     }
 
-    @Override protected boolean isAlarm(AlarmWatch watch) {
+    @Override
+    protected boolean isAlarm(AlarmWatch watch) {
         Value currentValue = watch.getCurrentValue();
         if (currentValue != null) {
             Boolean alarmValue = getProperty(ALARM_VALUE).getBool();
@@ -104,13 +109,14 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
         return false;
     }
 
-    @Override protected void onPropertyChange(Node child, ValuePair valuePair) {
+    @Override
+    protected void onPropertyChange(Node child, ValuePair valuePair) {
         if (isSteady()) {
             if (ALARM_VALUE.equals(child.getName())) {
                 AlarmUtil.enqueue(this);
             }
         }
-        super.onPropertyChange(child,valuePair);
+        super.onPropertyChange(child, valuePair);
     }
 
 }

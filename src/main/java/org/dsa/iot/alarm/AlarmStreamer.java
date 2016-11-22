@@ -8,10 +8,11 @@
 
 package org.dsa.iot.alarm;
 
-import org.dsa.iot.dslink.methods.*;
-import org.dsa.iot.dslink.node.actions.*;
-import org.dsa.iot.dslink.node.actions.table.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import org.dsa.iot.dslink.methods.StreamState;
+import org.dsa.iot.dslink.node.actions.ActionResult;
+import org.dsa.iot.dslink.node.actions.table.Table;
 
 /**
  * Action handler for sending a stream of alarms.  There can be an initial set to
@@ -44,10 +45,10 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
      * Will set this as the close handler on the given request and will add/remove
      * itself from the given listenerContainer.
      *
-     * @param listenerContainer  Optional, where to add and remove this instance.  If
-     *                           this is null, then no updates will be sent (ie only the
-     *                           initial set will be sent).
-     * @param initialSet Optional, initial table to send.
+     * @param listenerContainer Optional, where to add and remove this instance.  If
+     *                          this is null, then no updates will be sent (ie only the
+     *                          initial set will be sent).
+     * @param initialSet        Optional, initial table to send.
      */
     public AlarmStreamer(Collection listenerContainer, ActionResult request,
                          AlarmCursor initialSet) {
@@ -159,6 +160,7 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
 
     /**
      * Adds a record to the update queue.
+     *
      * @param record Do not use an AlarmCursor.
      */
     public void update(AlarmRecord record) {

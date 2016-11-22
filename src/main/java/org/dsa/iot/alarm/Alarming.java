@@ -8,7 +8,9 @@
 
 package org.dsa.iot.alarm;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Each alarm link will implement its own Alarming.Provider and set that instance here.
@@ -139,8 +141,8 @@ public class Alarming {
          * updates.
          *
          * @param alarmClass If null, return all alarm classes.
-         * @param from Inclusive start time, can be null.
-         * @param to   First excluded end time, can be null.
+         * @param from       Inclusive start time, can be null.
+         * @param to         First excluded end time, can be null.
          */
         public AlarmCursor queryAlarms(AlarmClass alarmClass, Calendar from, Calendar to);
 

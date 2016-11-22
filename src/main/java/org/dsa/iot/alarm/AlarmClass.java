@@ -8,14 +8,20 @@
 
 package org.dsa.iot.alarm;
 
-import org.dsa.iot.dslink.methods.*;
-import org.dsa.iot.dslink.node.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
+import org.dsa.iot.dslink.methods.StreamState;
+import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.Permission;
+import org.dsa.iot.dslink.node.Writable;
 import org.dsa.iot.dslink.node.actions.*;
-import org.dsa.iot.dslink.node.actions.table.*;
-import org.dsa.iot.dslink.node.value.*;
-import org.dsa.iot.dslink.util.*;
-import org.dsa.iot.dslink.util.handler.*;
-import java.util.*;
+import org.dsa.iot.dslink.node.actions.table.Table;
+import org.dsa.iot.dslink.node.value.Value;
+import org.dsa.iot.dslink.node.value.ValueType;
+import org.dsa.iot.dslink.util.TimeUtils;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 /**
  * An alarm class represents a group of alarms that are related in some way.
@@ -76,13 +82,13 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             AlarmCursor cur = Alarming.getProvider().queryOpenAlarms(this);
             while (cur.next()) {
                 if (!cur.isAcknowledged()) {
-                    provider.acknowledge(cur.getUuid(),user.getString());
+                    provider.acknowledge(cur.getUuid(), user.getString());
                     AlarmRecord rec = Alarming.getProvider().getAlarm(cur.getUuid());
                     notifyAllUpdates(rec);
                 }
             }
         } catch (Exception x) {
-            AlarmUtil.logError(getNode().getPath(),x);
+            AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
         }
     }
@@ -247,7 +253,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     }
 
     /**
-     * Action handler for getting all open alarms followed by a stream of 
+     * Action handler for getting all open alarms followed by a stream of
      * updates.
      */
     private void getOpenAlarms(final ActionResult event) {
@@ -257,20 +263,23 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         AlarmUtil.run(streamer, "Open Alarms");
     }
 
-    @Override protected void initActions() {
+    @Override
+    protected void initActions() {
         //Acknowledge All
         Action action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override public void handle(ActionResult event) {
+            @Override
+            public void handle(ActionResult event) {
                 acknowledgeAllOpen(event);
             }
         });
         action.addParameter(new Parameter(USER, ValueType.STRING));
         getNode().createChild(ACKNOWLEDGE_ALL).setSerializable(false)
-                .setAction(action).build();
+                 .setAction(action).build();
         //Add Algorithm
         Node node = getNode();
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
-            @Override public void handle(ActionResult event) {
+            @Override
+            public void handle(ActionResult event) {
                 addAlgorithm(event);
             }
         });
@@ -280,10 +289,11 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         action.addParameter(new Parameter(TYPE, ValueType.makeEnum(algos),
                                           new Value(algos.iterator().next())));
         node.createChild("Add Algorithm").setSerializable(false).setAction(action)
-                .build();
+            .build();
         //Create Alarm action
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
-            @Override public void handle(ActionResult event) {
+            @Override
+            public void handle(ActionResult event) {
                 createAlarm(event);
             }
         });
@@ -298,7 +308,8 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         node.createChild(CREATE_ALARM).setSerializable(false).setAction(action).build();
         //Get Alarms
         action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override public void handle(ActionResult event) {
+            @Override
+            public void handle(ActionResult event) {
                 getAlarms(event);
             }
         });
@@ -310,48 +321,54 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         node.createChild("Get Alarms").setSerializable(false).setAction(action).build();
         //Get Open Alarms
         action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override public void handle(ActionResult event) {
+            @Override
+            public void handle(ActionResult event) {
                 getOpenAlarms(event);
             }
         });
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         node.createChild("Get Open Alarms").setSerializable(false).setAction(action)
-                .build();
+            .build();
         //Stream Escalation 1
         action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override public void handle(ActionResult event) {
+            @Override
+            public void handle(ActionResult event) {
                 streamEscalation1(event);
             }
         });
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         node.createChild("Stream Escalation 1").setSerializable(false).setAction(action)
-                .build();
+            .build();
         //Stream Escalation 2
         action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override public void handle(ActionResult event) {
+            @Override
+            public void handle(ActionResult event) {
                 streamEscalation2(event);
             }
         });
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         node.createChild("Stream Escalation 2").setSerializable(false).setAction(action)
-                .build();
+            .build();
         //Stream New Alarms
         action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override public void handle(ActionResult event) {
+            @Override
+            public void handle(ActionResult event) {
                 streamNewAlarms(event);
             }
         });
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         node.createChild("Stream New Alarms").setSerializable(false).setAction(action)
-                .build();
+            .build();
         addDeleteAction("Delete Alarm Class");
     }
 
-    @Override protected void initData() {
+    @Override
+    protected void initData() {
+        initAttribute("icon", new Value("class.png"));
         initProperty(ENABLED, new Value(true)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION1_DYS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION1_HRS, new Value(0)).setWritable(Writable.CONFIG);

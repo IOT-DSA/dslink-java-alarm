@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Oct 7, 2016
-* Version: 0.3.0
+* Date: Nov 22, 2016
+* Version: 0.4.0
 
 
 Overview
@@ -32,7 +32,7 @@ Using the Provided Implementations
 ----------------------------------
 
 To use an implementation, one has the change the handler_class in
-dslink.json.
+dslink.json and/or the main class used to launch your application.
 
 The provided implementations are:
 * org.dsa.iot.alarm.jdbc.H2Main - Uses an embedded instance of the H2
@@ -70,18 +70,27 @@ public static void main(String[] args) {
 ```
 
 
-Attributions
-------------
-This software contains unmodified binary redistributions for H2 database 
-engine (http://www.h2database.com/), which is dual licensed and 
-available under the MPL 2.0 (Mozilla Public License) or under the 
+Acknowledgements
+----------------
+_H2 Database_
+This software contains unmodified binary redistributions for [H2 
+database engine](http://www.h2database.com/), which is dual licensed 
+and available under the MPL 2.0 (Mozilla Public License) or under the 
 EPL 1.0 (Eclipse Public License). An original copy of the license 
 agreement can be found at: http://www.h2database.com/html/license.html
 
+_Silk Icons_
+This software uses icons from Silk Icons 1.3 created by 
+[Mark James](http://www.famfamfam.com/lab/icons/silk/) and licensed 
+under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/licenses/by/2.5/).
 
 History
 -------
-_0.3.0 - 2016-10-03
+_0.4.0 - 2016-11-22
+  - Update SDK dependency.
+  - Added icons.
+  
+_0.3.0 - 2016-10-03_
   - Now compatible with JDK 1.7
   - If a stream such as open alarms was closed and another opened
     soon afterwards, the new stream would not receive any updates.

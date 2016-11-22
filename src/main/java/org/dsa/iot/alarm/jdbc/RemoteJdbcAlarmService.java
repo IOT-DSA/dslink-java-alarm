@@ -8,10 +8,12 @@
 
 package org.dsa.iot.alarm.jdbc;
 
-import org.dsa.iot.alarm.*;
-import org.dsa.iot.dslink.node.*;
-import org.dsa.iot.dslink.node.value.*;
-import org.slf4j.*;
+import org.dsa.iot.alarm.AlarmService;
+import org.dsa.iot.alarm.AlarmUtil;
+import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.Writable;
+import org.dsa.iot.dslink.node.value.Value;
+import org.dsa.iot.dslink.node.value.ValuePair;
 
 /**
  * {@inheritDoc} <p/>
@@ -43,7 +45,8 @@ public class RemoteJdbcAlarmService extends AlarmService {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override public void doStart() {
+    @Override
+    public void doStart() {
         loadDriverClass();
         super.doStart();
     }
@@ -64,7 +67,8 @@ public class RemoteJdbcAlarmService extends AlarmService {
         return getProperty(JDBC_DRIVER).getString();
     }
 
-    @Override protected void initData() {
+    @Override
+    protected void initData() {
         super.initData();
         initProperty(JDBC_DRIVER, new Value("com.driver.ClassName"))
                 .setWritable(Writable.CONFIG);
@@ -85,12 +89,13 @@ public class RemoteJdbcAlarmService extends AlarmService {
             try {
                 Class.forName(className);
             } catch (Exception x) {
-                AlarmUtil.logError("Cannot load JDBC driver",x);
+                AlarmUtil.logError("Cannot load JDBC driver", x);
             }
         }
     }
 
-    @Override protected void onPropertyChange(Node node, ValuePair valuePair) {
+    @Override
+    protected void onPropertyChange(Node node, ValuePair valuePair) {
         if (JDBC_DRIVER.equals(node.getName())) {
             loadDriverClass();
         }

@@ -8,10 +8,11 @@
 
 package org.dsa.iot.alarm.jdbc;
 
-import edu.umd.cs.findbugs.annotations.*;
-import org.dsa.iot.alarm.*;
 import java.sql.*;
-import java.util.*;
+import java.util.Calendar;
+import java.util.UUID;
+import org.dsa.iot.alarm.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Alarming provider that uses a JDBC data source.  This uses a fixed schema, but
@@ -61,7 +62,8 @@ public abstract class JdbcProvider extends AbstractProvider {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override public void addAlarm(final AlarmRecord arg) {
+    @Override
+    public void addAlarm(final AlarmRecord arg) {
         Connection conn = null;
         PreparedStatement stmt = null;
         try {
@@ -106,14 +108,15 @@ public abstract class JdbcProvider extends AbstractProvider {
         }
     }
 
-    @Override protected synchronized void addNote(Note arg) {
+    @Override
+    protected synchronized void addNote(Note arg) {
         Connection conn = null;
         PreparedStatement stmt = null;
         try {
             conn = getConnection();
             //insert the note
             stmt = conn.prepareStatement("insert into Alarm_Notes "
-                            + "(Uuid, Timestamp, User, Note) VALUES (?,?,?,?);");
+                                                 + "(Uuid, Timestamp, User, Note) VALUES (?,?,?,?);");
             stmt.setString(1, arg.getUUID().toString());
             stmt.setTimestamp(2, new Timestamp(arg.getTimestamp()));
             stmt.setString(3, arg.getUser());
@@ -158,7 +161,8 @@ public abstract class JdbcProvider extends AbstractProvider {
             }
     }
 
-    @Override public void deleteAllRecords() {
+    @Override
+    public void deleteAllRecords() {
         Connection conn = null;
         Statement statement = null;
         try {
@@ -173,7 +177,8 @@ public abstract class JdbcProvider extends AbstractProvider {
         }
     }
 
-    @Override public void deleteRecord(UUID uuid) {
+    @Override
+    public void deleteRecord(UUID uuid) {
         Connection conn = null;
         PreparedStatement statement = null;
         try {
@@ -200,7 +205,8 @@ public abstract class JdbcProvider extends AbstractProvider {
         }
     }
 
-    @Override public AlarmRecord getAlarm(UUID uuid) {
+    @Override
+    public AlarmRecord getAlarm(UUID uuid) {
         Connection conn = null;
         PreparedStatement statement = null;
         ResultSet results = null;
@@ -234,7 +240,8 @@ public abstract class JdbcProvider extends AbstractProvider {
      */
     protected abstract Connection getConnection();
 
-    @Override public NoteCursor getNotes(UUID uuid) {
+    @Override
+    public NoteCursor getNotes(UUID uuid) {
         Connection conn = null;
         PreparedStatement statement = null;
         ResultSet results = null;
@@ -270,8 +277,9 @@ public abstract class JdbcProvider extends AbstractProvider {
         }
     }
 
-    @Override public AlarmCursor queryAlarms(AlarmClass alarmClass, Calendar from,
-            Calendar to) {
+    @Override
+    public AlarmCursor queryAlarms(AlarmClass alarmClass, Calendar from,
+                                   Calendar to) {
         Connection conn = null;
         Statement statement = null;
         try {
@@ -286,7 +294,8 @@ public abstract class JdbcProvider extends AbstractProvider {
         return null;
     }
 
-    @Override public AlarmCursor queryOpenAlarms(AlarmClass alarmClass) {
+    @Override
+    public AlarmCursor queryOpenAlarms(AlarmClass alarmClass) {
         try {
             Connection conn = getConnection();
             Statement statement = conn.createStatement();
@@ -304,7 +313,8 @@ public abstract class JdbcProvider extends AbstractProvider {
      * <p>This only updates NormalTime, AckTime, AckUser, and IsOpen</p>
      */
     @SuppressFBWarnings("SQL_BAD_PREPARED_STATEMENT_ACCESS")
-    @Override protected void saveRecord(AlarmRecord arg) {
+    @Override
+    protected void saveRecord(AlarmRecord arg) {
         StringBuilder buf = new StringBuilder("update Alarm_Records set");
         //Indexes in prepared statements start at 1.
         int normalIdx = 0;
@@ -360,7 +370,7 @@ public abstract class JdbcProvider extends AbstractProvider {
      * @param mustBeOpen Whether or not to only return only open records.
      */
     protected String selectStatement(AlarmClass alarmClass, Calendar from, Calendar to,
-            boolean mustBeOpen) {
+                                     boolean mustBeOpen) {
         StringBuilder buf = new StringBuilder();
         buf.append("select * from Alarm_Records");
         boolean hasWhere = false;
@@ -392,7 +402,8 @@ public abstract class JdbcProvider extends AbstractProvider {
         return buf.toString();
     }
 
-    @Override public void start(AlarmService service) {
+    @Override
+    public void start(AlarmService service) {
         super.start(service);
         initializeDatabase();
     }
@@ -463,14 +474,16 @@ public abstract class JdbcProvider extends AbstractProvider {
             this.results = results;
         }
 
-        @Override public void close() {
+        @Override
+        public void close() {
             JdbcProvider.close(conn, statement, results);
             conn = null;
             statement = null;
             results = null;
         }
 
-        @Override public boolean next() {
+        @Override
+        public boolean next() {
             try {
                 if (results == null) {
                     return false;
@@ -482,7 +495,7 @@ public abstract class JdbcProvider extends AbstractProvider {
                     close();
                 }
             } catch (Exception x) {
-                AlarmUtil.logError("AlarmCursor.next",x);
+                AlarmUtil.logError("AlarmCursor.next", x);
                 close();
                 AlarmUtil.throwRuntime(x);
             }
@@ -501,14 +514,16 @@ public abstract class JdbcProvider extends AbstractProvider {
             this.results = results;
         }
 
-        @Override public void close() {
+        @Override
+        public void close() {
             JdbcProvider.close(conn, statement, results);
             conn = null;
             statement = null;
             results = null;
         }
 
-        @Override public boolean next() {
+        @Override
+        public boolean next() {
             try {
                 if (results == null) {
                     return false;
@@ -520,7 +535,7 @@ public abstract class JdbcProvider extends AbstractProvider {
                     close();
                 }
             } catch (Exception x) {
-                AlarmUtil.logError("NoteCursor.next",x);
+                AlarmUtil.logError("NoteCursor.next", x);
                 close();
                 AlarmUtil.throwRuntime(x);
             }

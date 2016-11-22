@@ -8,9 +8,10 @@
 
 package org.dsa.iot.alarm.jdbc;
 
-import org.dsa.iot.alarm.*;
-import org.slf4j.*;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import org.dsa.iot.alarm.AlarmService;
+import org.dsa.iot.alarm.AlarmUtil;
 
 /**
  * Jdbc provider that uses the connection details on the RemoteJdbcAlarmService to
@@ -41,7 +42,8 @@ public class RemoteJdbcProvider extends JdbcProvider {
      * Uses the connection information from the RemoteJdbcAlarmService to acquire
      * a connection.
      */
-    @Override protected Connection getConnection() {
+    @Override
+    protected Connection getConnection() {
         try {
             RemoteJdbcAlarmService svc = (RemoteJdbcAlarmService) getService();
             String user = svc.getDatabaseUser();
@@ -61,7 +63,8 @@ public class RemoteJdbcProvider extends JdbcProvider {
      *
      * @return RemoteJdbcAlarmService instance.
      */
-    @Override public AlarmService newAlarmService() {
+    @Override
+    public AlarmService newAlarmService() {
         return new RemoteJdbcAlarmService();
     }
 

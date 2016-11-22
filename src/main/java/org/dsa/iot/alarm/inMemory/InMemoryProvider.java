@@ -8,9 +8,9 @@
 
 package org.dsa.iot.alarm.inMemory;
 
-import edu.umd.cs.findbugs.annotations.*;
-import org.dsa.iot.alarm.*;
 import java.util.*;
+import org.dsa.iot.alarm.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Alarming provider that stores alarms in memory using Java collections.
@@ -46,18 +46,21 @@ public class InMemoryProvider extends AbstractProvider {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override public synchronized void addAlarm(AlarmRecord record) {
+    @Override
+    public synchronized void addAlarm(AlarmRecord record) {
         alarmSet.add(record);
         alarmMap.put(record.getUuid(), record);
         alarmCache = null;
     }
 
-    @Override protected synchronized void addNote(Note note) {
+    @Override
+    protected synchronized void addNote(Note note) {
         noteList.add(note);
         noteCache = null;
     }
 
-    @Override public void deleteAllRecords() {
+    @Override
+    public void deleteAllRecords() {
         alarmSet.clear();
         alarmMap.clear();
         noteList.clear();
@@ -65,7 +68,8 @@ public class InMemoryProvider extends AbstractProvider {
         noteCache = null;
     }
 
-    @Override public synchronized void deleteRecord(UUID uuid) {
+    @Override
+    public synchronized void deleteRecord(UUID uuid) {
         AlarmRecord record = alarmMap.remove(uuid);
         if (record == null) {
             return;
@@ -80,7 +84,8 @@ public class InMemoryProvider extends AbstractProvider {
         noteCache = null;
     }
 
-    @Override public synchronized AlarmRecord getAlarm(UUID uuid) {
+    @Override
+    public synchronized AlarmRecord getAlarm(UUID uuid) {
         return alarmMap.get(uuid);
     }
 
@@ -106,23 +111,27 @@ public class InMemoryProvider extends AbstractProvider {
         return noteCache.iterator();
     }
 
-    @Override public NoteCursor getNotes(UUID uuid) {
+    @Override
+    public NoteCursor getNotes(UUID uuid) {
         return new MyNoteCursor(uuid);
     }
 
-    @Override protected void saveRecord(AlarmRecord arg) {
+    @Override
+    protected void saveRecord(AlarmRecord arg) {
         AlarmRecord rec = getAlarm(arg.getUuid());
         if (rec != arg) {
             rec.copy(arg);
         }
     }
 
-    @Override public AlarmCursor queryAlarms(AlarmClass alarmClass, Calendar from,
-            Calendar to) {
+    @Override
+    public AlarmCursor queryAlarms(AlarmClass alarmClass, Calendar from,
+                                   Calendar to) {
         return new MyAlarmCursor(alarmClass, false, from, to);
     }
 
-    @Override public AlarmCursor queryOpenAlarms(AlarmClass alarmClass) {
+    @Override
+    public AlarmCursor queryOpenAlarms(AlarmClass alarmClass) {
         return new MyAlarmCursor(alarmClass, true, null, null);
     }
 
@@ -174,10 +183,12 @@ public class InMemoryProvider extends AbstractProvider {
             }
         }
 
-        @Override public void close() {
+        @Override
+        public void close() {
         }
 
-        @Override public boolean next() {
+        @Override
+        public boolean next() {
             if (iterator == null) {
                 return false;
             }
@@ -218,10 +229,12 @@ public class InMemoryProvider extends AbstractProvider {
             iterator = getNoteIterator();
         }
 
-        @Override public void close() {
+        @Override
+        public void close() {
         }
 
-        @Override public boolean next() {
+        @Override
+        public boolean next() {
             Note tmp;
             while (iterator.hasNext()) {
                 tmp = iterator.next();

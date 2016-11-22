@@ -8,8 +8,9 @@
 
 package org.dsa.iot.alarm.jdbc;
 
-import org.dsa.iot.alarm.*;
-import org.dsa.iot.dslink.*;
+import org.dsa.iot.alarm.AlarmLinkHandler;
+import org.dsa.iot.alarm.Alarming;
+import org.dsa.iot.dslink.DSLinkFactory;
 
 /**
  * Launches a jdbc alarm link.

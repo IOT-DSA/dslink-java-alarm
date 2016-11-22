@@ -8,7 +8,9 @@
 
 package org.dsa.iot.alarm;
 
-import java.util.*;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 
 /**
  * Skeletal Alarming.Provider.
@@ -39,7 +41,8 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * {@inheritDoc} <p/>
      * This implementation configures the alarm record and calls saveRecord.
      */
-    @Override public void acknowledge(UUID uuid, String user) {
+    @Override
+    public void acknowledge(UUID uuid, String user) {
         AlarmRecord rec = getAlarm(uuid);
         if (user == null) {
             throw new NullPointerException("User");
@@ -57,14 +60,15 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * This implementation configures the alarm record and calls saveRecord, then
      * calls doAddNote.
      */
-    @Override public void addNote(UUID uuid, String user, String note) {
+    @Override
+    public void addNote(UUID uuid, String user, String note) {
         AlarmRecord rec = getAlarm(uuid);
         if (!rec.getHasNotes()) {
             rec.setHasNotes(true);
             saveRecord(rec);
         }
         addNote(new Note(uuid).setUser(user).setText(note)
-                        .setTimestamp(System.currentTimeMillis()));
+                              .setTimestamp(System.currentTimeMillis()));
     }
 
     /**
@@ -78,8 +82,9 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * This implementation returns a map with all the algorithms defined in the
      * core alarm sdk.
      */
-    @Override public Map<String, Class> getAlarmAlgorithms() {
-        TreeMap<String,Class> ret = new TreeMap<>();
+    @Override
+    public Map<String, Class> getAlarmAlgorithms() {
+        TreeMap<String, Class> ret = new TreeMap<>();
         ret.put("Boolean Algorithm", BooleanAlgorithm.class);
         ret.put("Out of Range Algorithm", OutOfRangeAlgorithm.class);
         ret.put("Stale Algorithm", StaleAlgorithm.class);
@@ -98,7 +103,8 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * {@inheritDoc} <p/>
      * This implementation returns an AlarmClass.class.
      */
-    @Override public AlarmClass newAlarmClass(String name) {
+    @Override
+    public AlarmClass newAlarmClass(String name) {
         return new AlarmClass();
     }
 
@@ -106,7 +112,8 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * {@inheritDoc} <p/>
      * This implementation returns an AlarmRecord.class.
      */
-    @Override public AlarmRecord newAlarmRecord() {
+    @Override
+    public AlarmRecord newAlarmRecord() {
         return new AlarmRecord();
     }
 
@@ -114,7 +121,8 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * {@inheritDoc} <p/>
      * This implementation returns an AlarmService.class.
      */
-    @Override public AlarmService newAlarmService() {
+    @Override
+    public AlarmService newAlarmService() {
         return new AlarmService();
     }
 
@@ -122,7 +130,8 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * {@inheritDoc} <p/>
      * This implementation configures the alarm record and calls saveRecord.
      */
-    @Override public void returnToNormal(UUID uuid) {
+    @Override
+    public void returnToNormal(UUID uuid) {
         AlarmRecord rec = getAlarm(uuid);
         if (uuid == null) {
             throw new NullPointerException("UUID");
@@ -138,7 +147,8 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * {@inheritDoc} <p/>
      * This implementation does nothing other than store the service.
      */
-    @Override public void start(AlarmService service) {
+    @Override
+    public void start(AlarmService service) {
         this.service = service;
     }
 
@@ -146,7 +156,8 @@ public abstract class AbstractProvider implements Alarming.Provider {
      * {@inheritDoc} <p/>
      * This implementation does nothing.
      */
-    @Override public void stop() {
+    @Override
+    public void stop() {
     }
 
     /**

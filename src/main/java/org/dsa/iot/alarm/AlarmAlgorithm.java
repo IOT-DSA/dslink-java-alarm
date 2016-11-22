@@ -8,15 +8,21 @@
 
 package org.dsa.iot.alarm;
 
-import edu.umd.cs.findbugs.annotations.*;
-import org.dsa.iot.dslink.node.*;
-import org.dsa.iot.dslink.node.actions.*;
-import org.dsa.iot.dslink.node.value.*;
-import org.dsa.iot.dslink.util.*;
+import java.util.UUID;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.Permission;
+import org.dsa.iot.dslink.node.Writable;
+import org.dsa.iot.dslink.node.actions.Action;
+import org.dsa.iot.dslink.node.actions.ActionResult;
+import org.dsa.iot.dslink.node.actions.Parameter;
+import org.dsa.iot.dslink.node.value.Value;
+import org.dsa.iot.dslink.node.value.ValuePair;
+import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.Objects;
-import org.dsa.iot.dslink.util.handler.*;
-import java.util.*;
-import java.util.concurrent.*;
+import org.dsa.iot.dslink.util.handler.Handler;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Alarm algorithms evaluate the state of children AlarmWatch objects, and generate
@@ -80,7 +86,7 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
             AlarmWatch watch = (AlarmWatch) newChild(nameString, watchType());
             watch.setProperty(SOURCE_PATH, path);
         } catch (Exception x) {
-            AlarmUtil.logError(getNode().getPath(),x);
+            AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
         }
     }
@@ -88,14 +94,16 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
     /**
      * Schedules the auto update timer.
      */
-    @Override public void doSteady() {
+    @Override
+    public void doSteady() {
         rescheduleAutoUpdate();
     }
 
     /**
      * Cancels the auto update timer.
      */
-    @Override public void doStop() {
+    @Override
+    public void doStop() {
         if (autoUpdateFuture != null) {
             autoUpdateFuture.cancel(false);
             autoUpdateFuture = null;
@@ -155,11 +163,13 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         return getProperty(TO_NORMAL_INHIBIT).getNumber().longValue() * 1000l;
     }
 
-    @Override protected void initActions() {
+    @Override
+    protected void initActions() {
         Node node = getNode();
         //Add Watch
         Action action = new Action(Permission.WRITE, new Handler<ActionResult>() {
-            @Override public void handle(ActionResult event) {
+            @Override
+            public void handle(ActionResult event) {
                 addWatch(event);
             }
         });
@@ -172,26 +182,29 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         addDeleteAction("Delete Algorithm");
         //Update All
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
-            @Override public void handle(ActionResult event) {
+            @Override
+            public void handle(ActionResult event) {
                 updateAll(event);
             }
         });
         node.createChild("Update All").setSerializable(false).setAction(action).build();
     }
 
-    @Override protected void initData() {
+    @Override
+    protected void initData() {
+        initAttribute("icon", new Value("algorithm.png"));
         initProperty(ENABLED, new Value(true)).setWritable(Writable.CONFIG);
         initProperty(ALARM_TYPE, ENUM_ALARM_TYPE, new Value(ALERT))
                 .setWritable(Writable.CONFIG);
         initProperty(AUTO_UPDATE_INTERVAL, new Value(0)).createFakeBuilder()
-                .setConfig("unit", new Value("sec"))
-                .setWritable(Writable.CONFIG);
+                                                        .setConfig("unit", new Value("sec"))
+                                                        .setWritable(Writable.CONFIG);
         initProperty(TO_ALARM_INHIBIT, new Value(0)).createFakeBuilder()
-                .setConfig("unit", new Value("sec"))
-                .setWritable(Writable.CONFIG);
+                                                    .setConfig("unit", new Value("sec"))
+                                                    .setWritable(Writable.CONFIG);
         initProperty(TO_NORMAL_INHIBIT, new Value(0)).createFakeBuilder()
-                .setConfig("unit", new Value("sec"))
-                .setWritable(Writable.CONFIG);
+                                                     .setConfig("unit", new Value("sec"))
+                                                     .setWritable(Writable.CONFIG);
     }
 
     /**
@@ -200,13 +213,15 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
      */
     protected abstract boolean isAlarm(AlarmWatch watch);
 
-    @Override protected void onPropertyChange(Node node, ValuePair valuePair) {
+    @Override
+    protected void onPropertyChange(Node node, ValuePair valuePair) {
         if (isSteady()) {
             if (AUTO_UPDATE_INTERVAL.equals(node.getName())) {
                 rescheduleAutoUpdate();
             }
         }
     }
+
     /**
      * Cancels an existing timer, then schedules a new one if the auto update interval
      * is greater than zero.
@@ -220,7 +235,7 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         if (interval > 0) {
             int delay = Math.min(5, interval);
             autoUpdateFuture = Objects.getDaemonThreadPool()
-                    .scheduleAtFixedRate(this, delay, interval, TimeUnit.SECONDS);
+                                      .scheduleAtFixedRate(this, delay, interval, TimeUnit.SECONDS);
         }
     }
 

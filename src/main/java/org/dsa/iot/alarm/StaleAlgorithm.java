@@ -8,10 +8,12 @@
 
 package org.dsa.iot.alarm;
 
-import org.dsa.iot.dslink.node.*;
-import org.dsa.iot.dslink.node.value.*;
-import org.dsa.iot.dslink.util.*;
-import java.util.*;
+import java.util.Calendar;
+import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.Writable;
+import org.dsa.iot.dslink.node.value.Value;
+import org.dsa.iot.dslink.node.value.ValuePair;
+import org.dsa.iot.dslink.util.TimeUtils;
 
 /**
  * This algorithm creates alarms for sources whose value does not change after a certain
@@ -41,18 +43,21 @@ public class StaleAlgorithm extends AlarmAlgorithm {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override protected String getAlarmMessage(AlarmWatch watch) {
+    @Override
+    protected String getAlarmMessage(AlarmWatch watch) {
         return "Stale value";
     }
 
-    @Override protected void initData() {
+    @Override
+    protected void initData() {
         super.initData();
         initProperty(STALE_DAYS, new Value(1)).setWritable(Writable.CONFIG);
         initProperty(STALE_HOURS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(STALE_MINUTES, new Value(0)).setWritable(Writable.CONFIG);
     }
 
-    @Override protected boolean isAlarm(AlarmWatch watch) {
+    @Override
+    protected boolean isAlarm(AlarmWatch watch) {
         long start = watch.getStateTime();
         Calendar from = AlarmUtil.getCalendar(start);
         TimeUtils.addDays(getProperty(STALE_DAYS).getNumber().intValue(), from);
@@ -63,7 +68,8 @@ public class StaleAlgorithm extends AlarmAlgorithm {
         return ((end - start) > watch.getTimeInCurrentState());
     }
 
-    @Override protected void onPropertyChange(Node node, ValuePair valuePair) {
+    @Override
+    protected void onPropertyChange(Node node, ValuePair valuePair) {
         if (isSteady()) {
             String name = node.getName();
             if (name.equals(STALE_DAYS)) {
