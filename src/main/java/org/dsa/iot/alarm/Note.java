@@ -8,7 +8,7 @@
 
 package org.dsa.iot.alarm;
 
-import java.util.*;
+import java.util.UUID;
 
 /**
  * Simple note implementation.

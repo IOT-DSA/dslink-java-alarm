@@ -8,11 +8,16 @@
 
 package org.dsa.iot.alarm;
 
-import org.dsa.iot.dslink.node.*;
-import org.dsa.iot.dslink.node.actions.*;
-import org.dsa.iot.dslink.node.value.*;
-import org.dsa.iot.dslink.util.handler.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Map;
+import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.Permission;
+import org.dsa.iot.dslink.node.actions.Action;
+import org.dsa.iot.dslink.node.actions.ActionResult;
+import org.dsa.iot.dslink.node.value.Value;
+import org.dsa.iot.dslink.node.value.ValuePair;
+import org.dsa.iot.dslink.node.value.ValueType;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 /**
  * Basic implementation of the AlarmObject interface.  Subclasses are not required to
@@ -46,7 +51,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override public synchronized void addChild(AlarmObject child) {
+    @Override
+    public synchronized void addChild(AlarmObject child) {
         AlarmUtil.logTrace("Add " + child.getNode().getPath());
         if (children == null) {
             children = new ArrayList<>();
@@ -67,7 +73,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      */
     public void addDeleteAction(String actionName) {
         Action action = new Action(Permission.WRITE, new Handler<ActionResult>() {
-            @Override public void handle(ActionResult event) {
+            @Override
+            public void handle(ActionResult event) {
                 deleteSelf();
             }
         });
@@ -83,7 +90,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
     }
 
-    @Override public int childCount() {
+    @Override
+    public int childCount() {
         if (children == null) {
             return 0;
         }
@@ -115,7 +123,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     protected void doStop() {
     }
 
-    @Override public AlarmObject getChild(int index) {
+    @Override
+    public AlarmObject getChild(int index) {
         if (children == null) {
             return null;
         }
@@ -129,7 +138,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         return this.node;
     }
 
-    @Override public AlarmObject getParent() {
+    @Override
+    public AlarmObject getParent() {
         return parent;
     }
 
@@ -164,7 +174,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         return value;
     }
 
-    @Override public int getHandle() {
+    @Override
+    public int getHandle() {
         Value value = getConfig(HANDLE);
         if (value == null) {
             return 0;
@@ -192,7 +203,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         return node.getChild(name) != null;
     }
 
-    @Override public void init(Node node) {
+    @Override
+    public void init(Node node) {
         if (node == null) {
             throw new NullPointerException("SDK node cannot be null.");
         }
@@ -216,6 +228,20 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
                 }
             }
         }
+    }
+
+    /**
+     * Only adds an attribute that isn't already present, otherwise does nothing.
+     *
+     * @param name  The name of the attribute.
+     * @param value Only used when the attribute is not present.
+     */
+    protected void initAttribute(String name, Value value) {
+        Value tmp = node.getAttribute(name);
+        if (tmp != null) {
+            return;
+        }
+        node.setAttribute(name, value);
     }
 
     /**
@@ -287,8 +313,9 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         child.setHasChildren(false);
         final Node tmp = child;
         child.getListener().setValueHandler(new Handler<ValuePair>() {
-            @Override public void handle(ValuePair event) {
-                onPropertyChange(tmp,event);
+            @Override
+            public void handle(ValuePair event) {
+                onPropertyChange(tmp, event);
             }
         });
         return child;
@@ -306,7 +333,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         return val.getBool().booleanValue();
     }
 
-    @Override public final boolean isSteady() {
+    @Override
+    public final boolean isSteady() {
         return steady;
     }
 
@@ -357,7 +385,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * as well.
      * <p/>{@inheritDoc}
      */
-    @Override public void removed() {
+    @Override
+    public void removed() {
         removeAllDescendants();
     }
 
@@ -370,7 +399,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
     }
 
-    @Override public synchronized void removeChild(AlarmObject child) {
+    @Override
+    public synchronized void removeChild(AlarmObject child) {
         AlarmUtil.logTrace("Remove " + child.getNode().getPath());
         if (child.getParent() != this) {
             throw new IllegalStateException("Child not parented by this object");
@@ -387,7 +417,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
     }
 
-    @Override public void setParent(AlarmObject parent) {
+    @Override
+    public void setParent(AlarmObject parent) {
         this.parent = parent;
     }
 
@@ -410,7 +441,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * children.
      * <p/>{@inheritDoc}
      */
-    @Override public final void start() {
+    @Override
+    public final void start() {
         started = true;
         AlarmService svc = getService();
         if (svc != null) {
@@ -428,7 +460,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * Calls doSteady on this, then steadies all children.
      * <p/>{@inheritDoc}
      */
-    @Override public final void steady() {
+    @Override
+    public final void steady() {
         steady = true;
         doSteady();
         if (children != null) {
@@ -442,7 +475,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * Calls doStop on this, stops all children, then unregisters with the service.
      * <p/>{@inheritDoc}
      */
-    @Override public final void stop() {
+    @Override
+    public final void stop() {
         try {
             started = false;
             steady = false;

@@ -8,8 +8,10 @@
 
 package org.dsa.iot.alarm;
 
-import org.dsa.iot.dslink.node.*;
-import org.dsa.iot.dslink.node.value.*;
+import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.Writable;
+import org.dsa.iot.dslink.node.value.Value;
+import org.dsa.iot.dslink.node.value.ValuePair;
 
 /**
  * This algorithm creates alarms for sources whose numeric value is less than a minimum
@@ -38,17 +40,20 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-   @Override protected String getAlarmMessage(AlarmWatch watch) {
+    @Override
+    protected String getAlarmMessage(AlarmWatch watch) {
         return "Value out of range: " + watch.getCurrentValue().toString();
     }
 
-    @Override protected void initData() {
+    @Override
+    protected void initData() {
         super.initData();
         initProperty(MIN_VALUE, new Value(0.0d)).setWritable(Writable.CONFIG);
         initProperty(MAX_VALUE, new Value(100.0d)).setWritable(Writable.CONFIG);
     }
 
-    @Override protected boolean isAlarm(AlarmWatch watch) {
+    @Override
+    protected boolean isAlarm(AlarmWatch watch) {
         Value value = watch.getCurrentValue();
         if (value != null) {
             double val = value.getNumber().doubleValue();
@@ -64,7 +69,8 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
         return false;
     }
 
-    @Override protected void onPropertyChange(Node child, ValuePair valuePair) {
+    @Override
+    protected void onPropertyChange(Node child, ValuePair valuePair) {
         if (isSteady()) {
             String name = child.getName();
             if (name.equals(MAX_VALUE)) {
@@ -73,7 +79,7 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
                 AlarmUtil.enqueue(this);
             }
         }
-        super.onPropertyChange(child,valuePair);
+        super.onPropertyChange(child, valuePair);
     }
 
 }

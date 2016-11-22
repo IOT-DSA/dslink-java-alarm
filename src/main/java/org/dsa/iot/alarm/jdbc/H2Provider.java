@@ -8,10 +8,10 @@
 
 package org.dsa.iot.alarm.jdbc;
 
-import edu.umd.cs.findbugs.annotations.*;
-import org.dsa.iot.alarm.*;
-import org.dsa.iot.alarm.jdbc.*;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import org.dsa.iot.alarm.AlarmUtil;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Uses an in memory instance of the H2 database.
@@ -29,7 +29,8 @@ public class H2Provider extends JdbcProvider {
     }
 
     @SuppressFBWarnings("DMI_CONSTANT_DB_PASSWORD")
-    @Override protected Connection getConnection() {
+    @Override
+    protected Connection getConnection() {
         try {
             return DriverManager.getConnection("jdbc:h2:./db/Alarms",
                                                "alarmLink",

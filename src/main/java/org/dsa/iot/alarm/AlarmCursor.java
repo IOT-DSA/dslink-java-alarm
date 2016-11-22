@@ -28,7 +28,8 @@ public abstract class AlarmCursor extends AlarmRecord {
     /**
      * Calls close().
      */
-    @Override protected void finalize() {
+    @Override
+    protected void finalize() {
         close();
     }
 

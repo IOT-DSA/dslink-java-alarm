@@ -8,8 +8,11 @@
 
 package org.dsa.iot.alarm;
 
-import org.dsa.iot.dslink.node.*;
-import org.dsa.iot.dslink.node.value.*;
+import org.dsa.iot.dslink.node.Node;
+import org.dsa.iot.dslink.node.Writable;
+import org.dsa.iot.dslink.node.value.Value;
+import org.dsa.iot.dslink.node.value.ValuePair;
+import org.dsa.iot.dslink.node.value.ValueType;
 
 /**
  * This algorithm creates alarms based on String values.
@@ -31,7 +34,7 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
     private static final String MODE_STARTSWITH = "StartsWith";
 
     private ValueType ENUM_VALUE_MODE = ValueType.makeEnum(
-            MODE_EQUALS,MODE_NOTEQUALS,MODE_CONTAINS,MODE_STARTSWITH,MODE_ENDSWITH);
+            MODE_EQUALS, MODE_NOTEQUALS, MODE_CONTAINS, MODE_STARTSWITH, MODE_ENDSWITH);
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -45,11 +48,13 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override protected String getAlarmMessage(AlarmWatch watch) {
+    @Override
+    protected String getAlarmMessage(AlarmWatch watch) {
         return "Value = " + watch.getCurrentValue().toString();
     }
 
-    @Override protected void initData() {
+    @Override
+    protected void initData() {
         super.initData();
         initProperty(ALARM_VALUE, new Value("Value to alarm on"))
                 .setWritable(Writable.CONFIG);
@@ -57,7 +62,8 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
                 .setWritable(Writable.CONFIG);
     }
 
-    @Override protected boolean isAlarm(AlarmWatch watch) {
+    @Override
+    protected boolean isAlarm(AlarmWatch watch) {
         Value currentValue = watch.getCurrentValue();
         if (currentValue != null) {
             String alarmValue = getProperty(ALARM_VALUE).getString();
@@ -78,7 +84,8 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
         return false;
     }
 
-    @Override protected void onPropertyChange(Node child, ValuePair valuePair) {
+    @Override
+    protected void onPropertyChange(Node child, ValuePair valuePair) {
         if (isSteady()) {
             if (ALARM_VALUE.equals(child.getName())) {
                 AlarmUtil.enqueue(this);
