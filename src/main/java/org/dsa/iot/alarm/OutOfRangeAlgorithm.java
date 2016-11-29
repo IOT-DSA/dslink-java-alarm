@@ -42,7 +42,8 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
 
     @Override
     protected String getAlarmMessage(AlarmWatch watch) {
-        return "Value out of range: " + watch.getCurrentValue().toString();
+        String pattern = getProperty(MESSAGE).getString();
+        return String.format(pattern,watch.getCurrentValue().toString());
     }
 
     @Override
@@ -50,6 +51,8 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
         super.initData();
         initProperty(MIN_VALUE, new Value(0.0d)).setWritable(Writable.CONFIG);
         initProperty(MAX_VALUE, new Value(100.0d)).setWritable(Writable.CONFIG);
+        initProperty(MESSAGE, new Value("Value out of range: %s"))
+                .setWritable(Writable.CONFIG);
     }
 
     @Override

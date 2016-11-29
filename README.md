@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Nov 22, 2016
-* Version: 0.4.0
+* Date: Nov 28, 2016
+* Version: 0.4.1
 
 
 Overview
@@ -73,6 +73,7 @@ public static void main(String[] args) {
 Acknowledgements
 ----------------
 _H2 Database_
+
 This software contains unmodified binary redistributions for [H2 
 database engine](http://www.h2database.com/), which is dual licensed 
 and available under the MPL 2.0 (Mozilla Public License) or under the 
@@ -80,13 +81,18 @@ EPL 1.0 (Eclipse Public License). An original copy of the license
 agreement can be found at: http://www.h2database.com/html/license.html
 
 _Silk Icons_
+
 This software uses icons from Silk Icons 1.3 created by 
 [Mark James](http://www.famfamfam.com/lab/icons/silk/) and licensed 
 under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/licenses/by/2.5/).
 
 History
 -------
-_0.4.0 - 2016-11-22
+_0.4.1 - 2016-11-28_
+  - Added Watch Path to alarm tables.
+  - Made the alarm message configurable on each algorithm.
+  
+_0.4.0 - 2016-11-22_
   - Update SDK dependency.
   - Added icons.
   
