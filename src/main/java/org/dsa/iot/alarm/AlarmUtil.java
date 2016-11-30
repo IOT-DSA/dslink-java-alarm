@@ -98,7 +98,7 @@ public class AlarmUtil implements AlarmConstants {
         String watchPath = null;
         AlarmWatch watch = record.getAlarmWatch();
         if (watch != null) {
-            watchPath = watch.getNode().getPath();
+            watchPath = watch.getPath();
         }
         table.addRow(Row.make(new Value(record.getUuid().toString()),
                               new Value(record.getSourcePath()),
@@ -109,7 +109,7 @@ public class AlarmUtil implements AlarmConstants {
                               new Value(ackTime),
                               new Value(record.getAckUser()),
                               new Value(record.getMessage()),
-                              new Value(record.getHasNotes()),
+                              new Value(record.hasNotes()),
                               new Value(watchPath)));
         if (recycleCal) {
             recycle(cacheCal);

@@ -63,7 +63,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
     @Override
     public void addNote(UUID uuid, String user, String note) {
         AlarmRecord rec = getAlarm(uuid);
-        if (!rec.getHasNotes()) {
+        if (!rec.hasNotes()) {
             rec.setHasNotes(true);
             saveRecord(rec);
         }

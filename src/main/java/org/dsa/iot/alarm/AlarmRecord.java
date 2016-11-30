@@ -152,7 +152,7 @@ public class AlarmRecord {
      * Whether or not there are any notes for this alarm.  Notes can be retrieved
      * using the getNotes action in the AlarmService.
      */
-    public boolean getHasNotes() {
+    public boolean hasNotes() {
         return hasNotes;
     }
 

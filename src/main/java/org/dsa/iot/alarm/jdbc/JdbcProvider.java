@@ -92,7 +92,7 @@ public abstract class JdbcProvider extends AbstractProvider {
             stmt.setTimestamp(7, new Timestamp(arg.getAckTime()));
             stmt.setString(8, arg.getAckUser());
             stmt.setString(9, arg.getMessage());
-            stmt.setBoolean(10, arg.getHasNotes());
+            stmt.setBoolean(10, arg.hasNotes());
             stmt.setBoolean(11, arg.isOpen());
             if (arg.getAlarmWatch() != null) {
                 stmt.setInt(12, arg.getAlarmWatch().getHandle());
@@ -191,7 +191,7 @@ public abstract class JdbcProvider extends AbstractProvider {
                     "delete from Alarm_Records where Uuid = ?;");
             statement.setString(1, uuid.toString());
             statement.executeUpdate();
-            if (rec.getHasNotes()) {
+            if (rec.hasNotes()) {
                 statement.close();
                 statement = conn.prepareStatement(
                         "delete from Alarm_Notes where Uuid = ?;");

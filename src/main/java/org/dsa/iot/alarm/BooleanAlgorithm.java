@@ -12,7 +12,6 @@ import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Writable;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValuePair;
-import org.dsa.iot.dslink.node.value.ValueType;
 
 /**
  * This algorithm creates alarms from boolean sources.  This will allow
@@ -43,7 +42,7 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
     @Override
     protected String getAlarmMessage(AlarmWatch watch) {
         String pattern = getProperty(MESSAGE).getString();
-        return String.format(pattern,String.valueOf(watch.getCurrentValue()));
+        return String.format(pattern, String.valueOf(watch.getCurrentValue()));
     }
 
     @Override
