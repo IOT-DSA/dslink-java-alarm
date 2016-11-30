@@ -184,6 +184,13 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     }
 
     /**
+     * The path of the underlying node.
+     */
+    public String getPath() {
+        return node.getPath();
+    }
+
+    /**
      * Returns the value of the named child of the inner node.
      *
      * @return Possibly null.

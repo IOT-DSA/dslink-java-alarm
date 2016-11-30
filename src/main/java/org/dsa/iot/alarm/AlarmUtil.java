@@ -95,6 +95,11 @@ public class AlarmUtil implements AlarmConstants {
         if (alarmClass != null) {
             alarmClassName = alarmClass.getNode().getName();
         }
+        String watchPath = null;
+        AlarmWatch watch = record.getAlarmWatch();
+        if (watch != null) {
+            watchPath = watch.getPath();
+        }
         table.addRow(Row.make(new Value(record.getUuid().toString()),
                               new Value(record.getSourcePath()),
                               new Value(alarmClassName),
@@ -104,7 +109,8 @@ public class AlarmUtil implements AlarmConstants {
                               new Value(ackTime),
                               new Value(record.getAckUser()),
                               new Value(record.getMessage()),
-                              new Value(record.getHasNotes())));
+                              new Value(record.hasNotes()),
+                              new Value(watchPath)));
         if (recycleCal) {
             recycle(cacheCal);
         }
@@ -124,6 +130,7 @@ public class AlarmUtil implements AlarmConstants {
         action.addResult(new Parameter(ACK_USER, ValueType.STRING));
         action.addResult(new Parameter(MESSAGE, ValueType.STRING));
         action.addResult(new Parameter(HAS_NOTES, ValueType.BOOL));
+        action.addResult(new Parameter(WATCH_PATH, ValueType.STRING));
     }
 
     /**

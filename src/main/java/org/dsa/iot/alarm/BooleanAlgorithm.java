@@ -14,8 +14,8 @@ import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValuePair;
 
 /**
- * This algorithm creates alarms when boolean data sources turn true.  This will allow
- * other links the self detect alarmable conditions.
+ * This algorithm creates alarms from boolean sources.  This will allow
+ * other links to self detect alarmable conditions.
  *
  * @author Aaron Hansen
  */
@@ -41,13 +41,15 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
 
     @Override
     protected String getAlarmMessage(AlarmWatch watch) {
-        return "Value = " + watch.getCurrentValue().toString();
+        String pattern = getProperty(MESSAGE).getString();
+        return String.format(pattern, String.valueOf(watch.getCurrentValue()));
     }
 
     @Override
     protected void initData() {
         super.initData();
         initProperty(ALARM_VALUE, new Value(true)).setWritable(Writable.CONFIG);
+        initProperty(MESSAGE, new Value("Value = %s")).setWritable(Writable.CONFIG);
     }
 
     @Override

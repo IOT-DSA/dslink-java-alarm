@@ -45,7 +45,8 @@ public class StaleAlgorithm extends AlarmAlgorithm {
 
     @Override
     protected String getAlarmMessage(AlarmWatch watch) {
-        return "Stale value";
+        String pattern = getProperty(MESSAGE).getString();
+        return String.format(pattern, String.valueOf(watch.getCurrentValue()));
     }
 
     @Override
@@ -54,6 +55,8 @@ public class StaleAlgorithm extends AlarmAlgorithm {
         initProperty(STALE_DAYS, new Value(1)).setWritable(Writable.CONFIG);
         initProperty(STALE_HOURS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(STALE_MINUTES, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(MESSAGE, new Value("Stale value: %s"))
+                .setWritable(Writable.CONFIG);
     }
 
     @Override

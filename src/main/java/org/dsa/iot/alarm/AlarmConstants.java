@@ -49,6 +49,7 @@ public interface AlarmConstants {
     String TYPE = "Type";
     String USER = "User";
     String UUID_STR = "UUID";
+    String WATCH_PATH = "Watch Path";
 
     ///////////////////////////////////////////////////////////////////////////
     // Enums

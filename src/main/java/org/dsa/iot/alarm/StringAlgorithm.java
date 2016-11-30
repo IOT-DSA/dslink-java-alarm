@@ -50,7 +50,8 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
 
     @Override
     protected String getAlarmMessage(AlarmWatch watch) {
-        return "Value = " + watch.getCurrentValue().toString();
+        String pattern = getProperty(MESSAGE).getString();
+        return String.format(pattern, String.valueOf(watch.getCurrentValue()));
     }
 
     @Override
@@ -60,6 +61,7 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
                 .setWritable(Writable.CONFIG);
         initProperty(ALARM_VALUE_MODE, ENUM_VALUE_MODE, new Value(MODE_EQUALS))
                 .setWritable(Writable.CONFIG);
+        initProperty(MESSAGE, new Value("Value = %s")).setWritable(Writable.CONFIG);
     }
 
     @Override
