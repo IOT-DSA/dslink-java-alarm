@@ -43,7 +43,7 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
     @Override
     protected String getAlarmMessage(AlarmWatch watch) {
         String pattern = getProperty(MESSAGE).getString();
-        return String.format(pattern,watch.getCurrentValue().toString());
+        return String.format(pattern,String.valueOf(watch.getCurrentValue()));
     }
 
     @Override

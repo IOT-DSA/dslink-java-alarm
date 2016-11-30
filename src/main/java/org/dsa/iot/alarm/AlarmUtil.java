@@ -110,8 +110,7 @@ public class AlarmUtil implements AlarmConstants {
                               new Value(record.getAckUser()),
                               new Value(record.getMessage()),
                               new Value(record.getHasNotes()),
-                              new Value(watchPath)
-                              ));
+                              new Value(watchPath)));
         if (recycleCal) {
             recycle(cacheCal);
         }

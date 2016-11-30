@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Nov 28, 2016
-* Version: 0.4.1
+* Date: Dec 1, 2016
+* Version: 0.5.0
 
 
 Overview
@@ -88,7 +88,7 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
-_0.4.1 - 2016-11-28_
+_0.5.0 - 2016-12-01_
   - Added Watch Path to alarm tables.
   - Made the alarm message configurable on each algorithm.
   
