@@ -16,7 +16,7 @@ import org.dsa.iot.dslink.node.value.ValueType;
 
 /**
  * This algorithm creates alarms from boolean sources.  This will allow
- * other links the self detect alarmable conditions.
+ * other links to self detect alarmable conditions.
  *
  * @author Aaron Hansen
  */
