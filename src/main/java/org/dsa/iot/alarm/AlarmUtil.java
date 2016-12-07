@@ -110,7 +110,9 @@ public class AlarmUtil implements AlarmConstants {
                               new Value(record.getAckUser()),
                               new Value(record.getMessage()),
                               new Value(record.hasNotes()),
-                              new Value(watchPath)));
+                              new Value(watchPath),
+                              new Value(record.isNormal()),
+                              new Value(record.isAcknowledged())));
         if (recycleCal) {
             recycle(cacheCal);
         }
@@ -120,17 +122,21 @@ public class AlarmUtil implements AlarmConstants {
      * Encodes the columns for an action that returns a table of alarms.
      */
     public static void encodeAlarmColumns(Action action) {
-        action.addResult(new Parameter(UUID_STR, ValueType.STRING));
-        action.addResult(new Parameter(SOURCE_PATH, ValueType.STRING));
-        action.addResult(new Parameter(ALARM_CLASS, ValueType.STRING));
-        action.addResult(new Parameter(CREATED_TIME, ValueType.STRING));
-        action.addResult(new Parameter(ALARM_TYPE, ENUM_ALARM_TYPE));
-        action.addResult(new Parameter(NORMAL_TIME, ValueType.STRING));
-        action.addResult(new Parameter(ACK_TIME, ValueType.STRING));
-        action.addResult(new Parameter(ACK_USER, ValueType.STRING));
-        action.addResult(new Parameter(MESSAGE, ValueType.STRING));
-        action.addResult(new Parameter(HAS_NOTES, ValueType.BOOL));
-        action.addResult(new Parameter(WATCH_PATH, ValueType.STRING));
+        action.addResult(new Parameter(toColumnName(UUID_STR), ValueType.STRING));
+        action.addResult(new Parameter(toColumnName(SOURCE_PATH), ValueType.STRING));
+        action.addResult(new Parameter(toColumnName(ALARM_CLASS), ValueType.STRING));
+        action.addResult(new Parameter(toColumnName(CREATED_TIME), ValueType.STRING));
+        action.addResult(new Parameter(toColumnName(ALARM_TYPE), ENUM_ALARM_TYPE));
+        action.addResult(new Parameter(toColumnName(NORMAL_TIME), ValueType.STRING));
+        action.addResult(new Parameter(toColumnName(ACK_TIME), ValueType.STRING));
+        action.addResult(new Parameter(toColumnName(ACK_USER), ValueType.STRING));
+        action.addResult(new Parameter(toColumnName(MESSAGE), ValueType.STRING));
+        action.addResult(new Parameter(toColumnName(HAS_NOTES), ValueType.BOOL));
+        action.addResult(new Parameter(toColumnName(WATCH_PATH), ValueType.STRING));
+        action.addResult(new Parameter(toColumnName("Is Normal"),
+                                       ValueType.STRING));
+        action.addResult(new Parameter(toColumnName("Is Acknowledged"),
+                                       ValueType.STRING));
     }
 
     /**
@@ -219,6 +225,13 @@ public class AlarmUtil implements AlarmConstants {
         thread.setName(threadName);
         thread.setDaemon(true);
         thread.start();
+    }
+
+    /**
+     * Replaces spaces with underscores.
+     */
+    private static String toColumnName(String columnName) {
+        return columnName.replace(' ','_');
     }
 
     /**

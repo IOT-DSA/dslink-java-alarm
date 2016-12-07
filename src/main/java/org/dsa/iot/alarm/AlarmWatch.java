@@ -299,24 +299,10 @@ public class AlarmWatch extends AbstractAlarmObject
             if ((subscribedPath == null) || subscribedPath.isEmpty()) {
                 return;
             }
-            AlarmUtil.logTrace(getNode().getPath() + " subscribing to " + subscribedPath);
-            Requester requester = getRequester();
-            requester.subscribe(subscribedPath, this);
+            getService().getSubscriptionManager().subscribe(subscribedPath, this);
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
         }
-        /* This will probably change to on alarm, but it's complex...
-        //Add @@alarm to source
-        String myPath = getService().getLinkHandler().getRequesterLink()
-                .getPath() + '/' + getNode().getPath();
-        JsonObject obj = new JsonObject();
-        obj.put("@", "merge");
-        obj.put("type", "paths");
-        obj.put("val", new JsonArray().add(myPath));
-        Value pathList = new Value(obj);
-        String path = getSourcePath() + "/@@alarm";
-        requester.set(new SetRequest(path, pathList), null);
-        */
     }
 
     /**
@@ -326,7 +312,8 @@ public class AlarmWatch extends AbstractAlarmObject
     protected void unsubscribePath() {
         try {
             if ((subscribedPath != null) && !subscribedPath.isEmpty()) {
-                getRequester().unsubscribe(subscribedPath, null);
+                getService().getSubscriptionManager()
+                            .unsubscribe(subscribedPath, this);
                 subscribedPath = null;
             }
         } catch (Exception x) {
