@@ -11,17 +11,18 @@ package org.dsa.iot.alarm;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import org.dsa.iot.dslink.DSLink;
 import org.dsa.iot.dslink.link.Requester;
 import org.dsa.iot.dslink.node.value.SubscriptionValue;
 import org.dsa.iot.dslink.util.handler.Handler;
 
 /**
- * Needed because the SDK can't handle multiple subscribers for the same path.
+ * Manages multiple subscribers to the same path.
  *
  * @author Aaron Hansen
  */
-class SubscriptionManager {
+class Subscriptions {
 
     ///////////////////////////////////////////////////////////////////////////
     // Constants
@@ -32,13 +33,13 @@ class SubscriptionManager {
     ///////////////////////////////////////////////////////////////////////////
 
     private AlarmService service;
-    private Map<String, SubscriptionFacade> subscriptions = new HashMap<>();
+    private Map<String, SubscriptionHandler> subscriptions = new HashMap<>();
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    SubscriptionManager(AlarmService service) {
+    Subscriptions(AlarmService service) {
         this.service = service;
     }
 
@@ -56,14 +57,14 @@ class SubscriptionManager {
 
     public synchronized void subscribe(final String path,
                                        Handler<SubscriptionValue> handler) {
-        SubscriptionFacade facade = subscriptions.get(path);
+        SubscriptionHandler facade = subscriptions.get(path);
         if (facade == null) {
-            facade = new SubscriptionFacade(handler);
+            facade = new SubscriptionHandler(handler);
             subscriptions.put(path, facade);
             AlarmUtil.enqueue(new Runnable() {
                 @Override
                 public void run() {
-                    subscribePath(path);
+                    subscribeActual(path);
                 }
             });
         } else {
@@ -75,9 +76,9 @@ class SubscriptionManager {
      * Asynchronously called by subscribe to perform the actual subscription with the
      * requester.
      */
-    private void subscribePath(String path) {
+    private void subscribeActual(String path) {
         try {
-            SubscriptionFacade facade = null;
+            SubscriptionHandler facade = null;
             synchronized (this) {
                 facade = subscriptions.get(path);
             }
@@ -95,7 +96,7 @@ class SubscriptionManager {
 
     public synchronized void unsubscribe(final String path,
                                          Handler<SubscriptionValue> handler) {
-        SubscriptionFacade facade = subscriptions.get(path);
+        SubscriptionHandler facade = subscriptions.get(path);
         facade.remove(handler);
         if (facade.size() == 0) {
             subscriptions.remove(path);
@@ -103,7 +104,7 @@ class SubscriptionManager {
                 AlarmUtil.enqueue(new Runnable() {
                     @Override
                     public void run() {
-                        unsubscribePath(path);
+                        unsubscribeActual(path);
                     }
                 });
             }
@@ -114,7 +115,7 @@ class SubscriptionManager {
      * Asynchronously called by unsubscribe to perform the actual unsubscription with the
      * requester.
      */
-    private void unsubscribePath(String path) {
+    private void unsubscribeActual(String path) {
         try {
             Requester requester = getRequester();
             if (requester != null) {
@@ -130,15 +131,16 @@ class SubscriptionManager {
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * Acts as a handler for multiple subscriptions to the same path.
+     * Acts as a handler for multiple subscriptions to the same path.  However, most
+     * paths will have only one subscriber, so this is optimized for that.
      */
-    private static class SubscriptionFacade implements Handler<SubscriptionValue> {
+    private static class SubscriptionHandler implements Handler<SubscriptionValue> {
 
-        private Handler<SubscriptionValue> first;
-        private HashSet<Handler<SubscriptionValue>> handlers;
+        private Handler<SubscriptionValue> initialHandler;
+        private Set<Handler<SubscriptionValue>> handlers;
 
-        public SubscriptionFacade(Handler<SubscriptionValue> first) {
-            this.first = first;
+        public SubscriptionHandler(Handler<SubscriptionValue> initialHandler) {
+            this.initialHandler = initialHandler;
         }
 
         /**
@@ -147,8 +149,8 @@ class SubscriptionManager {
         public synchronized void add(Handler<SubscriptionValue> handler) {
             if (handlers == null) {
                 handlers = new HashSet<>();
-                handlers.add(first);
-                first = null;
+                handlers.add(initialHandler);
+                initialHandler = null;
             }
             if (!handlers.contains(handler)) {
                 handlers.add(handler);
@@ -159,8 +161,8 @@ class SubscriptionManager {
          * Forwards the call to all handlers.
          */
         public synchronized void handle(SubscriptionValue value) {
-            if (first != null) {
-                first.handle(value);
+            if (initialHandler != null) {
+                initialHandler.handle(value);
             } else {
                 for (Handler<SubscriptionValue> handler : handlers) {
                     handler.handle(value);
@@ -172,9 +174,9 @@ class SubscriptionManager {
          * Removes the handler to the internal collection.
          */
         public synchronized void remove(Handler<SubscriptionValue> handler) {
-            if (first != null) {
-                if (first == handler) {
-                    first = null;
+            if (initialHandler != null) {
+                if (initialHandler == handler) {
+                    initialHandler = null;
                 }
             } else {
                 handlers.remove(handler);
@@ -185,7 +187,7 @@ class SubscriptionManager {
          * The number of handlers in the internal colleciton.
          */
         public synchronized int size() {
-            if (first != null) {
+            if (initialHandler != null) {
                 return 1;
             }
             if (handlers != null) {

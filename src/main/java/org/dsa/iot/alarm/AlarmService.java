@@ -50,7 +50,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     private HashMap<Number, AlarmObject> handles = new HashMap<>();
     private HashSet<AlarmStreamer> openAlarmStreamListeners = new HashSet<>();
     private ArrayList<AlarmStreamer> openAlarmStreamListenerCache = new ArrayList<>();
-    private SubscriptionManager subscriptionManager = new SubscriptionManager(this);
+    private Subscriptions subscriptions = new Subscriptions(this);
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -390,8 +390,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
      * Use this for subscribing to alarm sources, the SDK cannot handle multiple
      * subscribers to the same path.
      */
-    public SubscriptionManager getSubscriptionManager() {
-        return subscriptionManager;
+    Subscriptions getSubscriptions() {
+        return subscriptions;
     }
 
     /**
