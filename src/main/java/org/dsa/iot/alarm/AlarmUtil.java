@@ -133,10 +133,8 @@ public class AlarmUtil implements AlarmConstants {
         action.addResult(new Parameter(toColumnName(MESSAGE), ValueType.STRING));
         action.addResult(new Parameter(toColumnName(HAS_NOTES), ValueType.BOOL));
         action.addResult(new Parameter(toColumnName(WATCH_PATH), ValueType.STRING));
-        action.addResult(new Parameter(toColumnName("Is Normal"),
-                                       ValueType.STRING));
-        action.addResult(new Parameter(toColumnName("Is Acknowledged"),
-                                       ValueType.STRING));
+        action.addResult(new Parameter(toColumnName(IS_NORMAL), ValueType.STRING));
+        action.addResult(new Parameter(toColumnName(IS_ACKNOWLEDGED), ValueType.STRING));
     }
 
     /**
