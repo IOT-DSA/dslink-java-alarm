@@ -231,7 +231,7 @@ public class AlarmUtil implements AlarmConstants {
      * Replaces spaces with underscores.
      */
     private static String toColumnName(String columnName) {
-        return columnName.replace(' ','_');
+        return columnName.replace(' ', '_');
     }
 
     /**
