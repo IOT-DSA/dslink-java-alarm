@@ -8,10 +8,10 @@
 
 package org.dsa.iot.alarm;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.dsa.iot.dslink.DSLink;
 import org.dsa.iot.dslink.link.Requester;
 import org.dsa.iot.dslink.node.value.SubscriptionValue;
@@ -137,7 +137,7 @@ class Subscriptions {
     private static class SubscriptionHandler implements Handler<SubscriptionValue> {
 
         private Handler<SubscriptionValue> initialHandler;
-        private Set<Handler<SubscriptionValue>> handlers;
+        private List<Handler<SubscriptionValue>> handlers;
 
         public SubscriptionHandler(Handler<SubscriptionValue> initialHandler) {
             this.initialHandler = initialHandler;
@@ -148,7 +148,7 @@ class Subscriptions {
          */
         public synchronized void add(Handler<SubscriptionValue> handler) {
             if (handlers == null) {
-                handlers = new HashSet<>();
+                handlers = new ArrayList<>();
                 handlers.add(initialHandler);
                 initialHandler = null;
             }
@@ -164,8 +164,8 @@ class Subscriptions {
             if (initialHandler != null) {
                 initialHandler.handle(value);
             } else {
-                for (Handler<SubscriptionValue> handler : handlers) {
-                    handler.handle(value);
+                for (int i = handlers.size(); --i >= 0; ) {
+                    handlers.get(i).handle(value);
                 }
             }
         }
