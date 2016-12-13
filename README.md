@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Dec 1, 2016
-* Version: 0.5.0
+* Date: Dec 12, 2016
+* Version: 0.6.0
 
 
 Overview
@@ -88,6 +88,11 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_0.6.0 - 2016-12-12_
+  - There can now be multiple watches of the same path.
+  - Added two new columns to the alarm tables: Is_Normal and Is_Acknowledged.
+  - All alarm table column names changed by replacing spaces with underscore.
+  
 _0.5.0 - 2016-12-01_
   - Added Watch Path to alarm tables.
   - Made the alarm message configurable on each algorithm.

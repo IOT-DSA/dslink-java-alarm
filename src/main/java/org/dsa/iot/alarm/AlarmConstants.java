@@ -35,6 +35,8 @@ public interface AlarmConstants {
     String FAULT = "Fault";
     String HAS_NOTES = "Has Notes";
     String HANDLE = "Handle";
+    String IS_ACKNOWLEDGED = "Is Acknowledged";
+    String IS_NORMAL = "Is Normal";
     String JAVA_TYPE = "javaType";
     String MESSAGE = "Message";
     String NAME = "Name";
