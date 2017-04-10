@@ -167,6 +167,73 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
+     * Action handler for testing, builds a very large database
+    private void buildTestDatabase(ActionResult event) {
+        AlarmUtil.logInfo("Enter buildTestDatabase.");
+        Node TestClass;
+        Node TestSubClass;
+        Node TestWatch;
+        String name;
+        Node node = getNode();
+        for (int i = 0; i < 10; i++) {
+            name = "TestClass" + i;
+            TestClass = setNode(node, name, name);
+            addAction(TestClass, "Test1", new Parameter("ID1", ValueType.STRING), new Parameter("Result", ValueType.STRING));
+            addAction(TestClass, "Test2", new Parameter("ID2", ValueType.STRING), new Parameter("Result", ValueType.STRING));
+            addAction(TestClass, "Test3", new Parameter("ID3", ValueType.STRING), new Parameter("Result", ValueType.STRING));
+            for (int j = 0; j < 100; j++) {
+                name = "TestSubClass" + j;
+                TestSubClass = setNode(TestClass, name, name);
+                addAction(TestSubClass, "Test1", new Parameter("ID1", ValueType.STRING), new Parameter("Result", ValueType.STRING));
+                addAction(TestSubClass, "Test2", new Parameter("ID2", ValueType.STRING), new Parameter("Result", ValueType.STRING));
+                addAction(TestSubClass, "Test3", new Parameter("ID3", ValueType.STRING), new Parameter("Result", ValueType.STRING));
+                for (int k = 0; k < 100; k++) {
+                    name = "TestWatch" + k;
+                    TestWatch = setNode(TestSubClass, name, name);
+                    TestWatch.setValueType(ValueType.NUMBER);
+                    TestWatch.setValue(new Value(k));
+                    addAction(TestWatch, "Test1", new Parameter("ID1", ValueType.STRING), new Parameter("Result", ValueType.STRING));
+                    addAction(TestWatch, "Test2", new Parameter("ID2", ValueType.STRING), new Parameter("Result", ValueType.STRING));
+                    addAction(TestWatch, "Test3", new Parameter("ID3", ValueType.STRING), new Parameter("Result", ValueType.STRING));
+                }
+            }
+        }
+        AlarmUtil.logInfo("Exit buildTestDatabase.");
+    }
+
+    //Large database testing
+    private Node setNode(Node node, String name, String displayname) {
+        node.createChild(name)
+            .setDisplayName(displayname)
+            .setSerializable(true)
+            .build();
+        return node.getChild(name);
+    }
+
+    //Large database testing
+    private void addAction(Node node, String name, Parameter parameter, Parameter result) {
+        Action action = createAction(node, name);
+        action.addParameter(parameter);
+        action.addResult(result);
+    }
+
+    //Large database testing
+    private Action createAction(Node node, String name) {
+        Action action = new Action(Permission.WRITE, new org.dsa.iot.dslink.util.handler.Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+            }
+        });
+        node.createChild(name)
+            .setAction(action)
+            .setSerializable(false)
+            .build();
+        return action;
+
+    }
+    */
+
+    /**
      * Creates a new alarm record, adds it to the provider, and returns it.
      */
     protected AlarmRecord createAlarm(AlarmClass alarmClass,
@@ -522,12 +589,23 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         getNode().createChild("Return To Normal").setSerializable(false).setAction(action)
                  .build();
-        //Set Log Level
-        /* For local testing.
+        /* //Set Log Level For testing.
         action = new Action(Permission.CONFIG, this::setLogLevel);
         action.addParameter(new Parameter(LOG_LEVEL, ENUM_LOG_LEVEL, new Value("info")));
         getNode().createChild("Set Log Level").setSerializable(false).setAction(action)
                 .build();
+        */
+        /* //Build test database
+        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                buildTestDatabase(event);
+            }
+        });
+        getNode().createChild("Build Test Database")
+                 .setSerializable(false)
+                 .setAction(action)
+                 .build();
         */
     }
 
