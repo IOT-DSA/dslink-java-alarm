@@ -144,7 +144,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     }
 
     /**
-     * Auto purge only once an hour.
+     * Auto purge once an hour.
      */
     private void checkAutoPurge() {
         long now = System.currentTimeMillis();
@@ -156,10 +156,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             return;
         }
         lastAutoPurge = now;
-        //This shouldn't be deleting many records each pass, to it was easier
-        //to just use existing code.  If there is a system where thousands of records are
-        //created per hour, then we might need to optimize it, then, for something like
-        //that we probably need smarter alarming in general.
+        //This wont't be deleting many records each pass.
         int days = getProperty(PURGE_CLOSED_DAYS).getNumber().intValue();
         if (days > 0) {
             Calendar cal = TimeUtils.reuseCalendar(now);
