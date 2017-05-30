@@ -522,8 +522,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         getNode().createChild("Return To Normal").setSerializable(false).setAction(action)
                  .build();
-        //Set Log Level
-        /* For local testing.
+        /* //Set Log Level For testing.
         action = new Action(Permission.CONFIG, this::setLogLevel);
         action.addParameter(new Parameter(LOG_LEVEL, ENUM_LOG_LEVEL, new Value("info")));
         getNode().createChild("Set Log Level").setSerializable(false).setAction(action)

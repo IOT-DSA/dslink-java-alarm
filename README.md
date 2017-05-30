@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Dec 12, 2016
-* Version: 0.6.0
+* Date: Apr 10, 2017
+* Version: 1.0.0
 
 
 Overview
@@ -88,6 +88,9 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.0.0 - 2017-04-10_
+  - Alarm auto purge options on Alarm Class.
+  
 _0.6.0 - 2016-12-12_
   - There can now be multiple watches of the same path.
   - Added two new columns to the alarm tables: Is_Normal and Is_Acknowledged.

@@ -46,6 +46,8 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     private static final String ESCALATION2_DYS = "Escalation 2 Days";
     private static final String ESCALATION2_HRS = "Escalation 2 Hours";
     private static final String ESCALATION2_MNS = "Escalation 2 Minutes";
+    private static final String PURGE_CLOSED_DAYS = "Purge Closed Days";
+    private static final String PURGE_OPEN_DAYS = "Purge Open Days";
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -57,6 +59,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     private ArrayList<AlarmStreamer> escalation1ListenerCache = null;
     private HashSet<AlarmStreamer> escalation2Listeners = new HashSet<>();
     private ArrayList<AlarmStreamer> escalation2ListenerCache = null;
+    private long lastAutoPurge = -1;
     private long lastEscalationCheck = System.currentTimeMillis();
     private HashSet<AlarmStreamer> newAlarmListeners = new HashSet<>();
     private ArrayList<AlarmStreamer> newAlarmListenerCache = null;
@@ -138,6 +141,50 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             TimeUtils.addMinutes(mins, from);
         }
         return from;
+    }
+
+    /**
+     * Auto purge once an hour.
+     */
+    private void checkAutoPurge() {
+        long now = System.currentTimeMillis();
+        if (lastAutoPurge < 0) {
+            lastAutoPurge = now;
+            return;
+        }
+        if (now < (lastAutoPurge + TimeUtils.MILLIS_HOUR)) {
+            return;
+        }
+        lastAutoPurge = now;
+        //This wont't be deleting many records each pass.
+        int days = getProperty(PURGE_CLOSED_DAYS).getNumber().intValue();
+        if (days > 0) {
+            Calendar cal = TimeUtils.reuseCalendar(now);
+            TimeUtils.addDays(-days,cal);
+            AlarmCursor cur = Alarming.getProvider().queryAlarms(this, null, cal);
+            while (cur.next()) {
+                if (cur.isClosed()) {
+                    AlarmUtil.logTrace("Auto purging: " + cur.getUuid().toString());
+                    Alarming.getProvider().deleteRecord(cur.getUuid());
+                }
+                Thread.yield();;
+            }
+            TimeUtils.recycleCalendar(cal);
+        }
+        days = getProperty(PURGE_OPEN_DAYS).getNumber().intValue();
+        if (days > 0) {
+            Calendar cal = TimeUtils.reuseCalendar(now);
+            TimeUtils.addDays(-days,cal);
+            AlarmCursor cur = Alarming.getProvider().queryAlarms(this, null, cal);
+            while (cur.next()) {
+                if (cur.isOpen()) {
+                    AlarmUtil.logTrace("Auto purging: " + cur.getUuid().toString());
+                    Alarming.getProvider().deleteRecord(cur.getUuid());
+                }
+                Thread.yield();;
+            }
+            TimeUtils.recycleCalendar(cal);
+        }
     }
 
     /**
@@ -226,6 +273,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             }
         }
         checkEscalations();
+        checkAutoPurge();
     }
 
     /**
@@ -369,6 +417,8 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     @Override
     protected void initData() {
         initAttribute("icon", new Value("class.png"));
+        initProperty(PURGE_CLOSED_DAYS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(PURGE_OPEN_DAYS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ENABLED, new Value(true)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION1_DYS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION1_HRS, new Value(0)).setWritable(Writable.CONFIG);
