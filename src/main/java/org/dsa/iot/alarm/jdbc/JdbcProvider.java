@@ -153,9 +153,9 @@ public abstract class JdbcProvider extends AbstractProvider {
     /**
      * Just a convenience for closing resources.
      *
-     * @param conn May be null.
+     * @param conn      May be null.
      * @param statement May be null.
-     * @param results May be null.
+     * @param results   May be null.
      */
     private static void close(Connection conn, Statement statement, ResultSet results) {
         if (results != null) {
@@ -382,8 +382,8 @@ public abstract class JdbcProvider extends AbstractProvider {
      * Creates a select statement based on the given parameters.
      *
      * @param alarmClass Alarm class name, may be null.
-     * @param from Earliest inclusive created time, may be null.
-     * @param to First excluded created time, may be null.
+     * @param from       Earliest inclusive created time, may be null.
+     * @param to         First excluded created time, may be null.
      * @param mustBeOpen Whether or not to only return only open records.
      */
     protected String selectStatement(AlarmClass alarmClass, Calendar from, Calendar to,

@@ -132,10 +132,10 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     /**
      * Adds the duration to the calendar and returns it.
      *
-     * @param from The calendar to add the duration, this is also returned.
-     * @param days Number of days to add (not simply 24 hours).
+     * @param from  The calendar to add the duration, this is also returned.
+     * @param days  Number of days to add (not simply 24 hours).
      * @param hours Number of hours to add to the given calendar.
-     * @param mins Number of minutes to add to the given calendar.
+     * @param mins  Number of minutes to add to the given calendar.
      * @return The provided calendar.
      */
     private Calendar applyEscalation(Calendar from, int days, int hours, int mins) {
@@ -509,7 +509,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
      * Whether or not escalation is needed.
      *
      * @param escalationTime The time escalation should occur.
-     * @param now The time to evaluate.
+     * @param now            The time to evaluate.
      * @return Whether or not an escalation is needed.
      */
     private boolean shouldEscalate(long escalationTime, long now) {
@@ -535,9 +535,9 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     /**
      * Establishes a stream with no initial set of values.
      *
-     * @param event Action invocation event.
+     * @param event     Action invocation event.
      * @param listeners The set the steamer object will add itself too.
-     * @param title The name of the thread handling the stream.
+     * @param title     The name of the thread handling the stream.
      */
     private void startStream(final ActionResult event,
                              Set<AlarmStreamer> listeners,

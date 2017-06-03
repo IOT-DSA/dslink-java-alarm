@@ -46,8 +46,9 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
      * itself from the given listenerContainer.
      *
      * @param listenerContainer Optional, where to add and remove this instance.  If this is null,
-     * then no updates will be sent (ie only the initial set will be sent).
-     * @param initialSet Optional, initial table to send.
+     *                          then no updates will be sent (ie only the initial set will be
+     *                          sent).
+     * @param initialSet        Optional, initial table to send.
      */
     public AlarmStreamer(Collection listenerContainer, ActionResult request,
                          AlarmCursor initialSet) {

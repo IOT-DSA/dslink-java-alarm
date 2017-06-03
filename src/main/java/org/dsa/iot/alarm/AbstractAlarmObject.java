@@ -241,7 +241,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     /**
      * Only adds an attribute that isn't already present, otherwise does nothing.
      *
-     * @param name The name of the attribute.
+     * @param name  The name of the attribute.
      * @param value Only used when the attribute is not present.
      */
     protected void initAttribute(String name, Value value) {
@@ -262,8 +262,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     /**
      * Only adds a config that isn't already present, otherwise does nothing.
      *
-     * @param name The name of the config.
-     * @param value Only used when the config is not present.
+     * @param name     The name of the config.
+     * @param value    Only used when the config is not present.
      * @param readOnly Whether or not the config is writable or not.
      */
     protected void initConfig(String name, Value value, boolean readOnly) {
@@ -290,7 +290,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * should be called during startup no matter what, it will register with the child
      * listener for value change callbacks, which get routed to onPropertyChange.
      *
-     * @param name Must be unique.
+     * @param name  Must be unique.
      * @param value Only used if the property does not exist.
      * @return The child value node.
      */
@@ -306,8 +306,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * should be called during startup no matter what, it will register with the child
      * nodes listener for value change callbacks, which get routed to onPropertyChange.
      *
-     * @param name Must be unique.
-     * @param type Only used if the property does not exist.
+     * @param name  Must be unique.
+     * @param type  Only used if the property does not exist.
      * @param value Only used if the property does not exist.
      * @return The child value node.
      */
@@ -357,11 +357,11 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * A convenience that creates and adds a new AlarmObject as well as the corresponding
      * persistent SDK Node.
      *
-     * @param name The name of the SDK node.
+     * @param name            The name of the SDK node.
      * @param alarmObjectType The alarm object class.
      * @return The newly created and added child.
      * @throws IllegalArgumentException If a child with the same name already exists.
-     * @throws RuntimeException Wrapping any other non-runtime exceptions.
+     * @throws RuntimeException         Wrapping any other non-runtime exceptions.
      */
     public AlarmObject newChild(String name, Class alarmObjectType) {
         AlarmObject ret = null;
@@ -433,7 +433,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     /**
      * Sets the value of a named child of the inner node.
      *
-     * @param name The name of the child node.
+     * @param name  The name of the child node.
      * @param value The new value.
      * @return The old value.
      */
