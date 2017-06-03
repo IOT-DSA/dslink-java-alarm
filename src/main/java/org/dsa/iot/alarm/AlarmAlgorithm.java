@@ -197,14 +197,14 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         initProperty(ALARM_TYPE, ENUM_ALARM_TYPE, new Value(ALERT))
                 .setWritable(Writable.CONFIG);
         initProperty(AUTO_UPDATE_INTERVAL, new Value(0)).createFakeBuilder()
-                .setConfig("unit", new Value("sec"))
-                .setWritable(Writable.CONFIG);
+                                                        .setConfig("unit", new Value("sec"))
+                                                        .setWritable(Writable.CONFIG);
         initProperty(TO_ALARM_INHIBIT, new Value(0)).createFakeBuilder()
-                .setConfig("unit", new Value("sec"))
-                .setWritable(Writable.CONFIG);
+                                                    .setConfig("unit", new Value("sec"))
+                                                    .setWritable(Writable.CONFIG);
         initProperty(TO_NORMAL_INHIBIT, new Value(0)).createFakeBuilder()
-                .setConfig("unit", new Value("sec"))
-                .setWritable(Writable.CONFIG);
+                                                     .setConfig("unit", new Value("sec"))
+                                                     .setWritable(Writable.CONFIG);
     }
 
     /**
@@ -238,7 +238,7 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         if (interval > 0) {
             int delay = Math.min(5, interval);
             autoUpdateFuture = Objects.getDaemonThreadPool()
-                    .scheduleAtFixedRate(this, delay, interval, TimeUnit.SECONDS);
+                                      .scheduleAtFixedRate(this, delay, interval, TimeUnit.SECONDS);
         }
     }
 

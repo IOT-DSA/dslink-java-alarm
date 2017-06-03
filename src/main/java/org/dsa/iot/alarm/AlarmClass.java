@@ -328,7 +328,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         });
         action.addParameter(new Parameter(USER, ValueType.STRING));
         getNode().createChild(ACKNOWLEDGE_ALL, false).setSerializable(false)
-                .setAction(action).build();
+                 .setAction(action).build();
         //Add Algorithm
         Node node = getNode();
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
@@ -343,7 +343,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         action.addParameter(new Parameter(TYPE, ValueType.makeEnum(algos),
                                           new Value(algos.iterator().next())));
         node.createChild("Add Algorithm", false).setSerializable(false).setAction(action)
-                .build();
+            .build();
         //Create Alarm action
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
             @Override
@@ -383,7 +383,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         node.createChild("Get Open Alarms", false).setSerializable(false).setAction(action)
-                .build();
+            .build();
         //Stream Escalation 1
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -394,7 +394,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         node.createChild("Stream Escalation 1", false).setSerializable(false).setAction(action)
-                .build();
+            .build();
         //Stream Escalation 2
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -405,7 +405,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         node.createChild("Stream Escalation 2", false).setSerializable(false).setAction(action)
-                .build();
+            .build();
         //Stream New Alarms
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -416,7 +416,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         node.createChild("Stream New Alarms", false).setSerializable(false).setAction(action)
-                .build();
+            .build();
         addDeleteAction("Delete Alarm Class");
     }
 

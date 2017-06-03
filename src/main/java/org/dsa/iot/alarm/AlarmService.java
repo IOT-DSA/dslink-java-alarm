@@ -189,13 +189,13 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             uuid = java.util.UUID.randomUUID();
         }
         AlarmRecord alarmRecord = Alarming.getProvider().newAlarmRecord()
-                .setUuid(uuid)
-                .setAlarmClass(alarmClass)
-                .setAlarmWatch(watch)
-                .setAlarmType(createState)
-                .setCreatedTime(now)
-                .setMessage(message)
-                .setSourcePath(sourcePath);
+                                          .setUuid(uuid)
+                                          .setAlarmClass(alarmClass)
+                                          .setAlarmWatch(watch)
+                                          .setAlarmType(createState)
+                                          .setCreatedTime(now)
+                                          .setMessage(message)
+                                          .setSourcePath(sourcePath);
         AlarmUtil.logInfo("New alarm: " +
                                   alarmRecord.getOwner().getNode().getPath()
                                   + "= "
@@ -418,7 +418,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         action.addParameter(new Parameter(USER, ValueType.STRING));
         getNode().createChild("Acknowledge", false).setSerializable(false).setAction(action)
-                .build();
+                 .build();
         //Acknowledge All
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -428,7 +428,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         });
         action.addParameter(new Parameter(USER, ValueType.STRING));
         getNode().createChild(ACKNOWLEDGE_ALL, false).setSerializable(false)
-                .setAction(action).build();
+                 .setAction(action).build();
         //Add Alarm Class action
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
             @Override
@@ -438,7 +438,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         });
         action.addParameter(new Parameter(NAME, ValueType.STRING));
         getNode().createChild("Add Alarm Class", false).setSerializable(false).setAction(action)
-                .build();
+                 .build();
         //Add Note
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
             @Override
@@ -450,7 +450,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action.addParameter(new Parameter(USER, ValueType.STRING));
         action.addParameter(new Parameter(NOTE, ValueType.STRING));
         getNode().createChild("Add Note", false).setSerializable(false).setAction(action)
-                .build();
+                 .build();
         //Delete All Records action
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
             @Override
@@ -469,7 +469,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         getNode().createChild("Delete Record", false).setSerializable(false).setAction(action)
-                .build();
+                 .build();
         //Get Alarm
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -481,7 +481,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action.setResultType(ResultType.TABLE);
         AlarmUtil.encodeAlarmColumns(action);
         getNode().createChild("Get Alarm", false).setSerializable(false).setAction(action)
-                .build();
+                 .build();
         //Get Alarms
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -495,7 +495,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         getNode().createChild("Get Alarms", false).setSerializable(false).setAction(action)
-                .build();
+                 .build();
         //Get Open Alarms
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -506,7 +506,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
         getNode().createChild("Get Open Alarms", false).setSerializable(false).setAction(action)
-                .build();
+                 .build();
         //Get Notes
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -520,7 +520,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         action.addResult(new Parameter(USER, ValueType.STRING));
         action.addResult(new Parameter(NOTE, ValueType.STRING));
         getNode().createChild("Get Notes", false).setSerializable(false).setAction(action)
-                .build();
+                 .build();
         //Return To Normal
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
             @Override
@@ -530,7 +530,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         getNode().createChild("Return To Normal", false).setSerializable(false).setAction(action)
-                .build();
+                 .build();
         /* //Set Log Level For testing.
         action = new Action(Permission.CONFIG, this::setLogLevel);
         action.addParameter(new Parameter(LOG_LEVEL, ENUM_LOG_LEVEL, new Value("info")));
