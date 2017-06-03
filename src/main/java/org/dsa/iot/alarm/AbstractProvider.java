@@ -68,7 +68,7 @@ public abstract class AbstractProvider implements Alarming.Provider {
             saveRecord(rec);
         }
         addNote(new Note(uuid).setUser(user).setText(note)
-                              .setTimestamp(System.currentTimeMillis()));
+                        .setTimestamp(System.currentTimeMillis()));
     }
 
     /**

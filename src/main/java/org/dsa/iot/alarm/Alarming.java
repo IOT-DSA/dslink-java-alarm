@@ -9,7 +9,6 @@
 package org.dsa.iot.alarm;
 
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
@@ -142,8 +141,8 @@ public class Alarming {
          * updates.
          *
          * @param alarmClass If null, return all alarm classes.
-         * @param from       Inclusive start time, can be null.
-         * @param to         First excluded end time, can be null.
+         * @param from Inclusive start time, can be null.
+         * @param to First excluded end time, can be null.
          */
         public AlarmCursor queryAlarms(AlarmClass alarmClass, Calendar from, Calendar to);
 

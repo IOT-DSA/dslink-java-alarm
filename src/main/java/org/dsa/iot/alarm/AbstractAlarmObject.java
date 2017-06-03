@@ -59,8 +59,9 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
         child.setParent(this);
         children.add(child);
-        if (started)
+        if (started) {
             child.start();
+        }
         if (steady) {
             child.steady();
         }
@@ -78,7 +79,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
                 deleteSelf();
             }
         });
-        node.createChild(actionName).setSerializable(false).setAction(action).build();
+        node.createChild(actionName, false).setSerializable(false).setAction(action).build();
     }
 
     /**
@@ -196,7 +197,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * @return Possibly null.
      */
     public Value getProperty(String name) {
-        Node child = node.getChild(name);
+        Node child = node.getChild(name, false);
         if (child == null) {
             return null;
         }
@@ -207,7 +208,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * Whether or not the inner node has a child node with the given name.
      */
     public boolean hasProperty(String name) {
-        return node.getChild(name) != null;
+        return node.getChild(name, false) != null;
     }
 
     @Override
@@ -240,7 +241,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     /**
      * Only adds an attribute that isn't already present, otherwise does nothing.
      *
-     * @param name  The name of the attribute.
+     * @param name The name of the attribute.
      * @param value Only used when the attribute is not present.
      */
     protected void initAttribute(String name, Value value) {
@@ -261,8 +262,8 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     /**
      * Only adds a config that isn't already present, otherwise does nothing.
      *
-     * @param name     The name of the config.
-     * @param value    Only used when the config is not present.
+     * @param name The name of the config.
+     * @param value Only used when the config is not present.
      * @param readOnly Whether or not the config is writable or not.
      */
     protected void initConfig(String name, Value value, boolean readOnly) {
@@ -289,7 +290,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * should be called during startup no matter what, it will register with the child
      * listener for value change callbacks, which get routed to onPropertyChange.
      *
-     * @param name  Must be unique.
+     * @param name Must be unique.
      * @param value Only used if the property does not exist.
      * @return The child value node.
      */
@@ -305,15 +306,15 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * should be called during startup no matter what, it will register with the child
      * nodes listener for value change callbacks, which get routed to onPropertyChange.
      *
-     * @param name  Must be unique.
-     * @param type  Only used if the property does not exist.
+     * @param name Must be unique.
+     * @param type Only used if the property does not exist.
      * @param value Only used if the property does not exist.
      * @return The child value node.
      */
     public Node initProperty(String name, ValueType type, Value value) {
-        Node child = node.getChild(name);
+        Node child = node.getChild(name, false);
         if (child == null) {
-            child = node.createChild(name).setSerializable(true).build();
+            child = node.createChild(name, false).setSerializable(true).build();
             child.setValueType(type);
             child.setValue(value);
         }
@@ -356,21 +357,21 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * A convenience that creates and adds a new AlarmObject as well as the corresponding
      * persistent SDK Node.
      *
-     * @param name            The name of the SDK node.
+     * @param name The name of the SDK node.
      * @param alarmObjectType The alarm object class.
      * @return The newly created and added child.
      * @throws IllegalArgumentException If a child with the same name already exists.
-     * @throws RuntimeException         Wrapping any other non-runtime exceptions.
+     * @throws RuntimeException Wrapping any other non-runtime exceptions.
      */
     public AlarmObject newChild(String name, Class alarmObjectType) {
         AlarmObject ret = null;
         try {
             Node parent = getNode();
-            Node node = parent.getChild(name);
+            Node node = parent.getChild(name, true);
             if (node != null) {
                 throw new IllegalArgumentException("Name already in use: " + name);
             }
-            node = parent.createChild(name).setSerializable(true).build();
+            node = parent.createChild(name, true).setSerializable(true).build();
             ret = (AlarmObject) alarmObjectType.newInstance();
             ret.init(node);
             addChild(ret);
@@ -420,7 +421,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         children.remove(child);
         Node tmp = child.getNode();
         if (tmp != null) {
-            node.removeChild(tmp);
+            node.removeChild(tmp, false);
         }
     }
 
@@ -432,12 +433,12 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     /**
      * Sets the value of a named child of the inner node.
      *
-     * @param name  The name of the child node.
+     * @param name The name of the child node.
      * @param value The new value.
      * @return The old value.
      */
     public Value setProperty(String name, Value value) {
-        Node child = node.getChild(name);
+        Node child = node.getChild(name, false);
         Value ret = child.getValue();
         child.setValue(value);
         return ret;

@@ -195,7 +195,7 @@ public class AlarmWatch extends AbstractAlarmObject
                     initProperty(CURRENT_VALUE, value).setWritable(Writable.NEVER);
                 } else {
                     if (curVal.getType() != subValue.getValue().getType()) {
-                        Node child = getNode().getChild(CURRENT_VALUE);
+                        Node child = getNode().getChild(CURRENT_VALUE, false);
                         child.setValueType(subValue.getValue().getType());
                     }
                     setProperty(CURRENT_VALUE, value);
@@ -313,7 +313,7 @@ public class AlarmWatch extends AbstractAlarmObject
         try {
             if ((subscribedPath != null) && !subscribedPath.isEmpty()) {
                 getService().getSubscriptions()
-                            .unsubscribe(subscribedPath, this);
+                        .unsubscribe(subscribedPath, this);
                 subscribedPath = null;
             }
         } catch (Exception x) {

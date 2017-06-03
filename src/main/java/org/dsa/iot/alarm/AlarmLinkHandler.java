@@ -102,7 +102,7 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
                 alarmService = null;
             }
             this.superRoot = superRoot;
-            Node serviceNode = superRoot.createChild("Alarm Service").setSerializable(
+            Node serviceNode = superRoot.createChild("Alarm Service", false).setSerializable(
                     true).build();
             alarmService = (AlarmService) AlarmUtil.tryCreateAlarmObject(serviceNode);
             if (alarmService == null) {

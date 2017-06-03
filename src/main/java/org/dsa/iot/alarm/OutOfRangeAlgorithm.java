@@ -25,6 +25,7 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
+    private static final String DEADBAND = "Deadband";
     private static final String MAX_VALUE = "Max Value";
     private static final String MIN_VALUE = "Min Value";
 
@@ -51,8 +52,8 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
         super.initData();
         initProperty(MIN_VALUE, new Value(0.0d)).setWritable(Writable.CONFIG);
         initProperty(MAX_VALUE, new Value(100.0d)).setWritable(Writable.CONFIG);
-        initProperty(MESSAGE, new Value("Value out of range: %s"))
-                .setWritable(Writable.CONFIG);
+        initProperty(DEADBAND, new Value(0.0d)).setWritable(Writable.CONFIG);
+        initProperty(MESSAGE, new Value("Value out of range: %s")).setWritable(Writable.CONFIG);
     }
 
     @Override
@@ -60,13 +61,23 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
         Value value = watch.getCurrentValue();
         if (value != null) {
             double val = value.getNumber().doubleValue();
-            double tmp = getProperty(MIN_VALUE).getNumber().doubleValue();
-            if (val < tmp) {
-                return true;
-            }
-            tmp = getProperty(MAX_VALUE).getNumber().doubleValue();
-            if (val > tmp) {
-                return true;
+            double deadband = Math.abs(getProperty(DEADBAND).getNumber().doubleValue());
+            double min = getProperty(MIN_VALUE).getNumber().doubleValue();
+            double max = getProperty(MAX_VALUE).getNumber().doubleValue();
+            if (watch.getAlarmState() == AlarmState.NORMAL) {
+                if (val < (min - deadband)) {
+                    return true;
+                }
+                if (val > (max + deadband)) {
+                    return true;
+                }
+            } else {
+                if (val <= (min + deadband)) {
+                    return true;
+                }
+                if (val >= (max - deadband)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -79,6 +90,8 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
             if (name.equals(MAX_VALUE)) {
                 AlarmUtil.enqueue(this);
             } else if (name.equals(MIN_VALUE)) {
+                AlarmUtil.enqueue(this);
+            } else if (name.equals(DEADBAND)) {
                 AlarmUtil.enqueue(this);
             }
         }

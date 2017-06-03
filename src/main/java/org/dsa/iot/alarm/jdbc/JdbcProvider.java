@@ -8,11 +8,25 @@
 
 package org.dsa.iot.alarm.jdbc;
 
-import java.sql.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.UUID;
-import org.dsa.iot.alarm.*;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.dsa.iot.alarm.AbstractProvider;
+import org.dsa.iot.alarm.AlarmClass;
+import org.dsa.iot.alarm.AlarmCursor;
+import org.dsa.iot.alarm.AlarmRecord;
+import org.dsa.iot.alarm.AlarmService;
+import org.dsa.iot.alarm.AlarmState;
+import org.dsa.iot.alarm.AlarmUtil;
+import org.dsa.iot.alarm.AlarmWatch;
+import org.dsa.iot.alarm.Note;
+import org.dsa.iot.alarm.NoteCursor;
 
 /**
  * Alarming provider that uses a JDBC data source.  This uses a fixed schema, but
@@ -139,26 +153,29 @@ public abstract class JdbcProvider extends AbstractProvider {
     /**
      * Just a convenience for closing resources.
      *
-     * @param conn      May be null.
+     * @param conn May be null.
      * @param statement May be null.
-     * @param results   May be null.
+     * @param results May be null.
      */
     private static void close(Connection conn, Statement statement, ResultSet results) {
-        if (results != null)
+        if (results != null) {
             try {
                 results.close();
             } catch (Exception ignore) {
             }
-        if (statement != null)
+        }
+        if (statement != null) {
             try {
                 statement.close();
             } catch (Exception ignore) {
             }
-        if (conn != null)
+        }
+        if (conn != null) {
             try {
                 conn.close();
             } catch (Exception ignore) {
             }
+        }
     }
 
     @Override
@@ -365,8 +382,8 @@ public abstract class JdbcProvider extends AbstractProvider {
      * Creates a select statement based on the given parameters.
      *
      * @param alarmClass Alarm class name, may be null.
-     * @param from       Earliest inclusive created time, may be null.
-     * @param to         First excluded created time, may be null.
+     * @param from Earliest inclusive created time, may be null.
+     * @param to First excluded created time, may be null.
      * @param mustBeOpen Whether or not to only return only open records.
      */
     protected String selectStatement(AlarmClass alarmClass, Calendar from, Calendar to,
@@ -464,6 +481,7 @@ public abstract class JdbcProvider extends AbstractProvider {
     ///////////////////////////////////////////////////////////////////////////
 
     private class MyAlarmCursor extends AlarmCursor {
+
         private Connection conn;
         private ResultSet results;
         private Statement statement;
@@ -504,6 +522,7 @@ public abstract class JdbcProvider extends AbstractProvider {
     }
 
     private class MyNoteCursor extends NoteCursor {
+
         private Connection conn;
         private ResultSet results;
         private Statement statement;

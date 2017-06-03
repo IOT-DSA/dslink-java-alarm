@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Apr 10, 2017
-* Version: 1.0.0
+* Date: June 1, 2017
+* Version: 1.1.0
 
 
 Overview
@@ -88,6 +88,9 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.1.0 - 2017-06-01_
+  - Added Deadband to the out of range alg.
+  
 _1.0.0 - 2017-04-10_
   - Alarm auto purge options on Alarm Class.
   

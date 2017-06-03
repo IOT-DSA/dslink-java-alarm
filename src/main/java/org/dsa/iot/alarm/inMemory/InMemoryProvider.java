@@ -8,9 +8,24 @@
 
 package org.dsa.iot.alarm.inMemory;
 
-import java.util.*;
-import org.dsa.iot.alarm.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.UUID;
+import org.dsa.iot.alarm.AbstractProvider;
+import org.dsa.iot.alarm.AlarmClass;
+import org.dsa.iot.alarm.AlarmCursor;
+import org.dsa.iot.alarm.AlarmRecord;
+import org.dsa.iot.alarm.Note;
+import org.dsa.iot.alarm.NoteCursor;
 
 /**
  * Alarming provider that stores alarms in memory using Java collections.
@@ -144,6 +159,7 @@ public class InMemoryProvider extends AbstractProvider {
      */
     @SuppressFBWarnings("SE_COMPARATOR_SHOULD_BE_SERIALIZABLE")
     private static class AlarmComparator implements Comparator<AlarmRecord> {
+
         public AlarmComparator() {
         }
 
@@ -165,6 +181,7 @@ public class InMemoryProvider extends AbstractProvider {
      * Uses an iterator on the noteCache.
      */
     private class MyAlarmCursor extends AlarmCursor {
+
         private AlarmClass alarmClass;
         private long from = Long.MIN_VALUE;
         private Iterator<AlarmRecord> iterator;
@@ -221,6 +238,7 @@ public class InMemoryProvider extends AbstractProvider {
      * Uses an iterator on the noteCache.
      */
     private class MyNoteCursor extends NoteCursor {
+
         private Iterator<Note> iterator;
         private UUID uuid;
 
