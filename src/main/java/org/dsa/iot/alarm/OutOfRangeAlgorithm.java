@@ -47,6 +47,30 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
         return String.format(pattern, String.valueOf(watch.getCurrentValue()));
     }
 
+    /**
+     * Try to extract a numeric from the value, even if it isn't a number.
+     *
+     * @return Double.NaN if a double can't be extracted.
+     */
+    private double getNumeric(Value value) {
+        Number num = value.getNumber();
+        if (num != null) {
+            return num.doubleValue();
+        }
+        Boolean bool = value.getBool();
+        if (bool != null) {
+            return bool ? 1 : 0;
+        }
+        String str = value.getString();
+        if (str != null) {
+            try {
+                return Double.parseDouble(str);
+            } catch (Exception possible) {
+            }
+        }
+        return Double.NaN;
+    }
+
     @Override
     protected void initData() {
         super.initData();
@@ -60,7 +84,11 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
     protected boolean isAlarm(AlarmWatch watch) {
         Value value = watch.getCurrentValue();
         if (value != null) {
-            double val = value.getNumber().doubleValue();
+            double val = getNumeric(value);
+            if (val == Double.NaN) {
+                //This is not a down device alarm etc, so don't alarm on other conditions.
+                return false;
+            }
             double deadband = Math.abs(getProperty(DEADBAND).getNumber().doubleValue());
             double min = getProperty(MIN_VALUE).getNumber().doubleValue();
             double max = getProperty(MAX_VALUE).getNumber().doubleValue();

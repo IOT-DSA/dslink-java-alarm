@@ -90,6 +90,7 @@ History
 -------
 _1.1.0 - 2017-06-05_
   - Added Deadband to the out of range alg.
+  - Out of range algorithm will now convert strings and booleans to numbers.
   - Fix watches not tracking changes to alarm type on the parent algorithm.
   - Fix unable to delete alarm objects with names containing special characters.
   
