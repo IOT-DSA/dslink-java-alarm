@@ -48,7 +48,7 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
     }
 
     /**
-     * Try to extract a numeric from the value, even if it isn't a number.
+     * Try to extract a numeric from the value, even if it's another type.
      *
      * @return Double.NaN if a double can't be extracted.
      */
