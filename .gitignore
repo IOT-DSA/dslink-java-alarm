@@ -5,11 +5,11 @@
 # Misc
 **.bak
 **.class
+**.iml
 **.old
 **/.classpath
 **/.DS_Store
 **/.idea
-**/.iml
 **/.metadata
 **/.project
 **/.settings

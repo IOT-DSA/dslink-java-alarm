@@ -92,7 +92,7 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
         } else if ("inactive".equalsIgnoreCase(arg)) {
             return true;
         }
-        return true;
+        return false;
     }
 
     /**
