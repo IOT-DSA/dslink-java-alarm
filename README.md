@@ -88,7 +88,7 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
-_1.1.2 - 2017-06-09_
+_1.1.2 - 2017-06-12_
   - Added deadband to the out of range alg.
   - Out of range algorithm will now convert strings and booleans to numbers.
   - Fix watches not tracking changes to alarm type on the parent algorithm.
