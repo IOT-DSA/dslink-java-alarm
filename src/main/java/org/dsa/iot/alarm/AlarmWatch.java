@@ -44,7 +44,9 @@ public class AlarmWatch extends AbstractAlarmObject
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private long lastStateTime = System.currentTimeMillis();
+    private Boolean detectionState = null;
+    private long detectionStateTime = System.currentTimeMillis();
+    private long lastStateTime = detectionStateTime;
     private AlarmAlgorithm parentAlgorithm;
     private String subscribedPath;
 
@@ -107,6 +109,13 @@ public class AlarmWatch extends AbstractAlarmObject
      */
     public Value getCurrentValue() {
         return getProperty(CURRENT_VALUE);
+    }
+
+    /**
+     * How long in millis since the change of state was first detected.
+     */
+    long getDetectionStateDuration() {
+        return System.currentTimeMillis() - detectionStateTime;
     }
 
     /**
@@ -278,6 +287,27 @@ public class AlarmWatch extends AbstractAlarmObject
         setProperty(ALARM_STATE_TIME,
                     new Value(TimeUtils.encode(cal, true, null).toString()));
         AlarmUtil.recycle(cal);
+    }
+
+    /**
+     * Called by the algorithm each time it evaluates the alarm condition.  This tracks
+     * state changes for inhibit purposes.
+     *
+     * @param state True for alarm, false for normal.
+     */
+    void setDetectionState(Boolean state) {
+        if (detectionState == null) {
+            if (getAlarmState() == AlarmState.NORMAL) {
+                detectionState = Boolean.FALSE;
+            } else {
+                detectionState = Boolean.TRUE;
+            }
+        }
+        if (state == detectionState) {
+            return;
+        }
+        this.detectionState = state;
+        this.detectionStateTime = System.currentTimeMillis();
     }
 
     /**

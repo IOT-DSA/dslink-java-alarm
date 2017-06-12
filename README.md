@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: June 9, 2017
-* Version: 1.1.1
+* Date: June 12, 2017
+* Version: 1.1.2
 
 
 Overview
@@ -88,12 +88,13 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
-_1.1.1 - 2017-06-09_
-  - Added Deadband to the out of range alg.
+_1.1.2 - 2017-06-09_
+  - Added deadband to the out of range alg.
   - Out of range algorithm will now convert strings and booleans to numbers.
   - Fix watches not tracking changes to alarm type on the parent algorithm.
   - Fix unable to delete alarm objects with names containing special characters.
   - Fix boolean algorithm when value is a string.
+  - Fix inhibits.
   
 _1.0.0 - 2017-04-10_
   - Alarm auto purge options on Alarm Class.
