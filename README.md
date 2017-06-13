@@ -2,7 +2,7 @@ DSLINK-JAVA-ALARM
 =================
 
 * Date: June 12, 2017
-* Version: 1.1.2
+* Version: 1.1.3
 
 
 Overview
@@ -88,7 +88,7 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
-_1.1.2 - 2017-06-12_
+_1.1.3 - 2017-06-13_
   - Added deadband to the out of range alg.
   - Out of range algorithm will now convert strings and booleans to numbers.
   - Fix watches not tracking changes to alarm type on the parent algorithm.

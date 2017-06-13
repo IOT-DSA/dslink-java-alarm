@@ -113,7 +113,7 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
             alarmService.start();
             AlarmUtil.logInfo("AlarmService started");
             alarmService.steady();
-            AlarmUtil.logInfo("AlarmService steady");
+            AlarmUtil.logInfo("AlarmService stable");
         }
     }
 
