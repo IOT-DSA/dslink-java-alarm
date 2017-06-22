@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: June 12, 2017
-* Version: 1.1.3
+* Date: June 22, 2017
+* Version: 1.1.4
 
 
 Overview
@@ -88,6 +88,9 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.1.4 - 2017-06-13_
+  - Null current values become "null" in the String algorithm.
+  
 _1.1.3 - 2017-06-13_
   - Added deadband to the out of range alg.
   - Out of range algorithm will now convert strings and booleans to numbers.
