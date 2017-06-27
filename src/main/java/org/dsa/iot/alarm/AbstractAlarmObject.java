@@ -59,8 +59,9 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
         child.setParent(this);
         children.add(child);
-        if (started)
+        if (started) {
             child.start();
+        }
         if (steady) {
             child.steady();
         }
@@ -78,7 +79,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
                 deleteSelf();
             }
         });
-        node.createChild(actionName).setSerializable(false).setAction(action).build();
+        node.createChild(actionName, false).setSerializable(false).setAction(action).build();
     }
 
     /**
@@ -196,7 +197,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * @return Possibly null.
      */
     public Value getProperty(String name) {
-        Node child = node.getChild(name);
+        Node child = node.getChild(name, false);
         if (child == null) {
             return null;
         }
@@ -207,7 +208,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * Whether or not the inner node has a child node with the given name.
      */
     public boolean hasProperty(String name) {
-        return node.getChild(name) != null;
+        return node.getChild(name, false) != null;
     }
 
     @Override
@@ -311,9 +312,9 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * @return The child value node.
      */
     public Node initProperty(String name, ValueType type, Value value) {
-        Node child = node.getChild(name);
+        Node child = node.getChild(name, false);
         if (child == null) {
-            child = node.createChild(name).setSerializable(true).build();
+            child = node.createChild(name, false).setSerializable(true).build();
             child.setValueType(type);
             child.setValue(value);
         }
@@ -366,11 +367,11 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         AlarmObject ret = null;
         try {
             Node parent = getNode();
-            Node node = parent.getChild(name);
+            Node node = parent.getChild(name, true);
             if (node != null) {
                 throw new IllegalArgumentException("Name already in use: " + name);
             }
-            node = parent.createChild(name).setSerializable(true).build();
+            node = parent.createChild(name, true).setSerializable(true).build();
             ret = (AlarmObject) alarmObjectType.newInstance();
             ret.init(node);
             addChild(ret);
@@ -420,7 +421,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         children.remove(child);
         Node tmp = child.getNode();
         if (tmp != null) {
-            node.removeChild(tmp);
+            node.removeChild(tmp, false);
         }
     }
 
@@ -437,7 +438,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * @return The old value.
      */
     public Value setProperty(String name, Value value) {
-        Node child = node.getChild(name);
+        Node child = node.getChild(name, false);
         Value ret = child.getValue();
         child.setValue(value);
         return ret;

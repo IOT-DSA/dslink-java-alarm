@@ -44,7 +44,9 @@ public class AlarmWatch extends AbstractAlarmObject
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private long lastStateTime = System.currentTimeMillis();
+    private Boolean alarmDetected = null;
+    private long alarmDetectedTime = System.currentTimeMillis();
+    private long lastStateTime = alarmDetectedTime;
     private AlarmAlgorithm parentAlgorithm;
     private String subscribedPath;
 
@@ -83,6 +85,13 @@ public class AlarmWatch extends AbstractAlarmObject
      * Override hook, called periodically on the entire tree; this does nothing.
      */
     protected void execute() {
+    }
+
+    /**
+     * How long in millis since the change of state was first detected.
+     */
+    long getAlarmDetectedStateElapsedTime() {
+        return System.currentTimeMillis() - alarmDetectedTime;
     }
 
     /**
@@ -195,7 +204,7 @@ public class AlarmWatch extends AbstractAlarmObject
                     initProperty(CURRENT_VALUE, value).setWritable(Writable.NEVER);
                 } else {
                     if (curVal.getType() != subValue.getValue().getType()) {
-                        Node child = getNode().getChild(CURRENT_VALUE);
+                        Node child = getNode().getChild(CURRENT_VALUE, false);
                         child.setValueType(subValue.getValue().getType());
                     }
                     setProperty(CURRENT_VALUE, value);
@@ -278,6 +287,27 @@ public class AlarmWatch extends AbstractAlarmObject
         setProperty(ALARM_STATE_TIME,
                     new Value(TimeUtils.encode(cal, true, null).toString()));
         AlarmUtil.recycle(cal);
+    }
+
+    /**
+     * Called by the algorithm each time it evaluates the alarm condition.  This tracks
+     * state changes for inhibit purposes.
+     *
+     * @param state True for alarm, false for normal.
+     */
+    void setAlarmDetected(Boolean state) {
+        if (alarmDetected == null) {
+            if (getAlarmState() == AlarmState.NORMAL) {
+                alarmDetected = Boolean.FALSE;
+            } else {
+                alarmDetected = Boolean.TRUE;
+            }
+        }
+        if (alarmDetected.equals(state)) {
+            return;
+        }
+        this.alarmDetected = state;
+        this.alarmDetectedTime = System.currentTimeMillis();
     }
 
     /**

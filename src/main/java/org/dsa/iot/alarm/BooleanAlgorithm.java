@@ -72,8 +72,9 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
             if (curStr != null) {
                 if (alarmValue) {
                     return isTrue(curStr);
+                } else {
+                    return isFalse(curStr);
                 }
-                return isFalse(curStr);
             }
         }
         return false;
@@ -92,7 +93,7 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
         } else if ("inactive".equalsIgnoreCase(arg)) {
             return true;
         }
-        return true;
+        return false;
     }
 
     /**

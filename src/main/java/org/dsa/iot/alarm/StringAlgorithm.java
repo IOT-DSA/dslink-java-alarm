@@ -66,22 +66,25 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
 
     @Override
     protected boolean isAlarm(AlarmWatch watch) {
+        String alarmValue = getProperty(ALARM_VALUE).getString();
+        String valueMode = getProperty(ALARM_VALUE_MODE).getString();
+        String curString = null;
         Value currentValue = watch.getCurrentValue();
         if (currentValue != null) {
-            String alarmValue = getProperty(ALARM_VALUE).getString();
-            String valueMode = getProperty(ALARM_VALUE_MODE).getString();
-            String curString = currentValue.toString();
-            if (valueMode.equals(MODE_EQUALS)) {
-                return curString.equals(alarmValue);
-            } else if (valueMode.equals(MODE_NOTEQUALS)) {
-                return !curString.equals(alarmValue);
-            } else if (valueMode.equals(MODE_CONTAINS)) {
-                return curString.contains(alarmValue);
-            } else if (valueMode.equals(MODE_STARTSWITH)) {
-                return curString.startsWith(alarmValue);
-            } else if (valueMode.equals(MODE_ENDSWITH)) {
-                return curString.endsWith(alarmValue);
-            }
+            curString = currentValue.toString();
+        } else {
+            curString = "null";
+        }
+        if (MODE_EQUALS.equals(valueMode)) {
+            return curString.equals(alarmValue);
+        } else if (MODE_NOTEQUALS.equals(valueMode)) {
+            return !curString.equals(alarmValue);
+        } else if (MODE_CONTAINS.equals(valueMode)) {
+            return curString.contains(alarmValue);
+        } else if (MODE_STARTSWITH.equals(valueMode)) {
+            return curString.startsWith(alarmValue);
+        } else if (MODE_ENDSWITH.equals(valueMode)) {
+            return curString.endsWith(alarmValue);
         }
         return false;
     }

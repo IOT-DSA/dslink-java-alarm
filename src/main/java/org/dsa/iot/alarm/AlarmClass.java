@@ -16,7 +16,11 @@ import org.dsa.iot.dslink.methods.StreamState;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.Writable;
-import org.dsa.iot.dslink.node.actions.*;
+import org.dsa.iot.dslink.node.actions.Action;
+import org.dsa.iot.dslink.node.actions.ActionResult;
+import org.dsa.iot.dslink.node.actions.EditorType;
+import org.dsa.iot.dslink.node.actions.Parameter;
+import org.dsa.iot.dslink.node.actions.ResultType;
 import org.dsa.iot.dslink.node.actions.table.Table;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
@@ -107,7 +111,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             }
             String nameString = name.getString();
             Node parent = event.getNode().getParent();
-            Node alarmClassNode = parent.getChild(nameString);
+            Node alarmClassNode = parent.getChild(nameString, true);
             if (alarmClassNode != null) {
                 throw new IllegalArgumentException(
                         "Name already in use: " + name.getString());
@@ -160,28 +164,28 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         int days = getProperty(PURGE_CLOSED_DAYS).getNumber().intValue();
         if (days > 0) {
             Calendar cal = TimeUtils.reuseCalendar(now);
-            TimeUtils.addDays(-days,cal);
+            TimeUtils.addDays(-days, cal);
             AlarmCursor cur = Alarming.getProvider().queryAlarms(this, null, cal);
             while (cur.next()) {
                 if (cur.isClosed()) {
                     AlarmUtil.logTrace("Auto purging: " + cur.getUuid().toString());
                     Alarming.getProvider().deleteRecord(cur.getUuid());
                 }
-                Thread.yield();;
+                Thread.yield();
             }
             TimeUtils.recycleCalendar(cal);
         }
         days = getProperty(PURGE_OPEN_DAYS).getNumber().intValue();
         if (days > 0) {
             Calendar cal = TimeUtils.reuseCalendar(now);
-            TimeUtils.addDays(-days,cal);
+            TimeUtils.addDays(-days, cal);
             AlarmCursor cur = Alarming.getProvider().queryAlarms(this, null, cal);
             while (cur.next()) {
                 if (cur.isOpen()) {
                     AlarmUtil.logTrace("Auto purging: " + cur.getUuid().toString());
                     Alarming.getProvider().deleteRecord(cur.getUuid());
                 }
-                Thread.yield();;
+                Thread.yield();
             }
             TimeUtils.recycleCalendar(cal);
         }
@@ -321,7 +325,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             }
         });
         action.addParameter(new Parameter(USER, ValueType.STRING));
-        getNode().createChild(ACKNOWLEDGE_ALL).setSerializable(false)
+        getNode().createChild(ACKNOWLEDGE_ALL, false).setSerializable(false)
                  .setAction(action).build();
         //Add Algorithm
         Node node = getNode();
@@ -336,7 +340,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         Set<String> algos = Alarming.getProvider().getAlarmAlgorithms().keySet();
         action.addParameter(new Parameter(TYPE, ValueType.makeEnum(algos),
                                           new Value(algos.iterator().next())));
-        node.createChild("Add Algorithm").setSerializable(false).setAction(action)
+        node.createChild("Add Algorithm", false).setSerializable(false).setAction(action)
             .build();
         //Create Alarm action
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
@@ -353,7 +357,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         action.addParameter(
                 new Parameter(MESSAGE, ValueType.STRING, new Value("80 Characters Max")));
         AlarmUtil.encodeAlarmColumns(action);
-        node.createChild(CREATE_ALARM).setSerializable(false).setAction(action).build();
+        node.createChild(CREATE_ALARM, false).setSerializable(false).setAction(action).build();
         //Get Alarms
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -366,7 +370,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
                         .setEditorType(EditorType.DATE_RANGE));
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
-        node.createChild("Get Alarms").setSerializable(false).setAction(action).build();
+        node.createChild("Get Alarms", false).setSerializable(false).setAction(action).build();
         //Get Open Alarms
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -376,7 +380,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         });
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
-        node.createChild("Get Open Alarms").setSerializable(false).setAction(action)
+        node.createChild("Get Open Alarms", false).setSerializable(false).setAction(action)
             .build();
         //Stream Escalation 1
         action = new Action(Permission.READ, new Handler<ActionResult>() {
@@ -387,7 +391,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         });
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
-        node.createChild("Stream Escalation 1").setSerializable(false).setAction(action)
+        node.createChild("Stream Escalation 1", false).setSerializable(false).setAction(action)
             .build();
         //Stream Escalation 2
         action = new Action(Permission.READ, new Handler<ActionResult>() {
@@ -398,7 +402,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         });
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
-        node.createChild("Stream Escalation 2").setSerializable(false).setAction(action)
+        node.createChild("Stream Escalation 2", false).setSerializable(false).setAction(action)
             .build();
         //Stream New Alarms
         action = new Action(Permission.READ, new Handler<ActionResult>() {
@@ -409,7 +413,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         });
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
-        node.createChild("Stream New Alarms").setSerializable(false).setAction(action)
+        node.createChild("Stream New Alarms", false).setSerializable(false).setAction(action)
             .build();
         addDeleteAction("Delete Alarm Class");
     }

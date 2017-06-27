@@ -8,10 +8,10 @@
 
 package org.dsa.iot.alarm.jdbc;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import org.dsa.iot.alarm.AlarmUtil;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Uses an in memory instance of the H2 database.

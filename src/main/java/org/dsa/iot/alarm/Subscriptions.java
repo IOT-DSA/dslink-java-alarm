@@ -97,17 +97,21 @@ class Subscriptions {
     public synchronized void unsubscribe(final String path,
                                          Handler<SubscriptionValue> handler) {
         SubscriptionHandler facade = subscriptions.get(path);
-        facade.remove(handler);
-        if (facade.size() == 0) {
-            subscriptions.remove(path);
-            if (service.getLinkHandler().getRequesterLink().isConnected()) {
-                AlarmUtil.enqueue(new Runnable() {
-                    @Override
-                    public void run() {
-                        unsubscribeActual(path);
-                    }
-                });
+        if (facade != null) {
+            facade.remove(handler);
+            if (facade.size() == 0) {
+                subscriptions.remove(path);
+                if (service.getLinkHandler().getRequesterLink().isConnected()) {
+                    AlarmUtil.enqueue(new Runnable() {
+                        @Override
+                        public void run() {
+                            unsubscribeActual(path);
+                        }
+                    });
+                }
             }
+        } else {
+            subscriptions.remove(path);
         }
     }
 

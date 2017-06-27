@@ -8,6 +8,7 @@
 
 package org.dsa.iot.alarm;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Calendar;
 import java.util.concurrent.Callable;
 import org.dsa.iot.dslink.node.Node;
@@ -21,7 +22,6 @@ import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.dslink.util.TimeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Misc utilities.
@@ -250,8 +250,8 @@ public class AlarmUtil implements AlarmConstants {
      *
      * @param node The node the alarm object represents/proxies.
      * @return An instance of the javaType config, or null if there isn't one.
-     * @throws RuntimeException Which will wrap the true exception if there are
-     *                          issues instantiating the type.
+     * @throws RuntimeException Which will wrap the true exception if there are issues instantiating
+     *                          the type.
      */
     public static AlarmObject tryCreateAlarmObject(Node node) {
         AlarmObject ret = null;

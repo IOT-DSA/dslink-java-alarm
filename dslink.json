@@ -1,11 +1,10 @@
 {
   "name": "dslink-java-alarm",
-  "version": "0.6.0",
+  "version": "1.1.4",
   "description": "Alarming Link",
   "license": "ISC",
   "author": {
-    "name": "Aaron Hansen",
-    "email": "aaron@comfortanalytics.com"
+    "name": "Aaron Hansen"
   },
   "main": "bin/dslink-java-alarm",
   "repository": {
