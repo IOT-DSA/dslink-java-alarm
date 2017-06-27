@@ -65,7 +65,8 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
         if (str != null) {
             try {
                 return Double.parseDouble(str);
-            } catch (Exception possible) {
+            } catch (Exception x) {
+                AlarmUtil.logError(str, x);
             }
         }
         return Double.NaN;
