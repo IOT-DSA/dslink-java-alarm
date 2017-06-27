@@ -126,13 +126,13 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             }
             String nameString = name.getString();
             Node parent = getNode();
-            Node alarmClassNode = parent.getChild(nameString, false);
+            Node alarmClassNode = parent.getChild(nameString, true);
             if (alarmClassNode != null) {
                 throw new IllegalArgumentException(
                         "Name already in use: " + name.getString());
             }
             //Create the child node representing the alarm class.
-            alarmClassNode = parent.createChild(nameString, false).setSerializable(true).build();
+            alarmClassNode = parent.createChild(nameString, true).setSerializable(true).build();
             AlarmClass alarmClass = Alarming.getProvider().newAlarmClass(nameString);
             alarmClass.init(alarmClassNode);
             addChild(alarmClass);

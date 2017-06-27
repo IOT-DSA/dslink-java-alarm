@@ -74,7 +74,7 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
             }
             String nameString = name.getString();
             Node parent = event.getNode().getParent();
-            Node watchNode = parent.getChild(nameString, false);
+            Node watchNode = parent.getChild(nameString, true);
             if (watchNode != null) {
                 throw new IllegalArgumentException(
                         "Name already in use: " + name.getString());

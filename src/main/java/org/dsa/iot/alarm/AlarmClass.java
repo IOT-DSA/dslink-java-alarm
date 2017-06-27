@@ -111,7 +111,7 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
             }
             String nameString = name.getString();
             Node parent = event.getNode().getParent();
-            Node alarmClassNode = parent.getChild(nameString, false);
+            Node alarmClassNode = parent.getChild(nameString, true);
             if (alarmClassNode != null) {
                 throw new IllegalArgumentException(
                         "Name already in use: " + name.getString());
