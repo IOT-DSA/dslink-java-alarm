@@ -90,7 +90,7 @@ public class AlarmWatch extends AbstractAlarmObject
     /**
      * How long in millis since the change of state was first detected.
      */
-    long getAlarmDetectedDuration() {
+    long getAlarmDetectedStateElapsedTime() {
         return System.currentTimeMillis() - alarmDetectedTime;
     }
 

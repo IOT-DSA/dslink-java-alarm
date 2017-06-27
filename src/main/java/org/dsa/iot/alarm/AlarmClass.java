@@ -186,7 +186,6 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
                     Alarming.getProvider().deleteRecord(cur.getUuid());
                 }
                 Thread.yield();
-                ;
             }
             TimeUtils.recycleCalendar(cal);
         }
