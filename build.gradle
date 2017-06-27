@@ -38,7 +38,7 @@ findbugsMain {
 
 dependencies {
     provided 'com.google.code.findbugs:annotations:3.0.1'
-    compile 'org.iot-dsa:dslink:0.17.4-SNAPSHOT'
+    compile 'org.iot-dsa:dslink:0.17.5-SNAPSHOT'
     compile 'com.h2database:h2:1.4.192'
 }
 
