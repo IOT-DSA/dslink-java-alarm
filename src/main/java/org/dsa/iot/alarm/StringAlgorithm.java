@@ -75,15 +75,15 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
         } else {
             curString = "null";
         }
-        if (valueMode.equals(MODE_EQUALS)) {
+        if (MODE_EQUALS.equals(valueMode)) {
             return curString.equals(alarmValue);
-        } else if (valueMode.equals(MODE_NOTEQUALS)) {
+        } else if (MODE_NOTEQUALS.equals(valueMode)) {
             return !curString.equals(alarmValue);
-        } else if (valueMode.equals(MODE_CONTAINS)) {
+        } else if (MODE_CONTAINS.equals(valueMode)) {
             return curString.contains(alarmValue);
-        } else if (valueMode.equals(MODE_STARTSWITH)) {
+        } else if (MODE_STARTSWITH.equals(valueMode)) {
             return curString.startsWith(alarmValue);
-        } else if (valueMode.equals(MODE_ENDSWITH)) {
+        } else if (MODE_ENDSWITH.equals(valueMode)) {
             return curString.endsWith(alarmValue);
         }
         return false;
