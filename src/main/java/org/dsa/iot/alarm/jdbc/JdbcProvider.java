@@ -161,19 +161,22 @@ public abstract class JdbcProvider extends AbstractProvider {
         if (results != null) {
             try {
                 results.close();
-            } catch (Exception ignore) {
+            } catch (Exception x) {
+                AlarmUtil.logError(results.toString(), x);
             }
         }
         if (statement != null) {
             try {
                 statement.close();
-            } catch (Exception ignore) {
+            } catch (Exception x) {
+                AlarmUtil.logError(statement.toString(), x);
             }
         }
         if (conn != null) {
             try {
                 conn.close();
-            } catch (Exception ignore) {
+            } catch (Exception x) {
+                AlarmUtil.logError(conn.toString(), x);
             }
         }
     }
