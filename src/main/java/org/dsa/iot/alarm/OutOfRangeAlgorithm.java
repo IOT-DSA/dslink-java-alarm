@@ -85,7 +85,7 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
         Value value = watch.getCurrentValue();
         if (value != null) {
             double val = getNumeric(value);
-            if (val == Double.NaN) {
+            if (Double.isNaN(val)) {
                 //This is not a down device alarm etc, so don't alarm on other conditions.
                 return false;
             }

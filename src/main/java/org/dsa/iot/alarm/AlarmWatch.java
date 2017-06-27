@@ -44,9 +44,9 @@ public class AlarmWatch extends AbstractAlarmObject
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private Boolean detectionState = null;
-    private long detectionStateTime = System.currentTimeMillis();
-    private long lastStateTime = detectionStateTime;
+    private Boolean alarmDetected = null;
+    private long alarmDetectedTime = System.currentTimeMillis();
+    private long lastStateTime = alarmDetectedTime;
     private AlarmAlgorithm parentAlgorithm;
     private String subscribedPath;
 
@@ -88,6 +88,13 @@ public class AlarmWatch extends AbstractAlarmObject
     }
 
     /**
+     * How long in millis since the change of state was first detected.
+     */
+    long getAlarmDetectedDuration() {
+        return System.currentTimeMillis() - alarmDetectedTime;
+    }
+
+    /**
      * Gets from the corresponding property.
      */
     protected AlarmState getAlarmState() {
@@ -109,13 +116,6 @@ public class AlarmWatch extends AbstractAlarmObject
      */
     public Value getCurrentValue() {
         return getProperty(CURRENT_VALUE);
-    }
-
-    /**
-     * How long in millis since the change of state was first detected.
-     */
-    long getDetectionStateDuration() {
-        return System.currentTimeMillis() - detectionStateTime;
     }
 
     /**
@@ -295,19 +295,19 @@ public class AlarmWatch extends AbstractAlarmObject
      *
      * @param state True for alarm, false for normal.
      */
-    void setDetectionState(Boolean state) {
-        if (detectionState == null) {
+    void setAlarmDetected(Boolean state) {
+        if (alarmDetected == null) {
             if (getAlarmState() == AlarmState.NORMAL) {
-                detectionState = Boolean.FALSE;
+                alarmDetected = Boolean.FALSE;
             } else {
-                detectionState = Boolean.TRUE;
+                alarmDetected = Boolean.TRUE;
             }
         }
-        if (state == detectionState) {
+        if (alarmDetected.equals(state)) {
             return;
         }
-        this.detectionState = state;
-        this.detectionStateTime = System.currentTimeMillis();
+        this.alarmDetected = state;
+        this.alarmDetectedTime = System.currentTimeMillis();
     }
 
     /**
