@@ -82,8 +82,9 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                 throw new NullPointerException("Missing User");
             }
             // 77513 - Acknowledge alarms with comma-separated UUIDs 
-            String items[] = uuid.getString().split(",");
+            String items[] = uuid.getString().replaceAll(" ", "").split(",");
             for (String item : items) {
+                if (item.isEmpty()) continue;
                 UUID uuidObj = UUID.fromString(item);
                 Alarming.getProvider().acknowledge(uuidObj, user.getString());
                 AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
