@@ -69,7 +69,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * Action handler for acknowledging a single alarm by UUID.
+     * Action handler for acknowledging alarms with comma-separated UUIDs.
      */
     private void acknowledge(ActionResult event) {
         try {
@@ -81,10 +81,15 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             if (user == null) {
                 throw new NullPointerException("Missing User");
             }
-            UUID uuidObj = UUID.fromString(uuid.getString());
-            Alarming.getProvider().acknowledge(uuidObj, user.getString());
-            AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
-            rec.getAlarmClass().notifyAllUpdates(rec);
+            // 77513 - Acknowledge alarms with comma-separated UUIDs 
+            String items[] = uuid.getString().replaceAll(" ", "").split(",");
+            for (String item : items) {
+                if (item.isEmpty()) continue;
+                UUID uuidObj = UUID.fromString(item);
+                Alarming.getProvider().acknowledge(uuidObj, user.getString());
+                AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
+                rec.getAlarmClass().notifyAllUpdates(rec);
+            }
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
