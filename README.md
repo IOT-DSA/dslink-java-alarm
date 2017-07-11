@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: June 22, 2017
-* Version: 1.1.4
+* Date: July 11, 2017
+* Version: 1.1.6
 
 
 Overview
@@ -88,6 +88,9 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.1.6 - 2017-07-11_
+  - enhance acknowledge alarms with comma-separated UUIDs.
+
 _1.1.4 - 2017-06-13_
   - Null current values become "null" in the String algorithm.
   
