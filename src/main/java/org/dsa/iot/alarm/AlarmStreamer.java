@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import org.dsa.iot.dslink.methods.StreamState;
 import org.dsa.iot.dslink.node.actions.ActionResult;
 import org.dsa.iot.dslink.node.actions.table.Table;
+import org.dsa.iot.dslink.node.actions.table.Table.Mode;
 
 /**
  * Action handler for sending a stream of alarms.  There can be an initial set to
@@ -63,7 +64,7 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
         this.initialSet = initialSet;
         request.setStreamState(StreamState.INITIALIZED);
         this.table = request.getTable();
-        table.setMode(Table.Mode.STREAM);
+        table.setMode(Mode.APPEND);
         table.sendReady();
     }
 
