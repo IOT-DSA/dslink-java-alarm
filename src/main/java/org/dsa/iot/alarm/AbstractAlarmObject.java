@@ -43,6 +43,25 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     private boolean started = false;
     private boolean steady = false;
 
+    protected int totalAlerm = 0; // 72101
+ 	protected int openAlarm = 0; // 72101
+ 	
+ 	public int getTotalAlerm() {
+		return totalAlerm;
+	}
+
+	public void setTotalAlerm(int totalAlerm) {
+		this.totalAlerm = totalAlerm;
+	}
+
+	public int getOpenAlarm() {
+		return openAlarm;
+	}
+
+	public void setOpenAlarm(int openAlarm) {
+		this.openAlarm = openAlarm;
+	}
+    
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
@@ -59,6 +78,13 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
         child.setParent(this);
         children.add(child);
+
+        if (child instanceof AlarmWatch) { // 72101
+            this.totalAlerm ++;
+            if (((AlarmWatch) child).getAlarmState() != AlarmState.NORMAL){
+            	this.openAlarm ++;
+            }
+        }
         if (started) {
             child.start();
         }
@@ -419,6 +445,13 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
         child.setParent(null);
         children.remove(child);
+        
+        if (child instanceof AlarmWatch) { // 72101
+        	this.totalAlerm --;
+        	if (((AlarmWatch) child).getAlarmState() != AlarmState.NORMAL) {
+        		this.openAlarm --;
+        	}
+        }
         Node tmp = child.getNode();
         if (tmp != null) {
             node.removeChild(tmp, false);

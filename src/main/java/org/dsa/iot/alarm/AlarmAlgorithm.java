@@ -309,11 +309,15 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
             if ((inhibit > 0) && (watch.getAlarmDetectedStateElapsedTime() < inhibit)) {
                 return;
             }
+            this.openAlarm --; // 72101
         } else {
             watch.setAlarmDetected(Boolean.TRUE);
             long inhibit = getToAlarmInhibit();
             if ((inhibit > 0) && (watch.getAlarmDetectedStateElapsedTime() < inhibit)) {
                 return;
+            }
+            if (watch.getAlarmState() == AlarmState.NORMAL) { // 72101
+            	this.openAlarm ++;
             }
         }
         AlarmClass alarmClass = getAlarmClass();
