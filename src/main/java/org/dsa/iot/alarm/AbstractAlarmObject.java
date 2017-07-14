@@ -43,6 +43,9 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     private boolean started = false;
     private boolean steady = false;
 
+    private int alarmWatchCount = 0;
+ 	private int normalWatchCount = 0;
+ 	
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
@@ -51,7 +54,43 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override
+    public int getAlarmWatchCount() {
+	    return alarmWatchCount;
+	}
+
+ 	protected void increaseAlarmWatchCount() {
+ 	    alarmWatchCount++;
+ 	    if (parent != null && parent instanceof AbstractAlarmObject) {
+ 	        ((AbstractAlarmObject)parent).increaseAlarmWatchCount();
+ 	    }
+ 	}
+ 
+	protected void decreaseAlarmWatchCount() {
+	    alarmWatchCount--;
+	    if (parent != null && parent instanceof AbstractAlarmObject) {
+	        ((AbstractAlarmObject)parent).decreaseAlarmWatchCount();
+	    }
+	}
+
+    public int getNormalWatchCount() {
+        return normalWatchCount;
+	}
+
+    protected void increaseNormalWatchCount() {
+        normalWatchCount++;
+        if (parent != null && parent instanceof AbstractAlarmObject) {
+            ((AbstractAlarmObject)parent).increaseNormalWatchCount();
+        }
+	}
+
+    protected void decreaseNormalWatchCount() {
+	    normalWatchCount--;
+	    if (parent != null && parent instanceof AbstractAlarmObject) {
+	        ((AbstractAlarmObject) parent).decreaseNormalWatchCount();
+	    }
+	}
+
+	@Override
     public synchronized void addChild(AlarmObject child) {
         AlarmUtil.logTrace("Add " + child.getNode().getPath());
         if (children == null) {
@@ -59,6 +98,13 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
         child.setParent(this);
         children.add(child);
+
+        if (child instanceof AlarmWatch) {
+            increaseAlarmWatchCount();
+            if (((AlarmWatch) child).getAlarmState() == AlarmState.NORMAL){
+                increaseNormalWatchCount();
+            }
+        }
         if (started) {
             child.start();
         }
@@ -409,6 +455,12 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
 
     @Override
     public synchronized void removeChild(AlarmObject child) {
+        if (child instanceof AlarmWatch) {
+            decreaseAlarmWatchCount();
+            if (((AlarmWatch) child).getAlarmState() == AlarmState.NORMAL) {
+                decreaseNormalWatchCount();
+            }
+        }
         AlarmUtil.logTrace("Remove " + child.getNode().getPath());
         if (child.getParent() != this) {
             throw new IllegalStateException("Child not parented by this object");
