@@ -43,25 +43,9 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     private boolean started = false;
     private boolean steady = false;
 
-    protected int totalAlerm = 0; // 72101
- 	protected int openAlarm = 0; // 72101
+    private int alarmWatchCount = 0;
+ 	private int normalWatchCount = 0;
  	
- 	public int getTotalAlerm() {
-		return totalAlerm;
-	}
-
-	public void setTotalAlerm(int totalAlerm) {
-		this.totalAlerm = totalAlerm;
-	}
-
-	public int getOpenAlarm() {
-		return openAlarm;
-	}
-
-	public void setOpenAlarm(int openAlarm) {
-		this.openAlarm = openAlarm;
-	}
-    
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
@@ -70,7 +54,43 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override
+    public int getAlarmWatchCount() {
+	    return alarmWatchCount;
+	}
+
+ 	protected void increaseAlarmWatchCount() {
+ 	    alarmWatchCount++;
+ 	    if (parent != null && parent instanceof AbstractAlarmObject) {
+ 	        ((AbstractAlarmObject)parent).increaseAlarmWatchCount();
+ 	    }
+ 	}
+ 
+	protected void decreaseAlarmWatchCount() {
+	    alarmWatchCount--;
+	    if (parent != null && parent instanceof AbstractAlarmObject) {
+	        ((AbstractAlarmObject)parent).decreaseAlarmWatchCount();
+	    }
+	}
+
+    public int getNormalWatchCount() {
+        return normalWatchCount;
+	}
+
+    protected void increaseNormalWatchCount() {
+        normalWatchCount++;
+        if (parent != null && parent instanceof AbstractAlarmObject) {
+            ((AbstractAlarmObject)parent).increaseNormalWatchCount();
+        }
+	}
+
+    protected void decreaseNormalWatchCount() {
+	    normalWatchCount--;
+	    if (parent != null && parent instanceof AbstractAlarmObject) {
+	        ((AbstractAlarmObject) parent).decreaseNormalWatchCount();
+	    }
+	}
+
+	@Override
     public synchronized void addChild(AlarmObject child) {
         AlarmUtil.logTrace("Add " + child.getNode().getPath());
         if (children == null) {
@@ -79,10 +99,10 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         child.setParent(this);
         children.add(child);
 
-        if (child instanceof AlarmWatch) { // 72101
-            this.totalAlerm ++;
-            if (((AlarmWatch) child).getAlarmState() != AlarmState.NORMAL){
-            	this.openAlarm ++;
+        if (child instanceof AlarmWatch) {
+            increaseAlarmWatchCount();
+            if (((AlarmWatch) child).getAlarmState() == AlarmState.NORMAL){
+                increaseNormalWatchCount();
             }
         }
         if (started) {
@@ -435,6 +455,12 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
 
     @Override
     public synchronized void removeChild(AlarmObject child) {
+        if (child instanceof AlarmWatch) {
+            decreaseAlarmWatchCount();
+            if (((AlarmWatch) child).getAlarmState() == AlarmState.NORMAL) {
+                decreaseNormalWatchCount();
+            }
+        }
         AlarmUtil.logTrace("Remove " + child.getNode().getPath());
         if (child.getParent() != this) {
             throw new IllegalStateException("Child not parented by this object");
@@ -445,13 +471,6 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
         child.setParent(null);
         children.remove(child);
-        
-        if (child instanceof AlarmWatch) { // 72101
-        	this.totalAlerm --;
-        	if (((AlarmWatch) child).getAlarmState() != AlarmState.NORMAL) {
-        		this.openAlarm --;
-        	}
-        }
         Node tmp = child.getNode();
         if (tmp != null) {
             node.removeChild(tmp, false);

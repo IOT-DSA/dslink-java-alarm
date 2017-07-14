@@ -554,6 +554,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                 .createFakeBuilder()
                 .setSerializable(false)
                 .setWritable(Writable.NEVER);
+        initProperty(ALARM_WATCH_COUNT, new Value(getAlarmWatchCount())).setWritable(Writable.NEVER);
+        initProperty(NORMAL_WATCH_COUNT, new Value(getNormalWatchCount())).setWritable(Writable.NEVER);
     }
 
     private int nextHandle() {

@@ -430,6 +430,8 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         initProperty(ESCALATION2_DYS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION2_HRS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION2_MNS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ALARM_WATCH_COUNT, new Value(getAlarmWatchCount())).setWritable(Writable.NEVER);
+        initProperty(NORMAL_WATCH_COUNT, new Value(getNormalWatchCount())).setWritable(Writable.NEVER);
     }
 
     /**
