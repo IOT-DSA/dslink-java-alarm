@@ -27,6 +27,7 @@ public interface AlarmConstants {
     String ACKNOWLEDGE_ALL = "Acknowledge All";
     String ALARM_CLASS = "Alarm Class";
     String ALARM_TYPE = "Alarm Type";
+    String ALARM_WATCH_COUNT = "Alarm Watch Count";
     String ALERT = "Alert";
     String ENABLED = "Enabled";
     String CREATE_ALARM = "Create Alarm";
@@ -42,6 +43,7 @@ public interface AlarmConstants {
     String NAME = "Name";
     String NORMAL = "Normal";
     String NORMAL_TIME = "Normal Time";
+    String NORMAL_WATCH_COUNT = "Normal Watch Count";
     String NOTE = "Note";
     String OFFNORMAL = "Offnormal";
     String PATH = "Path";
