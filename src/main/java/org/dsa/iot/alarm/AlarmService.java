@@ -10,11 +10,15 @@ package org.dsa.iot.alarm;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.dsa.iot.dslink.DSLink;
+import org.dsa.iot.dslink.link.Requester;
+import org.dsa.iot.dslink.link.SubscriptionHelper;
 import org.dsa.iot.dslink.methods.StreamState;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
@@ -58,7 +62,6 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     private HashMap<Number, AlarmObject> handles = new HashMap<>();
     private HashSet<AlarmStreamer> openAlarmStreamListeners = new HashSet<>();
     private ArrayList<AlarmStreamer> openAlarmStreamListenerCache = new ArrayList<>();
-    private Subscriptions subscriptions = new Subscriptions(this);
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -84,7 +87,9 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             // 77513 - Acknowledge alarms with comma-separated UUIDs 
             String items[] = uuid.getString().replaceAll(" ", "").split(",");
             for (String item : items) {
-                if (item.isEmpty()) continue;
+                if (item.isEmpty()) {
+                    continue;
+                }
                 UUID uuidObj = UUID.fromString(item);
                 Alarming.getProvider().acknowledge(uuidObj, user.getString());
                 AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
@@ -232,6 +237,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     @Override
     protected void doSteady() {
         try {
+            Alarming.getProvider().start(this);
+            syncWatchesToDatabase();
             executeFuture = Objects.getDaemonThreadPool().scheduleAtFixedRate(
                     new Runnable() {
                         @Override
@@ -239,7 +246,6 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                             execute();
                         }
                     }, 10, 10, TimeUnit.SECONDS);
-            Alarming.getProvider().start(this);
         } catch (Exception x) {
             AlarmUtil.logError("Starting provider", x);
         }
@@ -401,12 +407,35 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         AlarmUtil.run(streamer, "Open Alarms");
     }
 
+    private Requester getRequester() {
+        DSLink link = getLinkHandler().getRequesterLink();
+        if (link != null) {
+            return link.getRequester();
+        }
+        return null;
+    }
+
     /**
      * Use this for subscribing to alarm sources, the SDK cannot handle multiple
      * subscribers to the same path.
      */
-    Subscriptions getSubscriptions() {
-        return subscriptions;
+    SubscriptionHelper getSubscriptions() {
+        return getRequester().getSubscriptionHelper();
+    }
+
+    /**
+     * Adds all child watch objects to the given bucket.
+     */
+    Collection<AlarmWatch> getWatches() {
+        HashSet<AlarmWatch> set = new HashSet<AlarmWatch>();
+        AlarmObject child;
+        for (int i = 0, len = childCount(); i < len; i++) {
+            child = getChild(i);
+            if (child instanceof AlarmClass) {
+                ((AlarmClass) child).getWatches(set);
+            }
+        }
+        return set;
     }
 
     /**
@@ -640,6 +669,65 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
+     * Sometimes the node database isn't fully saved at shutdown.  That can lead to inconsistent
+     * state.  This method scans all open, non-normal alarms and syncs the watches.  Any remaining
+     * watch that are not normal are then reset to normal.
+     * <p>
+     * Called when transitioning into the steady state.
+     */
+    private void syncWatchesToDatabase() {
+        try {
+            Collection<AlarmWatch> watches = getWatches();
+            ArrayList<UUID> toDelete = new ArrayList<UUID>();
+            AlarmWatch watch;
+            AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(null);
+            while (cursor.next()) {
+                watch = cursor.getAlarmWatch();
+                if (watch == null) {
+                    toDelete.add(cursor.getUuid());
+                    continue;
+                } else if (cursor.isNormal()) {
+                    continue;
+                } else if (watch.getLastAlarmUuid() == null) {
+                    watch.setLastAlarmUuid(cursor.getUuid());
+                    if (watch.getAlgorithm() != null) {
+                        watch.setAlarmState(watch.getAlgorithm().getAlarmType());
+                    }
+                } else if (!watch.getLastAlarmUuid().equals(cursor.getUuid())) {
+                    AlarmRecord last = watch.getLastAlarmRecord();
+                    if (last.getCreatedTime() > cursor.getCreatedTime()) {
+                        //The record in the database is wrong.  I doubt this ever happens.
+                        toDelete.add(cursor.getUuid());
+                    } else {
+                        if (!last.isNormal()) {
+                            //The last known by the watch is wrong, node database wasn't saved after
+                            //the last alarm was created.
+                            toDelete.add(cursor.getUuid());
+                        }
+                        watch.setLastAlarmUuid(cursor.getUuid());
+                        if (watch.getAlgorithm() != null) {
+                            watch.setAlarmState(watch.getAlgorithm().getAlarmType());
+                        }
+                    }
+                }
+                watches.remove(watch);
+            }
+            for (UUID uuid : toDelete) {
+                AlarmUtil.logTrace("syncWatches delete: " + cursor.getUuid());
+                Alarming.getProvider().deleteRecord(uuid);
+            }
+            //The following watches did not have an open alarm record
+            for (AlarmWatch w : watches) {
+                if (w.getAlarmState() != AlarmState.NORMAL) {
+                    w.setAlarmState(AlarmState.NORMAL);
+                }
+            }
+        } catch (Exception x) {
+            AlarmUtil.logError("syncWatchesToDatabase", x);
+        }
+    }
+
+    /**
      * Clears the instance mapped to the handle.
      */
     public synchronized void unregister(AlarmObject obj) {
@@ -670,3 +758,4 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         setProperty(NORMAL_WATCH_COUNT, new Value(normalWatchCount));
     }
 } //class
+}

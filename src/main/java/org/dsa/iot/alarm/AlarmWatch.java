@@ -343,7 +343,7 @@ public class AlarmWatch extends AbstractAlarmObject
         try {
             if ((subscribedPath != null) && !subscribedPath.isEmpty()) {
                 getService().getSubscriptions()
-                            .unsubscribe(subscribedPath, this);
+                            .unsubscribe(subscribedPath, this, null);
                 subscribedPath = null;
             }
         } catch (Exception x) {

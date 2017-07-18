@@ -10,6 +10,7 @@ package org.dsa.iot.alarm;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import org.dsa.iot.dslink.methods.StreamState;
@@ -313,6 +314,19 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         AlarmStreamer streamer = new AlarmStreamer(allUpdatesListeners, event, cursor);
         allUpdatesListenerCache = null;
         AlarmUtil.run(streamer, "Open Alarms");
+    }
+
+    /**
+     * Adds all child watch objects to the given bucket.
+     */
+    void getWatches(Collection<AlarmWatch> bucket) {
+        AlarmObject child;
+        for (int i = 0, len = childCount(); i < len; i++) {
+            child = getChild(i);
+            if (child instanceof AlarmAlgorithm) {
+                ((AlarmAlgorithm) child).getWatches(bucket);
+            }
+        }
     }
 
     @Override
