@@ -430,6 +430,8 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
         initProperty(ESCALATION2_DYS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION2_HRS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION2_MNS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ALARM_WATCH_COUNT, new Value(getAlarmWatchCount())).setWritable(Writable.NEVER);
+        initProperty(NORMAL_WATCH_COUNT, new Value(getNormalWatchCount())).setWritable(Writable.NEVER);
     }
 
     /**
@@ -550,6 +552,24 @@ public class AlarmClass extends AbstractAlarmObject implements AlarmConstants {
     private void streamNewAlarms(final ActionResult event) {
         startStream(event, newAlarmListeners, getNode().getName() + " New Alarms");
         newAlarmListenerCache = null;
+    }
+
+    public void updateCount() {
+        alarmWatchCount = 0;
+        normalWatchCount = 0;
+        AlarmObject child;
+        AlarmAlgorithm algorithm;
+        for (int i = 0, len = childCount(); i < len; i++) {
+            child = getChild(i);
+            if (child instanceof AlarmAlgorithm) {
+                algorithm = (AlarmAlgorithm) child;
+                algorithm.updateCount();
+                alarmWatchCount += algorithm.getAlarmWatchCount();
+                normalWatchCount += algorithm.getNormalWatchCount();
+            }
+        }
+        setProperty(ALARM_WATCH_COUNT, new Value(alarmWatchCount));
+        setProperty(NORMAL_WATCH_COUNT, new Value(normalWatchCount));
     }
 
     ///////////////////////////////////////////////////////////////////////////

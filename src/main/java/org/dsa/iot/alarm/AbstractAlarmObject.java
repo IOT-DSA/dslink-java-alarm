@@ -42,7 +42,9 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     private AlarmService service;
     private boolean started = false;
     private boolean steady = false;
-
+	protected int alarmWatchCount = 0;
+    protected int normalWatchCount = 0;
+ 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
@@ -50,6 +52,14 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
+
+    public int getAlarmWatchCount() {
+        return alarmWatchCount;
+    }
+
+    public int getNormalWatchCount() {
+        return normalWatchCount;
+    }
 
     @Override
     public synchronized void addChild(AlarmObject child) {

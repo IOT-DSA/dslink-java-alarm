@@ -205,6 +205,8 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         initProperty(TO_NORMAL_INHIBIT, new Value(0)).createFakeBuilder()
                                                      .setConfig("unit", new Value("sec"))
                                                      .setWritable(Writable.CONFIG);
+        initProperty(ALARM_WATCH_COUNT, new Value(getAlarmWatchCount())).setWritable(Writable.NEVER);
+        initProperty(NORMAL_WATCH_COUNT, new Value(getNormalWatchCount())).setWritable(Writable.NEVER);
     }
 
     /**
@@ -345,4 +347,23 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         return AlarmWatch.class;
     }
 
+    public void updateCount() {
+        alarmWatchCount = 0;
+        normalWatchCount = 0;
+        AlarmObject child;
+        AlarmWatch watch;
+        for (int i = 0, len = childCount(); i < len; i++) {
+            child = getChild(i);
+            if (child instanceof AlarmWatch) {
+                watch = (AlarmWatch) child;
+                if (watch.getAlarmState() == AlarmState.NORMAL) {
+                    normalWatchCount++;
+                } else {
+                    alarmWatchCount++;
+                }
+            }
+        }
+        setProperty(ALARM_WATCH_COUNT, new Value(alarmWatchCount));
+        setProperty(NORMAL_WATCH_COUNT, new Value(normalWatchCount));
+    }
 }

@@ -278,6 +278,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                     ((AlarmClass) child).execute();
                 }
             }
+            updateCount();
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
         } finally {
@@ -554,6 +555,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                 .createFakeBuilder()
                 .setSerializable(false)
                 .setWritable(Writable.NEVER);
+        initProperty(ALARM_WATCH_COUNT, new Value(getAlarmWatchCount())).setWritable(Writable.NEVER);
+        initProperty(NORMAL_WATCH_COUNT, new Value(getNormalWatchCount())).setWritable(Writable.NEVER);
     }
 
     private int nextHandle() {
@@ -649,4 +652,21 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         }
     }
 
+    public void updateCount() {
+        alarmWatchCount = 0;
+        normalWatchCount = 0;
+        AlarmObject child;
+        AlarmClass alarmClass;
+        for (int i = 0, len = childCount(); i < len; i++) {
+            child = getChild(i);
+            if (child instanceof AlarmClass) {
+                alarmClass = (AlarmClass) child;
+                alarmClass.updateCount();
+                alarmWatchCount += alarmClass.getAlarmWatchCount();
+                normalWatchCount += alarmClass.getNormalWatchCount();
+            }
+        }
+        setProperty(ALARM_WATCH_COUNT, new Value(alarmWatchCount));
+        setProperty(NORMAL_WATCH_COUNT, new Value(normalWatchCount));
+    }
 } //class
