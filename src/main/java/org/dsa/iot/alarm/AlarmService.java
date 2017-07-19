@@ -757,5 +757,5 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         setProperty(ALARM_WATCH_COUNT, new Value(alarmWatchCount));
         setProperty(NORMAL_WATCH_COUNT, new Value(normalWatchCount));
     }
-} //class
+
 }
