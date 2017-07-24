@@ -422,7 +422,11 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
      * subscribers to the same path.
      */
     SubscriptionHelper getSubscriptions() {
-        return getRequester().getSubscriptionHelper();
+        Requester requester = getRequester();
+        if (requester != null) {
+            return requester.getSubscriptionHelper();
+        }
+        return null;
     }
 
     /**
