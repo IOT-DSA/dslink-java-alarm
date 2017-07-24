@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: July 12, 2017
-* Version: 1.2.0
+* Date: July 20, 2017
+* Version: 1.3.0
 
 
 Overview
@@ -88,6 +88,11 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.3.0 - 2017-07-20_
+  - Normal and alarm watch counts maintained in algorithms and alarm class.
+  - Watches sync'd to database at startup.  Sometimes a link is restarted before the configuration
+    database has been saved.
+
 _1.2.0 - 2017-07-12_
   - Alarms streams now use append mode rather than stream.
 

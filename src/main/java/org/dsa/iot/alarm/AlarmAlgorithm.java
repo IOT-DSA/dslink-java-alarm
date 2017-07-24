@@ -9,6 +9,7 @@
 package org.dsa.iot.alarm;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -161,6 +162,19 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
      */
     protected long getToNormalInhibit() {
         return getProperty(TO_NORMAL_INHIBIT).getNumber().longValue() * 1000l;
+    }
+
+    /**
+     * Adds all child watch objects to the given bucket.
+     */
+    void getWatches(Collection<AlarmWatch> bucket) {
+        AlarmObject child;
+        for (int i = 0, len = childCount(); i < len; i++) {
+            child = getChild(i);
+            if (child instanceof AlarmWatch) {
+                bucket.add((AlarmWatch) child);
+            }
+        }
     }
 
     @Override
