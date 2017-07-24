@@ -456,6 +456,7 @@ public abstract class JdbcProvider extends AbstractProvider {
         rec.setMessage(res.getString("Message"));
         rec.setHasNotes(res.getBoolean("HasNotes"));
         int handle = res.getInt("Watch");
+        rec.setWatchHandle(handle);
         if (handle > 0) {
             Object obj = getService().getByHandle(handle);
             //If the configuration database is deleted, but the database isn't

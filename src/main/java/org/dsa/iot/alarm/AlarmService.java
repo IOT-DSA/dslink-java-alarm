@@ -84,8 +84,9 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             if (user == null) {
                 throw new NullPointerException("Missing User");
             }
-            // 77513 - Acknowledge alarms with comma-separated UUIDs 
-            String items[] = uuid.getString().replaceAll(" ", "").split(",");
+            String items[] = uuid.getString()
+                                 .replaceAll(" ", "")
+                                 .split(",");
             for (String item : items) {
                 if (item.isEmpty()) {
                     continue;
@@ -142,7 +143,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                         "Name already in use: " + name.getString());
             }
             //Create the child node representing the alarm class.
-            alarmClassNode = parent.createChild(nameString, true).setSerializable(true).build();
+            alarmClassNode = parent.createChild(nameString, true)
+                                   .setSerializable(true).build();
             AlarmClass alarmClass = Alarming.getProvider().newAlarmClass(nameString);
             alarmClass.init(alarmClassNode);
             addChild(alarmClass);
@@ -684,24 +686,23 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             while (cursor.next()) {
                 watch = cursor.getAlarmWatch();
                 if (watch == null) {
-                    toDelete.add(cursor.getUuid());
                     continue;
                 } else if (cursor.isNormal()) {
                     continue;
                 } else if (watch.getLastAlarmUuid() == null) {
                     watch.setLastAlarmUuid(cursor.getUuid());
+                    //The most recent watch state wasn't persisted.
                     if (watch.getAlgorithm() != null) {
                         watch.setAlarmState(watch.getAlgorithm().getAlarmType());
                     }
                 } else if (!watch.getLastAlarmUuid().equals(cursor.getUuid())) {
                     AlarmRecord last = watch.getLastAlarmRecord();
                     if (last.getCreatedTime() > cursor.getCreatedTime()) {
-                        //The record in the database is wrong.  I doubt this ever happens.
+                        //The record in the database is wrong.  Doubt this will ever happen.
                         toDelete.add(cursor.getUuid());
                     } else {
                         if (!last.isNormal()) {
-                            //The last known by the watch is wrong, node database wasn't saved after
-                            //the last alarm was created.
+                            //The most recent watch state wasn't persisted.
                             toDelete.add(cursor.getUuid());
                         }
                         watch.setLastAlarmUuid(cursor.getUuid());

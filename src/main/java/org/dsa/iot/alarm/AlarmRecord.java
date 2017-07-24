@@ -35,6 +35,7 @@ public class AlarmRecord {
     private long normalTime;
     private String sourcePath;
     private UUID uuid;
+    private int watchHandle;
     private AlarmWatch watch;
 
     ///////////////////////////////////////////////////////////////////////////
