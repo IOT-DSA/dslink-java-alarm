@@ -35,7 +35,6 @@ public class AlarmRecord {
     private long normalTime;
     private String sourcePath;
     private UUID uuid;
-    private int watchHandle;
     private AlarmWatch watch;
 
     ///////////////////////////////////////////////////////////////////////////
@@ -47,16 +46,16 @@ public class AlarmRecord {
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * A value greater than zero represents the instant the alarm was acknowledged,
-     * otherwise the record is unacknowledged.
+     * A value greater than zero represents the instant the alarm was acknowledged, otherwise the
+     * record is unacknowledged.
      */
     public long getAckTime() {
         return ackTime;
     }
 
     /**
-     * A value greater than zero represents the instant the alarm was acknowledged,
-     * otherwise the record is unacknowledged.
+     * A value greater than zero represents the instant the alarm was acknowledged, otherwise the
+     * record is unacknowledged.
      */
     public AlarmRecord setAckTime(long ackTime) {
         this.ackTime = ackTime;
@@ -64,16 +63,16 @@ public class AlarmRecord {
     }
 
     /**
-     * If the ack time is greater than zero, there should be a entity name representing
-     * the acknowledging entity.
+     * If the ack time is greater than zero, there should be a entity name representing the
+     * acknowledging entity.
      */
     public String getAckUser() {
         return ackUser;
     }
 
     /**
-     * If the ack time is greater than zero, there should be a entity name representing
-     * the acknowledging entity.
+     * If the ack time is greater than zero, there should be a entity name representing the
+     * acknowledging entity.
      */
     public AlarmRecord setAckUser(String ackUser) {
         this.ackUser = ackUser;
@@ -150,16 +149,16 @@ public class AlarmRecord {
     }
 
     /**
-     * Whether or not there are any notes for this alarm.  Notes can be retrieved
-     * using the getNotes action in the AlarmService.
+     * Whether or not there are any notes for this alarm.  Notes can be retrieved using the getNotes
+     * action in the AlarmService.
      */
     public boolean hasNotes() {
         return hasNotes;
     }
 
     /**
-     * Whether or not there are any notes for this alarm.  Notes can be retrieved
-     * using the getNotes action in the AlarmService.
+     * Whether or not there are any notes for this alarm.  Notes can be retrieved using the getNotes
+     * action in the AlarmService.
      */
     public AlarmRecord setHasNotes(boolean hasNotes) {
         this.hasNotes = hasNotes;
@@ -182,16 +181,16 @@ public class AlarmRecord {
     }
 
     /**
-     * A value greater than zero represents the instant the alarm returned to normal,
-     * otherwise the record is still in it's created state.
+     * A value greater than zero represents the instant the alarm returned to normal, otherwise the
+     * record is still in it's created state.
      */
     public long getNormalTime() {
         return normalTime;
     }
 
     /**
-     * A value greater than zero represents the instant the alarm returned to normal,
-     * otherwise the record is still in it's created state.
+     * A value greater than zero represents the instant the alarm returned to normal, otherwise the
+     * record is still in it's created state.
      */
     public AlarmRecord setNormalTime(long normalTime) {
         this.normalTime = normalTime;
@@ -250,8 +249,8 @@ public class AlarmRecord {
     }
 
     /**
-     * If the alarm watch is non-null, that will be returned, otherwise the alarm
-     * class will be returned.
+     * If the alarm watch is non-null, that will be returned, otherwise the alarm class will be
+     * returned.
      */
     public AlarmObject getOwner() {
         if (watch != null) {
@@ -331,4 +330,4 @@ public class AlarmRecord {
     // Inner Classes
     ///////////////////////////////////////////////////////////////////////////
 
-} //class
+}

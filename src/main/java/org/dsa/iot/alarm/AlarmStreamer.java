@@ -8,16 +8,18 @@
 
 package org.dsa.iot.alarm;
 
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.LinkedList;
 import org.dsa.iot.dslink.methods.StreamState;
 import org.dsa.iot.dslink.node.actions.ActionResult;
 import org.dsa.iot.dslink.node.actions.table.Table;
 import org.dsa.iot.dslink.node.actions.table.Table.Mode;
+import org.dsa.iot.dslink.util.TimeUtils;
 
 /**
- * Action handler for sending a stream of alarms.  There can be an initial set to
- * send (optional) and after that, all records passed to the update method are sent.
+ * Action handler for sending a stream of alarms.  There can be an initial set to send (optional)
+ * and after that, all records passed to the update method are sent.
  *
  * @author Aaron Hansen
  */
@@ -43,8 +45,8 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * Will set this as the close handler on the given request and will add/remove
-     * itself from the given listenerContainer.
+     * Will set this as the close handler on the given request and will add/remove itself from the
+     * given listenerContainer.
      *
      * @param listenerContainer Optional, where to add and remove this instance.  If this is null,
      *                          then no updates will be sent (ie only the initial set will be
@@ -58,6 +60,7 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
         if (listenerContainer != null) {
             synchronized (listenerContainer) {
                 listenerContainer.add(this);
+                AlarmUtil.logInfo("Enter listenerContainer: " + listenerContainer.size());
             }
         }
         this.request = request;
@@ -66,6 +69,7 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
         this.table = request.getTable();
         table.setMode(Mode.APPEND);
         table.sendReady();
+        AlarmUtil.logInfo("Enter streamer: " + ++streamerCount);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -114,50 +118,67 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     }
 
     /**
-     * Sends the initial set of alarms (if not null), then sends updates until the
-     * stream is closed.
+     * Sends the initial set of alarms (if not null), then sends updates until the stream is
+     * closed.
      */
     public void run() {
+        Calendar cal = TimeUtils.reuseCalendar();
+        StringBuilder buf = new StringBuilder();
         table.waitForStream(WAIT_FOR_STREAM, true);
         if (initialSet != null) {
             int count = 1;
             while (isValid() && initialSet.next()) {
-                AlarmUtil.encodeAlarm(initialSet, table, null, null);
+                AlarmUtil.encodeAlarm(initialSet, table, cal, buf);
                 if ((++count % ALARM_RECORD_CHUNK) == 0) {
                     table.sendReady();
+                    Thread.yield();
                 }
             }
         }
         if (isValid()) {
             request.setStreamState(StreamState.OPEN);
             table.sendReady();
+            Thread.yield();
         }
-        initialSet = null;
+        if (initialSet != null) {
+            initialSet.close();
+            initialSet = null;
+        }
         AlarmRecord record;
         if (listenerContainer != null) {
+            int count = 0;
             while (isValid()) {
                 record = getNextUpdate();
                 if (record != null) {
-                    AlarmUtil.encodeAlarm(record, table, null, null);
+                    AlarmUtil.encodeAlarm(record, table, cal, buf);
                 }
                 if (isValid()) {
-                    Thread.yield();
-                    if (!hasUpdates()) {
+                    if (!hasUpdates() || (++count % ALARM_RECORD_CHUNK) == 0) {
+                        count = 0;
                         table.sendReady();
+                        Thread.yield();
                     }
                 }
             }
         }
         if (isOpen()) {
             request.setStreamState(StreamState.CLOSED);
+            table.sendReady();
+            Thread.yield();
         }
         updates = null;
         if (listenerContainer != null) {
             synchronized (listenerContainer) {
                 listenerContainer.remove(this);
+                AlarmUtil.logInfo("Exit listenerContainer: " + listenerContainer.size());
             }
         }
+        AlarmUtil.logInfo("Exit streamer: " + --streamerCount);
+        TimeUtils.recycleCalendar(cal);
     }
+
+    private static int streamerCount = 0; //TODO
+    private int maxUpdates = 0;
 
     /**
      * Adds a record to the update queue.
@@ -167,6 +188,13 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     public void update(AlarmRecord record) {
         if (isValid()) {
             synchronized (updates) {
+                int size = updates.size();
+                if (updates.size() > 5000) {
+                    if (size > maxUpdates) {
+                        maxUpdates = size;
+                        AlarmUtil.logInfo("Alarm updates size: " + size);
+                    }
+                }
                 updates.add(record);
                 updates.notify();
             }

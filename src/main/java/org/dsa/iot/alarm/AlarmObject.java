@@ -105,4 +105,4 @@ public interface AlarmObject {
      */
     public void stop();
 
-} //class
+}

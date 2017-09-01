@@ -27,7 +27,7 @@ public interface AlarmConstants {
     String ACKNOWLEDGE_ALL = "Acknowledge All";
     String ALARM_CLASS = "Alarm Class";
     String ALARM_TYPE = "Alarm Type";
-    String ALARM_WATCH_COUNT = "Alarm Watch Count";
+    String ALARM_WATCH_COUNT = "Alarm Watch Count"; //TODO delete after 1/1/18
     String ALERT = "Alert";
     String ENABLED = "Enabled";
     String CREATE_ALARM = "Create Alarm";
@@ -36,6 +36,7 @@ public interface AlarmConstants {
     String FAULT = "Fault";
     String HAS_NOTES = "Has Notes";
     String HANDLE = "Handle";
+    String IN_ALARM_COUNT = "In Alarm Count";
     String IS_ACKNOWLEDGED = "Is Acknowledged";
     String IS_NORMAL = "Is Normal";
     String JAVA_TYPE = "javaType";
@@ -43,14 +44,18 @@ public interface AlarmConstants {
     String NAME = "Name";
     String NORMAL = "Normal";
     String NORMAL_TIME = "Normal Time";
-    String NORMAL_WATCH_COUNT = "Normal Watch Count";
+    String NORMAL_WATCH_COUNT = "Normal Watch Count"; //TODO delete after 1/1/18
     String NOTE = "Note";
     String OFFNORMAL = "Offnormal";
+    String OPEN_ALARM_COUNT = "Open Alarm Count";
     String PATH = "Path";
     String SOURCE_PATH = "Source Path";
+    String STREAM_UPDATES = "Stream Updates";
     String TIMESTAMP = "Timestamp";
     String TIME_RANGE = "Time Range";
+    String TTL_ALARM_COUNT = "Total Alarm Count";
     String TYPE = "Type";
+    String UNACKED_ALARM_COUNT = "Unacked Alarm Count";
     String USER = "User";
     String UUID_STR = "UUID";
     String WATCH_PATH = "Watch Path";
