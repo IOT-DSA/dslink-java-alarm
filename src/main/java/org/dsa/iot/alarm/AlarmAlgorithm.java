@@ -219,12 +219,12 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         initProperty(TO_NORMAL_INHIBIT, new Value(0)).createFakeBuilder()
                                                      .setConfig("unit", new Value("sec"))
                                                      .setWritable(Writable.CONFIG);
-        //No longer used the following after 1/1/18 TODO
+        //No longer used, remove the following after 1/1/18 TODO
         initProperty(ALARM_WATCH_COUNT, new Value(0)).createFakeBuilder()
                                                      .setSerializable(false)
                                                      .setHidden(true)
                                                      .setWritable(Writable.NEVER);
-        //No longer used the following after 1/1/18 TODO
+        //No longer used, remove the following after 1/1/18 TODO
         initProperty(NORMAL_WATCH_COUNT, new Value(0)).createFakeBuilder()
                                                       .setSerializable(false)
                                                       .setHidden(true)

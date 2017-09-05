@@ -608,12 +608,12 @@ public class AlarmService extends AbstractAlarmObject {
                 .createFakeBuilder()
                 .setSerializable(false)
                 .setWritable(Writable.NEVER);
-        //No longer used the following after 1/1/18 TODO
+        //No longer used, remove the following after 1/1/18 TODO
         initProperty(ALARM_WATCH_COUNT, new Value(0)).createFakeBuilder()
                                                      .setSerializable(false)
                                                      .setHidden(true)
                                                      .setWritable(Writable.NEVER);
-        //No longer used the following after 1/1/18 TODO
+        //No longer used, remove the following after 1/1/18 TODO
         initProperty(NORMAL_WATCH_COUNT, new Value(0)).createFakeBuilder()
                                                       .setSerializable(false)
                                                       .setHidden(true)

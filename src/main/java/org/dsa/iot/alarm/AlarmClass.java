@@ -462,12 +462,12 @@ public class AlarmClass extends AbstractAlarmObject {
         initProperty(ESCALATION2_DYS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION2_HRS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION2_MNS, new Value(0)).setWritable(Writable.CONFIG);
-        //No longer used the following after 1/1/18 TODO
+        //No longer used, remove the following after 1/1/18 TODO
         initProperty(ALARM_WATCH_COUNT, new Value(0)).createFakeBuilder()
                                                      .setSerializable(false)
                                                      .setHidden(true)
                                                      .setWritable(Writable.NEVER);
-        //No longer used the following after 1/1/18 TODO
+        //No longer used, remove the following after 1/1/18 TODO
         initProperty(NORMAL_WATCH_COUNT, new Value(0)).createFakeBuilder()
                                                       .setSerializable(false)
                                                       .setHidden(true)

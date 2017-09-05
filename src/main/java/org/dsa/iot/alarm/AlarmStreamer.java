@@ -60,7 +60,6 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
         if (listenerContainer != null) {
             synchronized (listenerContainer) {
                 listenerContainer.add(this);
-                AlarmUtil.logInfo("Enter listenerContainer: " + listenerContainer.size());
             }
         }
         this.request = request;
@@ -69,7 +68,6 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
         this.table = request.getTable();
         table.setMode(Mode.APPEND);
         table.sendReady();
-        AlarmUtil.logInfo("Enter streamer: " + ++streamerCount);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -170,15 +168,10 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
         if (listenerContainer != null) {
             synchronized (listenerContainer) {
                 listenerContainer.remove(this);
-                AlarmUtil.logInfo("Exit listenerContainer: " + listenerContainer.size());
             }
         }
-        AlarmUtil.logInfo("Exit streamer: " + --streamerCount);
         TimeUtils.recycleCalendar(cal);
     }
-
-    private static int streamerCount = 0; //TODO
-    private int maxUpdates = 0;
 
     /**
      * Adds a record to the update queue.
@@ -188,13 +181,6 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     public void update(AlarmRecord record) {
         if (isValid()) {
             synchronized (updates) {
-                int size = updates.size();
-                if (updates.size() > 5000) {
-                    if (size > maxUpdates) {
-                        maxUpdates = size;
-                        AlarmUtil.logInfo("Alarm updates size: " + size);
-                    }
-                }
                 updates.add(record);
                 updates.notify();
             }
