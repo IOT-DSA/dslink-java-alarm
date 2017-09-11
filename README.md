@@ -92,6 +92,7 @@ _1.3.1 - 2017-09-08_
   - Fixed icons.
   - Added new counts logic to the Alarm Service and Alarm Class.
   - Fixed potential db connection leak in AlarmStreamer.
+  - Get open alarms now takes option that determines whether or not to keep an open alarm stream.
   
 _1.3.0 - 2017-07-20_
   - Normal and alarm watch counts maintained in algorithms and alarm class.
