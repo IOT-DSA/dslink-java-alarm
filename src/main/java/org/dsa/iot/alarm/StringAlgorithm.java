@@ -66,8 +66,8 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
 
     @Override
     protected boolean isAlarm(AlarmWatch watch) {
-        String alarmValue = getProperty(ALARM_VALUE).getString();
-        String valueMode = getProperty(ALARM_VALUE_MODE).getString();
+        String alarmValue = getProperty(ALARM_VALUE).toString();
+        String valueMode = getProperty(ALARM_VALUE_MODE).toString();
         String curString = null;
         Value currentValue = watch.getCurrentValue();
         if (currentValue != null) {

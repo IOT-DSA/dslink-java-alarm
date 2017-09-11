@@ -2,16 +2,16 @@ apply plugin: 'application'
 apply plugin: 'findbugs'
 apply plugin: 'idea'
 apply plugin: 'java'
-apply plugin: 'maven'
 
 group 'org.iot-dsa'
-version '1.3.0'
+version '1.3.1'
 
 mainClassName = 'org.dsa.iot.alarm.jdbc.H2Main'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven {
         url 'https://oss.sonatype.org/content/repositories/snapshots/'
@@ -41,7 +41,7 @@ wrapper {
 
 dependencies {
     provided 'com.google.code.findbugs:annotations:3.0.1'
-    compile 'org.iot-dsa:dslink:0.18.0'
+    compile 'org.iot-dsa:dslink:0.18.1'
     compile 'com.h2database:h2:1.4.192'
 }
 

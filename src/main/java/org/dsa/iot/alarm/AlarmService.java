@@ -38,12 +38,12 @@ import org.dsa.iot.dslink.util.handler.Handler;
 import org.dsa.iot.dslink.util.log.LogManager;
 
 /**
- * Represents the visible root node of the link.  Its purpose is to create alarm classes
- * and manage alarm records independent of alarm class.
+ * Represents the visible root node of the link.  Its purpose is to create alarm classes and manage
+ * alarm records independent of alarm class.
  *
  * @author Aaron Hansen
  */
-public class AlarmService extends AbstractAlarmObject implements AlarmConstants {
+public class AlarmService extends AbstractAlarmObject {
 
     ///////////////////////////////////////////////////////////////////////////
     // Constants
@@ -60,8 +60,10 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     private ScheduledFuture executeFuture;
     private boolean executing = false;
     private HashMap<Number, AlarmObject> handles = new HashMap<>();
+    private long nextUpdateCounts = 0;
     private HashSet<AlarmStreamer> openAlarmStreamListeners = new HashSet<>();
     private ArrayList<AlarmStreamer> openAlarmStreamListenerCache = new ArrayList<>();
+    private boolean updateCounts = true;
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -96,6 +98,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                 AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
                 rec.getAlarmClass().notifyAllUpdates(rec);
             }
+            updateCounts = true;
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
@@ -120,6 +123,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                     rec.getAlarmClass().notifyAllUpdates(rec);
                 }
             }
+            updateCounts = true;
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
@@ -213,6 +217,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                                   + "= "
                                   + uuid);
         Alarming.getProvider().addAlarm(alarmRecord);
+        updateCounts = true;
         return alarmRecord;
     }
 
@@ -227,6 +232,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             }
             AlarmUtil.logTrace(getNode().getPath() + " deleting alarm " + uuid);
             Alarming.getProvider().deleteRecord(UUID.fromString(uuid.getString()));
+            updateCounts = true;
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
@@ -265,8 +271,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
-     * Housekeeping, called by an executor.  Enforces max records and max
-     * record age.
+     * Housekeeping, called by an executor.  Enforces max records and max record age.
      */
     protected void execute() {
         if (!isSteady()) {
@@ -286,7 +291,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                     ((AlarmClass) child).execute();
                 }
             }
-            updateCount();
+            updateCounts(false);
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
         } finally {
@@ -372,13 +377,13 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
      * Action handler for getting the notes for a specific alarm record.
      */
     private void getNotes(final ActionResult event) {
+        NoteCursor cursor = null;
         try {
             Value uuid = event.getParameter(UUID_STR);
             if (uuid == null) {
                 throw new NullPointerException("Missing UUID_STR");
             }
-            NoteCursor cursor = Alarming.getProvider().getNotes(
-                    UUID.fromString(uuid.getString()));
+            cursor = Alarming.getProvider().getNotes(UUID.fromString(uuid.getString()));
             event.setStreamState(StreamState.INITIALIZED);
             Table table = event.getTable();
             table.setMode(Table.Mode.APPEND);
@@ -397,15 +402,26 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
         }
+        cursor.close();
     }
 
     /**
-     * Action handler for getting all open alarms followed by a stream of
-     * all upates.
+     * Action handler for getting all open alarms followed by a stream of all upates.
      */
     private void getOpenAlarms(final ActionResult event) {
+        boolean updates = true;
+        Value stream = event.getParameter(STREAM_UPDATES);
+        if ((stream != null) && (stream.getBool() != null)) {
+            updates = stream.getBool();
+            System.out.println("updates: " + updates);
+        }
         final AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(null);
-        AlarmStreamer streamer = new AlarmStreamer(openAlarmStreamListeners, event, cursor);
+        AlarmStreamer streamer = null;
+        if (updates) {
+            streamer = new AlarmStreamer(openAlarmStreamListeners, event, cursor);
+        } else {
+            streamer = new AlarmStreamer(null, event, cursor);
+        }
         AlarmUtil.run(streamer, "Open Alarms");
     }
 
@@ -418,8 +434,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
-     * Use this for subscribing to alarm sources, the SDK cannot handle multiple
-     * subscribers to the same path.
+     * Use this for subscribing to alarm sources, the SDK cannot handle multiple subscribers to the
+     * same path.
      */
     SubscriptionHelper getSubscriptions() {
         Requester requester = getRequester();
@@ -545,6 +561,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             }
         });
         action.setResultType(ResultType.STREAM);
+        action.addParameter(
+                new Parameter(STREAM_UPDATES, ValueType.BOOL, new Value(true)));
         AlarmUtil.encodeAlarmColumns(action);
         getNode().createChild("Get Open Alarms", false).setSerializable(false).setAction(action)
                  .build();
@@ -578,6 +596,92 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         getNode().createChild("Set Log Level", false).setSerializable(false).setAction(action)
                 .build();
         */
+        /*
+        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                test();
+            }
+        });
+        getNode().createChild("Test", false).setSerializable(false).setAction(action)
+                 .build();
+        */
+    }
+
+    /*
+    private void test() {
+        System.out.println("Begin test");
+        long time = System.currentTimeMillis();
+        Node TestClass;
+        Node TestSubClass;
+        Node TestWatch;
+        String name;
+        for (int i = 0; i < 10; i++) {
+            name = "TestClass" + i;
+            TestClass = addNode(getNode(), name, name);
+            addAction(TestClass, "Test1", new Parameter("ID1", ValueType.STRING),
+                      new Parameter("Result", ValueType.STRING));
+            addAction(TestClass, "Test2", new Parameter("ID2", ValueType.STRING),
+                      new Parameter("Result", ValueType.STRING));
+            addAction(TestClass, "Test3", new Parameter("ID3", ValueType.STRING),
+                      new Parameter("Result", ValueType.STRING));
+            for (int j = 0; j < 100; j++) {
+                name = "TestSubClass" + j;
+                TestSubClass = addNode(TestClass, name, name);
+                addAction(TestSubClass, "Test1", new Parameter("ID1", ValueType.STRING),
+                          new Parameter("Result", ValueType.STRING));
+                addAction(TestSubClass, "Test2", new Parameter("ID2", ValueType.STRING),
+                          new Parameter("Result", ValueType.STRING));
+                addAction(TestSubClass, "Test3", new Parameter("ID3", ValueType.STRING),
+                          new Parameter("Result", ValueType.STRING));
+                for (int k = 0; k < 100; k++) {
+                    name = "TestWatch" + k;
+                    TestWatch = addNode(TestSubClass, name, name);
+                    TestWatch.setValueType(ValueType.NUMBER);
+                    TestWatch.setValue(new Value(k));
+                    addAction(TestWatch, "Test1", new Parameter("ID1", ValueType.STRING),
+                              new Parameter("Result", ValueType.STRING));
+                    addAction(TestWatch, "Test2", new Parameter("ID2", ValueType.STRING),
+                              new Parameter("Result", ValueType.STRING));
+                    addAction(TestWatch, "Test3", new Parameter("ID3", ValueType.STRING),
+                              new Parameter("Result", ValueType.STRING));
+                }
+                System.out.println("  j: " + j);
+            }
+            System.out.println("i: " + i);
+        }
+        time = System.currentTimeMillis() - time;
+        System.out.println("**********Finished: " + time + "ms");
+    }
+
+    private Node addNode(Node node, String name, String displayname) {
+        node.createChild(name, false)
+            .setDisplayName(displayname)
+            .setSerializable(true)
+            .build();
+        return node.getChild(name, false);
+
+    }
+
+    private void addAction(Node node, String name, Parameter parameter, Parameter result) {
+        Action action = createAction(node, name);
+        action.addParameter(parameter);
+        action.addResult(result);
+    }
+    */
+
+    private Action createAction(Node node, String name) {
+        Action action = new Action(Permission.WRITE,
+                                   new org.dsa.iot.dslink.util.handler.Handler<ActionResult>() {
+                                       @Override
+                                       public void handle(ActionResult event) {
+                                       }
+                                   });
+        node.createChild(name, false)
+            .setAction(action)
+            .setSerializable(true)
+            .build();
+        return action;
     }
 
     @Override
@@ -590,8 +694,33 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
                 .createFakeBuilder()
                 .setSerializable(false)
                 .setWritable(Writable.NEVER);
-        initProperty(ALARM_WATCH_COUNT, new Value(getAlarmWatchCount())).setWritable(Writable.NEVER);
-        initProperty(NORMAL_WATCH_COUNT, new Value(getNormalWatchCount())).setWritable(Writable.NEVER);
+        //No longer used, remove the following after 1/1/18 TODO
+        initProperty(ALARM_WATCH_COUNT, new Value(0)).createFakeBuilder()
+                                                     .setSerializable(false)
+                                                     .setHidden(true)
+                                                     .setWritable(Writable.NEVER);
+        //No longer used, remove the following after 1/1/18 TODO
+        initProperty(NORMAL_WATCH_COUNT, new Value(0)).createFakeBuilder()
+                                                      .setSerializable(false)
+                                                      .setHidden(true)
+                                                      .setWritable(Writable.NEVER);
+        initProperty(IN_ALARM_COUNT, new Value(0)).createFakeBuilder()
+                                                  .setSerializable(false)
+                                                  .setWritable(Writable.NEVER);
+        initProperty(OPEN_ALARM_COUNT, new Value(0)).createFakeBuilder()
+                                                    .setSerializable(false)
+                                                    .setWritable(Writable.NEVER);
+        initProperty(TTL_ALARM_COUNT, new Value(0)).createFakeBuilder()
+                                                   .setSerializable(false)
+                                                   .setWritable(Writable.NEVER);
+        initProperty(UNACKED_ALARM_COUNT, new Value(0)).createFakeBuilder()
+                                                       .setSerializable(false)
+                                                       .setWritable(Writable.NEVER);
+        /* Used during dev
+        initProperty("Version", new Value("1.3.0.8")).createFakeBuilder()
+                                                     .setSerializable(false)
+                                                     .setWritable(Writable.NEVER);
+        */
     }
 
     private int nextHandle() {
@@ -619,11 +748,10 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     }
 
     /**
-     * This will assign a persistent read-only int config to the inner node.  AlarmObjects
-     * can then be quickly retrieved by calling getByHandle(int).  AbstractAlarmObject
-     * calls this in the start method; custom implementations that do not subclass
-     * it would need to call in their start implementation, even if they already have
-     * a handle.
+     * This will assign a persistent read-only int config to the inner node.  AlarmObjects can then
+     * be quickly retrieved by calling getByHandle(int).  AbstractAlarmObject calls this in the
+     * start method; custom implementations that do not subclass it would need to call in their
+     * start implementation, even if they already have a handle.
      */
     public synchronized void register(AlarmObject obj) {
         Value handle = obj.getNode().getRoConfig(HANDLE);
@@ -648,6 +776,7 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
             Alarming.getProvider().returnToNormal(uuidObj);
             AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
             rec.getAlarmClass().notifyAllUpdates(rec);
+            updateCounts = true;
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
@@ -677,9 +806,8 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
     /**
      * Sometimes the node database isn't fully saved at shutdown.  That can lead to inconsistent
      * state.  This method scans all open, non-normal alarms and syncs the watches.  Any remaining
-     * watch that are not normal are then reset to normal.
-     * <p>
-     * Called when transitioning into the steady state.
+     * watch that are not normal are then reset to normal. <p> Called when transitioning into the
+     * steady state.
      */
     private void syncWatchesToDatabase() {
         try {
@@ -745,22 +873,87 @@ public class AlarmService extends AbstractAlarmObject implements AlarmConstants 
         }
     }
 
-    public void updateCount() {
-        alarmWatchCount = 0;
-        normalWatchCount = 0;
-        AlarmObject child;
-        AlarmClass alarmClass;
-        for (int i = 0, len = childCount(); i < len; i++) {
-            child = getChild(i);
-            if (child instanceof AlarmClass) {
-                alarmClass = (AlarmClass) child;
-                alarmClass.updateCount();
-                alarmWatchCount += alarmClass.getAlarmWatchCount();
-                normalWatchCount += alarmClass.getNormalWatchCount();
+    /**
+     * Notify the service that counts need to be updated.
+     */
+    void updateCounts() {
+        updateCounts = true;
+    }
+
+    /**
+     * Iterates all alarms and updates various alarms counts for the service and all classes.
+     */
+    void updateCounts(boolean force) {
+        if (!force) {
+            if (!updateCounts) {
+                return;
+            }
+            if (System.currentTimeMillis() < nextUpdateCounts) {
+                return;
             }
         }
-        setProperty(ALARM_WATCH_COUNT, new Value(alarmWatchCount));
-        setProperty(NORMAL_WATCH_COUNT, new Value(normalWatchCount));
+        updateCounts = false;
+        nextUpdateCounts = System.currentTimeMillis() + 30000;
+        Counts svc = new Counts();
+        AlarmCursor cursor = Alarming.getProvider()
+                                     .queryAlarms(null, null, null);
+        AlarmClass clazz = null;
+        HashMap<AlarmClass, Counts> map = new HashMap<>();
+        Counts counts = null;
+        Counts noClazzCounts = new Counts();
+        while (cursor.next()) {
+            clazz = cursor.getAlarmClass();
+            if (clazz != null) {
+                counts = map.get(clazz);
+            } else {
+                counts = noClazzCounts;
+            }
+            if (counts == null) {
+                counts = new Counts();
+                map.put(clazz, counts);
+            }
+            svc.ttl++;
+            counts.ttl++;
+            if (cursor.isOpen()) {
+                svc.open++;
+                counts.open++;
+            }
+            if (!cursor.isNormal()) {
+                svc.alarms++;
+                counts.alarms++;
+            }
+            if (cursor.isAckRequired() && !cursor.isAcknowledged()) {
+                svc.unacked++;
+                counts.unacked++;
+            }
+            if (svc.ttl % 100 == 0) {
+                Thread.yield();
+            }
+        }
+        setProperty(IN_ALARM_COUNT, new Value(svc.alarms));
+        setProperty(OPEN_ALARM_COUNT, new Value(svc.open));
+        setProperty(TTL_ALARM_COUNT, new Value(svc.ttl));
+        setProperty(UNACKED_ALARM_COUNT, new Value(svc.unacked));
+        AlarmObject obj;
+        for (int i = childCount(); --i >= 0; ) {
+            obj = getChild(i);
+            if (obj instanceof AlarmClass) {
+                clazz = (AlarmClass) obj;
+                clazz.updateCounts(map.get(clazz));
+            }
+        }
+    }
+
+    /**
+     * Used for updating various alarm counts in the service and child classes.
+     */
+    static class Counts {
+
+        int alarms = 0; //in alarm
+        int open = 0;
+        int ttl = 0;
+        int unacked = 0;
+
     }
 
 }
