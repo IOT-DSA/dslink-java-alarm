@@ -596,6 +596,92 @@ public class AlarmService extends AbstractAlarmObject {
         getNode().createChild("Set Log Level", false).setSerializable(false).setAction(action)
                 .build();
         */
+        /*
+        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                test();
+            }
+        });
+        getNode().createChild("Test", false).setSerializable(false).setAction(action)
+                 .build();
+        */
+    }
+
+    /*
+    private void test() {
+        System.out.println("Begin test");
+        long time = System.currentTimeMillis();
+        Node TestClass;
+        Node TestSubClass;
+        Node TestWatch;
+        String name;
+        for (int i = 0; i < 10; i++) {
+            name = "TestClass" + i;
+            TestClass = addNode(getNode(), name, name);
+            addAction(TestClass, "Test1", new Parameter("ID1", ValueType.STRING),
+                      new Parameter("Result", ValueType.STRING));
+            addAction(TestClass, "Test2", new Parameter("ID2", ValueType.STRING),
+                      new Parameter("Result", ValueType.STRING));
+            addAction(TestClass, "Test3", new Parameter("ID3", ValueType.STRING),
+                      new Parameter("Result", ValueType.STRING));
+            for (int j = 0; j < 100; j++) {
+                name = "TestSubClass" + j;
+                TestSubClass = addNode(TestClass, name, name);
+                addAction(TestSubClass, "Test1", new Parameter("ID1", ValueType.STRING),
+                          new Parameter("Result", ValueType.STRING));
+                addAction(TestSubClass, "Test2", new Parameter("ID2", ValueType.STRING),
+                          new Parameter("Result", ValueType.STRING));
+                addAction(TestSubClass, "Test3", new Parameter("ID3", ValueType.STRING),
+                          new Parameter("Result", ValueType.STRING));
+                for (int k = 0; k < 100; k++) {
+                    name = "TestWatch" + k;
+                    TestWatch = addNode(TestSubClass, name, name);
+                    TestWatch.setValueType(ValueType.NUMBER);
+                    TestWatch.setValue(new Value(k));
+                    addAction(TestWatch, "Test1", new Parameter("ID1", ValueType.STRING),
+                              new Parameter("Result", ValueType.STRING));
+                    addAction(TestWatch, "Test2", new Parameter("ID2", ValueType.STRING),
+                              new Parameter("Result", ValueType.STRING));
+                    addAction(TestWatch, "Test3", new Parameter("ID3", ValueType.STRING),
+                              new Parameter("Result", ValueType.STRING));
+                }
+                System.out.println("  j: " + j);
+            }
+            System.out.println("i: " + i);
+        }
+        time = System.currentTimeMillis() - time;
+        System.out.println("**********Finished: " + time + "ms");
+    }
+
+    private Node addNode(Node node, String name, String displayname) {
+        node.createChild(name, false)
+            .setDisplayName(displayname)
+            .setSerializable(true)
+            .build();
+        return node.getChild(name, false);
+
+    }
+
+    private void addAction(Node node, String name, Parameter parameter, Parameter result) {
+        Action action = createAction(node, name);
+        action.addParameter(parameter);
+        action.addResult(result);
+    }
+    */
+
+    private Action createAction(Node node, String name) {
+        Action action = new Action(Permission.WRITE,
+                                   new org.dsa.iot.dslink.util.handler.Handler<ActionResult>() {
+                                       @Override
+                                       public void handle(ActionResult event) {
+                                       }
+                                   });
+        node.createChild(name, false)
+            .setAction(action)
+            .setSerializable(true)
+            .build();
+        return action;
     }
 
     @Override
@@ -793,8 +879,7 @@ public class AlarmService extends AbstractAlarmObject {
     }
 
     /**
-     * Iterates all alarms and updates various alarms counts for the service and all
-     * classes.
+     * Iterates all alarms and updates various alarms counts for the service and all classes.
      */
     void updateCounts(boolean force) {
         if (!force) {

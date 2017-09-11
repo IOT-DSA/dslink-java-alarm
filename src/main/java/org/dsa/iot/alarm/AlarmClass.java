@@ -31,7 +31,10 @@ import org.dsa.iot.dslink.util.handler.Handler;
 
 /**
  * An alarm class represents a group of alarms that are related in some way. Alarms can only be
- * created with an alarm class but some alarm lifecycle operations are handled on the service. <p>
+ * created with an alarm class but some alarm lifecycle operations are handled on the service.
+ *
+ * <p>
+ *
  * The alarm class offers many streams (as actions) for monitoring various states of alarms
  * including escalation.  Escalation happens when alarm goes unacknowledged for a certain period of
  * time and can be used to notify backup or higher seniority staff.
