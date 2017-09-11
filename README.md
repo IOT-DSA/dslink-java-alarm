@@ -1,7 +1,7 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Sept 06, 2017
+* Date: Sept 08, 2017
 * Version: 1.3.1
 
 
@@ -88,9 +88,9 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
-_1.3.1 - 2017-09-06_
+_1.3.1 - 2017-09-08_
   - Fixed icons.
-  - Added new counts logic for various alarm states.
+  - Added new counts logic to the Alarm Service and Alarm Class.
   - Fixed potential db connection leak in AlarmStreamer.
   
 _1.3.0 - 2017-07-20_

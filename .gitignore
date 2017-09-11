@@ -15,6 +15,7 @@
 **/.settings
 **/eclipseBin
 **/libJar
+**/out
 **/target
 
 # Runtime files

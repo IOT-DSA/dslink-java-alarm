@@ -716,9 +716,11 @@ public class AlarmService extends AbstractAlarmObject {
         initProperty(UNACKED_ALARM_COUNT, new Value(0)).createFakeBuilder()
                                                        .setSerializable(false)
                                                        .setWritable(Writable.NEVER);
+        /* Used during dev
         initProperty("Version", new Value("1.3.0.8")).createFakeBuilder()
                                                      .setSerializable(false)
                                                      .setWritable(Writable.NEVER);
+        */
     }
 
     private int nextHandle() {
