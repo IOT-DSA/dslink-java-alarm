@@ -52,6 +52,11 @@ public class AlarmService extends AbstractAlarmObject {
     static final String LOG_LEVEL = "Log Level";
     static final String NEXT_HANDLE = "nextHandle";
 
+    public static final String DATABASE_PASS = "Database Password";
+    public static final String DATABASE_URL = "Database URL";
+    public static final String DATABASE_USER = "Database User";
+    public static final String JDBC_DRIVER = "JDBC Driver";
+
     ///////////////////////////////////////////////////////////////////////////
     // Fields
     ///////////////////////////////////////////////////////////////////////////
