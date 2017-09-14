@@ -51,6 +51,20 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
+    public void initTCPPassword(String str) {
+        if (node.getPassword() == null) {
+            setTCPPassword(str);
+        }
+    }
+
+    public void setTCPPassword(String str) {
+        node.setPassword(str.toCharArray());
+    }
+
+    public String getTCPPassword() {
+        return String.valueOf(node.getPassword());
+    }
+
     @Override
     public synchronized void addChild(AlarmObject child) {
         AlarmUtil.logTrace("Add " + child.getNode().getPath());
