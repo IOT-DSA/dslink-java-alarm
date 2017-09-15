@@ -35,7 +35,7 @@ public class H2Provider extends JdbcProvider {
 
     private static Server server;
     private static AlarmService service;
-    private static String DB_NAME = "./db/Alarms";
+    private static String DEF_DB_NAME = "./db/Alarms";
     private static String DEF_USR = "alarmLink";
     private static String DEF_PASS = "alarmLink";
     private static String NO_URL = "No Access";
@@ -53,7 +53,6 @@ public class H2Provider extends JdbcProvider {
             server = Server.createTcpServer("-tcpAllowOthers").start();
         } catch (SQLException e) {
             AlarmUtil.logError("Cannot start Web Server", e);
-            System.out.println("Cannot start Web Server" + e); //TODO: Remove log
         }
         updateServerURL();
     }
@@ -63,9 +62,12 @@ public class H2Provider extends JdbcProvider {
         service.setProperty(AlarmService.DATABASE_URL, new Value(NO_URL));
     }
 
+    private String getCurDBName() {
+        return service.getProperty(AlarmService.DATABASE_NAME).getString();
+    }
+
     private String getServerURL() {
-        boolean on = service.getProperty(AlarmService.EXTERNAL_DB_ACCESS_ENABLED).getBool();
-        return (server == null && !on) ? NO_URL : "jdbc:h2:" + server.getURL() + "/" + DB_NAME;
+        return (server != null) ? "jdbc:h2:" + server.getURL() + "/" + getCurDBName() : NO_URL;
     }
 
     private void updateServerURL() {
@@ -75,11 +77,13 @@ public class H2Provider extends JdbcProvider {
 
     protected void initData() {
         service.initProperty(AlarmService.JDBC_DRIVER, new Value("org.h2.Driver"))
-                .setWritable(Writable.CONFIG);
+                .setWritable(Writable.NEVER);
         service.initProperty(AlarmService.DATABASE_URL, new Value(getServerURL()))
+                .setWritable(Writable.NEVER);
+        service.initProperty(AlarmService.DATABASE_NAME, new Value(DEF_DB_NAME))
                 .setWritable(Writable.CONFIG);
         service.initProperty(AlarmService.DATABASE_USER, new Value(DEF_USR))
-                .setWritable(Writable.CONFIG);
+                .setWritable(Writable.NEVER);
         service.initProperty(AlarmService.EXTERNAL_DB_ACCESS_ENABLED, new Value(false))
                 .setWritable(Writable.CONFIG);
         service.initDBPassword(DEF_PASS);
@@ -92,16 +96,22 @@ public class H2Provider extends JdbcProvider {
                 handleTCPSetup(event);
             }
         });
+        action.addParameter(new Parameter(AlarmService.DATABASE_NAME, ValueType.STRING));
         action.addParameter(new Parameter(AlarmService.DATABASE_USER, ValueType.STRING));
         action.addParameter(new Parameter(AlarmService.DATABASE_PASS, ValueType.STRING));
-        service.getNode().createChild("TCP Access Setup", false).setSerializable(false).setAction(action)
+        service.getNode().createChild("Edit DB Cred", false).setSerializable(false).setAction(action)
                 .build();
     }
 
     private void handleTCPSetup(ActionResult event) {
         Value newUsr = event.getParameter(AlarmService.DATABASE_USER);
         Value newPass = event.getParameter(AlarmService.DATABASE_PASS);
+        //Probably leave it out, too confusing, creates new database.
+//        Value newName = event.getParameter(AlarmService.DATABASE_NAME);
         String curUsr = service.getProperty(AlarmService.DATABASE_USER).getString();
+//        if (newName != null) {
+//            service.setProperty(AlarmService.DATABASE_NAME, newName);
+//        }
         Connection data = getConnection();
         try {
             if (!newUsr.getString().toUpperCase().equals(curUsr.toUpperCase())) {
@@ -114,8 +124,7 @@ public class H2Provider extends JdbcProvider {
             chg_pass.execute("ALTER USER " + newUsr.getString() + " SET PASSWORD '" + newPass.getString() + "'");
             data.commit();
         } catch (Exception ex) {
-            AlarmUtil.logError("Cannot change User/Pass:", ex);
-            ex.printStackTrace(); //TODO: remove log
+            AlarmUtil.logError("User/Pass change error:", ex);
         }
 
         service.setProperty(AlarmService.DATABASE_USER, newUsr);
@@ -136,15 +145,12 @@ public class H2Provider extends JdbcProvider {
         }
 
         try {
-            System.out.println("Got this far");
-            System.out.println(service.getProperty(AlarmService.DATABASE_USER).getString());
-            System.out.println(service.getDBPassword());
             updateServerURL();
-            return DriverManager.getConnection("jdbc:h2:" + DB_NAME, //"jdbc:h2:~/test"
+            return DriverManager.getConnection("jdbc:h2:" + getCurDBName(), //"jdbc:h2:~/test"
                     service.getProperty(AlarmService.DATABASE_USER).getString(), //"sa"
                     service.getDBPassword()); //""
         } catch (Exception x) {
-            AlarmUtil.throwRuntime(x);
+            AlarmUtil.logError("Failed to login:", x);
         }
         return null;
     }
