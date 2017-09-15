@@ -157,6 +157,12 @@ public class Alarming {
          */
         public AlarmCursor queryOpenAlarms(AlarmClass alarmClass);
 
+        /**
+         * Switch for controlling public access for Providers with public database option.
+         * @param allow Set to true to allow access.
+         */
+        public void changeDatabaseAccessTo(boolean allow);
+
     }
 
     ///////////////////////////////////////////////////////////////////////////

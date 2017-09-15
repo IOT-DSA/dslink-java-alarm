@@ -51,17 +51,17 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    public void initTCPPassword(String str) {
+    public void initDBPassword(String str) {
         if (node.getPassword() == null) {
-            setTCPPassword(str);
+            setDBPassword(str);
         }
     }
 
-    public void setTCPPassword(String str) {
+    public void setDBPassword(String str) {
         node.setPassword(str.toCharArray());
     }
 
-    public String getTCPPassword() {
+    public String getDBPassword() {
         return String.valueOf(node.getPassword());
     }
 

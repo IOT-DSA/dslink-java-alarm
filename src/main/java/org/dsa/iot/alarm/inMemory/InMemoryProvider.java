@@ -61,6 +61,12 @@ public class InMemoryProvider extends AbstractProvider {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
+
+    @Override
+    public void changeDatabaseAccessTo(boolean allow) {
+        //Do nothing, this option is not needed here.
+    }
+
     @Override
     public synchronized void addAlarm(AlarmRecord record) {
         alarmSet.add(record);

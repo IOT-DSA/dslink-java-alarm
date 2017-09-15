@@ -68,6 +68,11 @@ public class RemoteJdbcProvider extends JdbcProvider {
         return new RemoteJdbcAlarmService();
     }
 
+    @Override
+    public void changeDatabaseAccessTo(boolean allow) {
+        //Do nothing. This option is absent.
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Inner Classes
     ///////////////////////////////////////////////////////////////////////////

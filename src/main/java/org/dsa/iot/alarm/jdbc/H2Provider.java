@@ -36,6 +36,9 @@ public class H2Provider extends JdbcProvider {
     private static Server server;
     private static AlarmService service;
     private static String DB_NAME = "./db/Alarms";
+    private static String DEF_USR = "alarmLink";
+    private static String DEF_PASS = "alarmLink";
+    private static String NO_URL = "No Access";
 
     static {
         try {
@@ -45,25 +48,41 @@ public class H2Provider extends JdbcProvider {
         }
     }
 
-    H2Provider() {
-        super();
+    private void startTCPServer() {
         try {
-            server = Server.createTcpServer().start();
-            System.out.println("URL: jdbc:h2:" + server.getURL() + "/" + DB_NAME);
+            server = Server.createTcpServer("-tcpAllowOthers").start();
         } catch (SQLException e) {
             AlarmUtil.logError("Cannot start Web Server", e);
-            System.out.println("Cannot start Web Server" + e);
+            System.out.println("Cannot start Web Server" + e); //TODO: Remove log
         }
+        updateServerURL();
     }
+
+    private void stopTCPServer() {
+        if (server != null) server.stop();
+        service.setProperty(AlarmService.DATABASE_URL, new Value(NO_URL));
+    }
+
+    private String getServerURL() {
+        boolean on = service.getProperty(AlarmService.EXTERNAL_DB_ACCESS_ENABLED).getBool();
+        return (server == null && !on) ? NO_URL : "jdbc:h2:" + server.getURL() + "/" + DB_NAME;
+    }
+
+    private void updateServerURL() {
+        service.setProperty(AlarmService.DATABASE_URL, new Value(getServerURL()));
+    }
+
 
     protected void initData() {
         service.initProperty(AlarmService.JDBC_DRIVER, new Value("org.h2.Driver"))
                 .setWritable(Writable.CONFIG);
-        service.initProperty(AlarmService.DATABASE_URL, new Value("jdbc:h2:" + server.getURL() + "/" + DB_NAME))
+        service.initProperty(AlarmService.DATABASE_URL, new Value(getServerURL()))
                 .setWritable(Writable.CONFIG);
-        service.initProperty(AlarmService.DATABASE_USER, new Value("alarmLink"))
+        service.initProperty(AlarmService.DATABASE_USER, new Value(DEF_USR))
                 .setWritable(Writable.CONFIG);
-        service.initTCPPassword("alarmLink2");
+        service.initProperty(AlarmService.EXTERNAL_DB_ACCESS_ENABLED, new Value(false))
+                .setWritable(Writable.CONFIG);
+        service.initDBPassword(DEF_PASS);
     }
 
     protected void initActions() {
@@ -94,13 +113,13 @@ public class H2Provider extends JdbcProvider {
             Statement chg_pass = data.createStatement();
             chg_pass.execute("ALTER USER " + newUsr.getString() + " SET PASSWORD '" + newPass.getString() + "'");
             data.commit();
-
         } catch (Exception ex) {
-            ex.printStackTrace();
+            AlarmUtil.logError("Cannot change User/Pass:", ex);
+            ex.printStackTrace(); //TODO: remove log
         }
 
         service.setProperty(AlarmService.DATABASE_USER, newUsr);
-        service.setTCPPassword(newPass.getString());
+        service.setDBPassword(newPass.getString());
     }
 
 
@@ -111,19 +130,31 @@ public class H2Provider extends JdbcProvider {
             service = getService();
             initData();
             initActions();
+            if (service.getProperty(AlarmService.EXTERNAL_DB_ACCESS_ENABLED).getBool()) {
+                startTCPServer();
+            }
         }
 
         try {
-//            System.out.println("Got this far");
-//            System.out.println(service.getProperty(AlarmService.DATABASE_USER).getString());
-//            System.out.println(service.getProperty(AlarmService.DATABASE_PASS).getString());
-            return DriverManager.getConnection(service.getProperty(AlarmService.DATABASE_URL).getString(), //"jdbc:h2:~/test"
+            System.out.println("Got this far");
+            System.out.println(service.getProperty(AlarmService.DATABASE_USER).getString());
+            System.out.println(service.getDBPassword());
+            updateServerURL();
+            return DriverManager.getConnection("jdbc:h2:" + DB_NAME, //"jdbc:h2:~/test"
                     service.getProperty(AlarmService.DATABASE_USER).getString(), //"sa"
-                    service.getTCPPassword()); //""
+                    service.getDBPassword()); //""
         } catch (Exception x) {
             AlarmUtil.throwRuntime(x);
         }
         return null;
     }
 
+    @Override
+    public void changeDatabaseAccessTo(boolean allow) {
+        if (allow) {
+            startTCPServer();
+        } else {
+            stopTCPServer();
+        }
+    }
 }

@@ -60,11 +60,12 @@ public interface AlarmConstants {
     String UUID_STR = "UUID";
     String WATCH_PATH = "Watch Path";
 
-    //Settings for H2 TCP server
-    String USER_NAME = "User Name";
-    String PASSWORD = "Password";
-    String H2_URL = "H2 Server URL";
-    String H2_TCP_ENABLED = "H2 Server On";
+    //Settings for H2 TCP server (and other external DBs)
+    String DATABASE_PASS = "Database Password";
+    String DATABASE_URL = "Database URL";
+    String DATABASE_USER = "Database User";
+    String JDBC_DRIVER = "JDBC Driver";
+    String EXTERNAL_DB_ACCESS_ENABLED = "DB Server On";
 
     ///////////////////////////////////////////////////////////////////////////
     // Enums
