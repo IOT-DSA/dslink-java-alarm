@@ -51,6 +51,20 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
+    public void initDBPassword(String str) {
+        if (node.getPassword() == null) {
+            setDBPassword(str);
+        }
+    }
+
+    public void setDBPassword(String str) {
+        node.setPassword(str.toCharArray());
+    }
+
+    public String getDBPassword() {
+        return String.valueOf(node.getPassword());
+    }
+
     @Override
     public synchronized void addChild(AlarmObject child) {
         AlarmUtil.logTrace("Add " + child.getNode().getPath());

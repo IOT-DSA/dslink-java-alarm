@@ -100,5 +100,4 @@ public class RemoteJdbcAlarmService extends AlarmService {
             loadDriverClass();
         }
     }
-
 } //class

@@ -8,6 +8,9 @@
 
 package org.dsa.iot.alarm;
 
+import org.h2.tools.Server;
+
+import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.UUID;
@@ -153,6 +156,12 @@ public class Alarming {
          * @param alarmClass If null, return all alarm classes.
          */
         public AlarmCursor queryOpenAlarms(AlarmClass alarmClass);
+
+        /**
+         * Switch for controlling public access for Providers with public database option.
+         * @param allow Set to true to allow access.
+         */
+        public void changeDatabaseAccessTo(boolean allow);
 
     }
 

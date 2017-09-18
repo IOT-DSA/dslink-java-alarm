@@ -31,6 +31,7 @@ import org.dsa.iot.dslink.node.actions.ResultType;
 import org.dsa.iot.dslink.node.actions.table.Row;
 import org.dsa.iot.dslink.node.actions.table.Table;
 import org.dsa.iot.dslink.node.value.Value;
+import org.dsa.iot.dslink.node.value.ValuePair;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.dslink.util.TimeUtils;
@@ -956,4 +957,16 @@ public class AlarmService extends AbstractAlarmObject {
 
     }
 
+    @Override
+    protected void onPropertyChange(Node child, ValuePair valuePair) {
+        if (!valuePair.isFromExternalSource()) {
+            return;
+        }
+        if (!valuePair.getCurrent().equals(valuePair.getPrevious())) {
+            if (EXTERNAL_DB_ACCESS_ENABLED.equals(child.getName())) {
+                Alarming.getProvider().changeDatabaseAccessTo(valuePair.getCurrent().getBool());
+            }
+        }
+        super.onPropertyChange(child, valuePair);
+    }
 }
