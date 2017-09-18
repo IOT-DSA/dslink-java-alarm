@@ -63,7 +63,7 @@ public interface AlarmConstants {
     //Settings for H2 TCP server (and other external DBs)
     String DATABASE_PASS = "DB Password";
     String DATABASE_URL = "DB URL";
-    String DATABASE_NAME = "DB NAME";
+    String DATABASE_NAME = "DB Name";
     String DATABASE_USER = "DB User";
     String JDBC_DRIVER = "JDBC Driver";
     String EXTERNAL_DB_ACCESS_ENABLED = "DB Server On";
