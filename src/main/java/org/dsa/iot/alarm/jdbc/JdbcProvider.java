@@ -157,7 +157,7 @@ public abstract class JdbcProvider extends AbstractProvider {
      * @param statement May be null.
      * @param results   May be null.
      */
-    private static void close(Connection conn, Statement statement, ResultSet results) {
+    static void close(Connection conn, Statement statement, ResultSet results) {
         if (results != null) {
             try {
                 results.close();

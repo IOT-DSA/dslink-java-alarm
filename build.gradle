@@ -4,7 +4,7 @@ apply plugin: 'idea'
 apply plugin: 'java'
 
 group 'org.iot-dsa'
-version '1.4.0'
+version '1.4.1'
 
 mainClassName = 'org.dsa.iot.alarm.jdbc.H2Main'
 sourceCompatibility = 1.7
