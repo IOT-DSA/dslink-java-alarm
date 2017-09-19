@@ -591,12 +591,6 @@ public class AlarmService extends AbstractAlarmObject {
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         getNode().createChild("Return To Normal", false).setSerializable(false).setAction(action)
                  .build();
-        /* //Set Log Level For testing.
-        action = new Action(Permission.CONFIG, this::setLogLevel);
-        action.addParameter(new Parameter(LOG_LEVEL, ENUM_LOG_LEVEL, new Value("info")));
-        getNode().createChild("Set Log Level", false).setSerializable(false).setAction(action)
-                .build();
-        */
         /*
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
             @Override
@@ -717,11 +711,6 @@ public class AlarmService extends AbstractAlarmObject {
         initProperty(UNACKED_ALARM_COUNT, new Value(0)).createFakeBuilder()
                                                        .setSerializable(false)
                                                        .setWritable(Writable.NEVER);
-        /* Used during dev
-        initProperty("Version", new Value("1.3.0.8")).createFakeBuilder()
-                                                     .setSerializable(false)
-                                                     .setWritable(Writable.NEVER);
-        */
     }
 
     private int nextHandle() {

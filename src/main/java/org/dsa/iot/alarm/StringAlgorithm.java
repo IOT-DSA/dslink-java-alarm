@@ -101,6 +101,39 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
         super.onPropertyChange(child, valuePair);
     }
 
+    /**
+     * Converts decimal numbers with no decimals into integer strings.
+     */
+    private String toString(Value value) {
+        if (value == null) {
+            return "null";
+        }
+        String ret = value.getString();
+        if (ret != null) {
+            return ret;
+        }
+        Number n = value.getNumber();
+        if (n != null) {
+            if (n instanceof Double) {
+                double d = n.doubleValue();
+                if (d % 1d == 0) {
+                    long l = (long) d;
+                    ret = String.valueOf(l);
+                }
+            } else if (n instanceof Float) {
+                float f = n.floatValue();
+                if (f % 1f == 0) {
+                    long l = (long) f;
+                    ret = String.valueOf(l);
+                }
+            }
+        }
+        if (ret == null) {
+            ret = value.toString();
+        }
+        return ret;
+    }
+
 }
 
 
