@@ -34,6 +34,7 @@ public class H2Provider extends JdbcProvider {
 
     private static Server server;
     private static AlarmService service;
+    private static String DEF_DB_NAME = "./db/Alarms";
     private static String DEF_USR = "alarmLink";
     private static String DEF_PASS = "alarmLink";
     private static String NO_URL = "No Access";
@@ -64,7 +65,7 @@ public class H2Provider extends JdbcProvider {
     }
 
     private String getCurDBName() {
-        return service.getProperty(AlarmService.DATABASE_NAME).getString();
+        return DEF_DB_NAME;
     }
 
     private String getServerURL() {
