@@ -8,6 +8,7 @@
 
 package org.dsa.iot.alarm;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -64,6 +65,7 @@ public class AlarmService extends AbstractAlarmObject {
     private long nextUpdateCounts = 0;
     private HashSet<AlarmStreamer> openAlarmStreamListeners = new HashSet<>();
     private ArrayList<AlarmStreamer> openAlarmStreamListenerCache = new ArrayList<>();
+    private boolean updating = false;
     private boolean updateCounts = true;
 
     ///////////////////////////////////////////////////////////////////////////
@@ -99,7 +101,7 @@ public class AlarmService extends AbstractAlarmObject {
                 AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
                 rec.getAlarmClass().notifyAllUpdates(rec);
             }
-            updateCounts = true;
+            updateCounts(true);
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
@@ -124,7 +126,7 @@ public class AlarmService extends AbstractAlarmObject {
                     rec.getAlarmClass().notifyAllUpdates(rec);
                 }
             }
-            updateCounts = true;
+            updateCounts(true);
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
@@ -475,7 +477,9 @@ public class AlarmService extends AbstractAlarmObject {
         });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         action.addParameter(new Parameter(USER, ValueType.STRING));
-        getNode().createChild("Acknowledge", false).setSerializable(false).setAction(action)
+        getNode().createChild("Acknowledge", false)
+                 .setSerializable(false)
+                 .setAction(action)
                  .build();
         //Acknowledge All
         action = new Action(Permission.READ, new Handler<ActionResult>() {
@@ -485,7 +489,8 @@ public class AlarmService extends AbstractAlarmObject {
             }
         });
         action.addParameter(new Parameter(USER, ValueType.STRING));
-        getNode().createChild(ACKNOWLEDGE_ALL, false).setSerializable(false)
+        getNode().createChild(ACKNOWLEDGE_ALL, false)
+                 .setSerializable(false)
                  .setAction(action).build();
         //Add Alarm Class action
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
@@ -495,7 +500,9 @@ public class AlarmService extends AbstractAlarmObject {
             }
         });
         action.addParameter(new Parameter(NAME, ValueType.STRING));
-        getNode().createChild("Add Alarm Class", false).setSerializable(false).setAction(action)
+        getNode().createChild("Add Alarm Class", false)
+                 .setSerializable(false)
+                 .setAction(action)
                  .build();
         //Add Note
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
@@ -507,26 +514,34 @@ public class AlarmService extends AbstractAlarmObject {
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         action.addParameter(new Parameter(USER, ValueType.STRING));
         action.addParameter(new Parameter(NOTE, ValueType.STRING));
-        getNode().createChild("Add Note", false).setSerializable(false).setAction(action)
+        getNode().createChild("Add Note", false)
+                 .setSerializable(false)
+                 .setAction(action)
                  .build();
         //Delete All Records action
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
             @Override
             public void handle(ActionResult event) {
                 Alarming.getProvider().deleteAllRecords();
+                updateCounts(true);
             }
         });
-        getNode().createChild("Delete All Records", false).setSerializable(false).setAction(
-                action).build();
+        getNode().createChild("Delete All Records", false)
+                 .setSerializable(false)
+                 .setAction(action)
+                 .build();
         //Delete Record
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
             @Override
             public void handle(ActionResult event) {
                 deleteRecord(event);
+                updateCounts(true);
             }
         });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
-        getNode().createChild("Delete Record", false).setSerializable(false).setAction(action)
+        getNode().createChild("Delete Record", false)
+                 .setSerializable(false)
+                 .setAction(action)
                  .build();
         //Get Alarm
         action = new Action(Permission.READ, new Handler<ActionResult>() {
@@ -538,7 +553,9 @@ public class AlarmService extends AbstractAlarmObject {
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
         action.setResultType(ResultType.TABLE);
         AlarmUtil.encodeAlarmColumns(action);
-        getNode().createChild("Get Alarm", false).setSerializable(false).setAction(action)
+        getNode().createChild("Get Alarm", false)
+                 .setSerializable(false)
+                 .setAction(action)
                  .build();
         //Get Alarms
         action = new Action(Permission.READ, new Handler<ActionResult>() {
@@ -552,7 +569,9 @@ public class AlarmService extends AbstractAlarmObject {
                         .setEditorType(EditorType.DATE_RANGE));
         action.setResultType(ResultType.STREAM);
         AlarmUtil.encodeAlarmColumns(action);
-        getNode().createChild("Get Alarms", false).setSerializable(false).setAction(action)
+        getNode().createChild("Get Alarms", false)
+                 .setSerializable(false)
+                 .setAction(action)
                  .build();
         //Get Open Alarms
         action = new Action(Permission.READ, new Handler<ActionResult>() {
@@ -565,7 +584,9 @@ public class AlarmService extends AbstractAlarmObject {
         action.addParameter(
                 new Parameter(STREAM_UPDATES, ValueType.BOOL, new Value(true)));
         AlarmUtil.encodeAlarmColumns(action);
-        getNode().createChild("Get Open Alarms", false).setSerializable(false).setAction(action)
+        getNode().createChild("Get Open Alarms", false)
+                 .setSerializable(false)
+                 .setAction(action)
                  .build();
         //Get Notes
         action = new Action(Permission.READ, new Handler<ActionResult>() {
@@ -579,7 +600,9 @@ public class AlarmService extends AbstractAlarmObject {
         action.addResult(new Parameter(TIMESTAMP, ValueType.STRING));
         action.addResult(new Parameter(USER, ValueType.STRING));
         action.addResult(new Parameter(NOTE, ValueType.STRING));
-        getNode().createChild("Get Notes", false).setSerializable(false).setAction(action)
+        getNode().createChild("Get Notes", false)
+                 .setSerializable(false)
+                 .setAction(action)
                  .build();
         //Return To Normal
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
@@ -589,9 +612,22 @@ public class AlarmService extends AbstractAlarmObject {
             }
         });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
-        getNode().createChild("Return To Normal", false).setSerializable(false).setAction(action)
+        getNode().createChild("Return To Normal", false)
+                 .setSerializable(false)
+                 .setAction(action)
                  .build();
-        /*
+        //Update Counts
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                updateCounts(true);
+            }
+        });
+        getNode().createChild("Update Counts", false)
+                 .setSerializable(false)
+                 .setAction(action)
+                 .build();
+        /* Temporary, here for some v2 performance tests
         action = new Action(Permission.WRITE, new Handler<ActionResult>() {
             @Override
             public void handle(ActionResult event) {
@@ -873,6 +909,7 @@ public class AlarmService extends AbstractAlarmObject {
     /**
      * Iterates all alarms and updates various alarms counts for the service and all classes.
      */
+    @SuppressFBWarnings("IS2_INCONSISTENT_SYNC")
     void updateCounts(boolean force) {
         if (!force) {
             if (!updateCounts) {
@@ -882,55 +919,65 @@ public class AlarmService extends AbstractAlarmObject {
                 return;
             }
         }
-        updateCounts = false;
-        nextUpdateCounts = System.currentTimeMillis() + 30000;
-        Counts svc = new Counts();
-        AlarmCursor cursor = Alarming.getProvider()
-                                     .queryAlarms(null, null, null);
-        AlarmClass clazz = null;
-        HashMap<AlarmClass, Counts> map = new HashMap<>();
-        Counts counts = null;
-        Counts noClazzCounts = new Counts();
-        while (cursor.next()) {
-            clazz = cursor.getAlarmClass();
-            if (clazz != null) {
-                counts = map.get(clazz);
-            } else {
-                counts = noClazzCounts;
+        synchronized (this) {
+            if (updating) {
+                return;
             }
-            if (counts == null) {
-                counts = new Counts();
-                map.put(clazz, counts);
-            }
-            svc.ttl++;
-            counts.ttl++;
-            if (cursor.isOpen()) {
-                svc.open++;
-                counts.open++;
-            }
-            if (!cursor.isNormal()) {
-                svc.alarms++;
-                counts.alarms++;
-            }
-            if (cursor.isAckRequired() && !cursor.isAcknowledged()) {
-                svc.unacked++;
-                counts.unacked++;
-            }
-            if (svc.ttl % 100 == 0) {
-                Thread.yield();
-            }
+            updating = true;
         }
-        setProperty(IN_ALARM_COUNT, new Value(svc.alarms));
-        setProperty(OPEN_ALARM_COUNT, new Value(svc.open));
-        setProperty(TTL_ALARM_COUNT, new Value(svc.ttl));
-        setProperty(UNACKED_ALARM_COUNT, new Value(svc.unacked));
-        AlarmObject obj;
-        for (int i = childCount(); --i >= 0; ) {
-            obj = getChild(i);
-            if (obj instanceof AlarmClass) {
-                clazz = (AlarmClass) obj;
-                clazz.updateCounts(map.get(clazz));
+        try {
+            updateCounts = false;
+            nextUpdateCounts = System.currentTimeMillis() + 30000;
+            Counts svc = new Counts();
+            AlarmCursor cursor = Alarming.getProvider()
+                                         .queryAlarms(null, null, null);
+            AlarmClass clazz = null;
+            HashMap<AlarmClass, Counts> map = new HashMap<>();
+            Counts counts = null;
+            Counts noClazzCounts = new Counts();
+            while (cursor.next()) {
+                clazz = cursor.getAlarmClass();
+                if (clazz != null) {
+                    counts = map.get(clazz);
+                } else {
+                    counts = noClazzCounts;
+                }
+                if (counts == null) {
+                    counts = new Counts();
+                    map.put(clazz, counts);
+                }
+                svc.ttl++;
+                counts.ttl++;
+                if (cursor.isOpen()) {
+                    svc.open++;
+                    counts.open++;
+                }
+                if (!cursor.isNormal()) {
+                    svc.alarms++;
+                    counts.alarms++;
+                }
+                if (cursor.isAckRequired() && !cursor.isAcknowledged()) {
+                    svc.unacked++;
+                    counts.unacked++;
+                }
+                if (svc.ttl % 100 == 0) {
+                    Thread.yield();
+                }
             }
+            setProperty(IN_ALARM_COUNT, new Value(svc.alarms));
+            setProperty(OPEN_ALARM_COUNT, new Value(svc.open));
+            setProperty(TTL_ALARM_COUNT, new Value(svc.ttl));
+            setProperty(UNACKED_ALARM_COUNT, new Value(svc.unacked));
+            AlarmObject obj;
+            for (int i = childCount(); --i >= 0; ) {
+                obj = getChild(i);
+                if (obj instanceof AlarmClass) {
+                    clazz = (AlarmClass) obj;
+                    clazz.updateCounts(map.get(clazz));
+                }
+            }
+        } finally {
+            updating = false;
         }
     }
 

@@ -88,6 +88,9 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.4.2 - 2017-09-21_
+  - Counts automatically updated on acks and deletes.
+  
 _1.4.1 - 2017-09-19_
   - Added ability to run the database in server mode.
   - Added ability to change the database user and pass.
