@@ -232,7 +232,7 @@ public class AlarmWatch extends AbstractAlarmObject
     @Override
     protected void initData() {
         initAttribute("icon", new Value("watch.png"));
-        initProperty(ENABLED, new Value(true));
+        initProperty(ENABLED, new Value(true)).setWritable(Writable.CONFIG);
         initProperty(SOURCE_PATH, new Value("")).setWritable(Writable.NEVER);
         initProperty(ALARM_STATE, new Value(NORMAL)).setWritable(Writable.NEVER);
         Calendar cal = AlarmUtil.getCalendar(System.currentTimeMillis());

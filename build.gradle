@@ -4,7 +4,7 @@ apply plugin: 'idea'
 apply plugin: 'java'
 
 group 'org.iot-dsa'
-version '1.4.2'
+version '1.4.2.1'
 
 mainClassName = 'org.dsa.iot.alarm.jdbc.H2Main'
 sourceCompatibility = 1.7
@@ -40,9 +40,9 @@ wrapper {
 }
 
 dependencies {
-    provided 'com.google.code.findbugs:annotations:3.0.1'
-    compile 'org.iot-dsa:dslink:0.18.1'
-    compile 'com.h2database:h2:1.4.192'
+    provided 'com.google.code.findbugs:annotations:+'
+    compile 'org.iot-dsa:dslink:+'
+    compile 'com.h2database:h2:1.+'
 }
 
 compileJava {
