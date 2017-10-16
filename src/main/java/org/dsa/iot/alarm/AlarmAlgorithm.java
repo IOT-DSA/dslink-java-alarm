@@ -278,6 +278,9 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
      * gets called by watches on cov, and by updateAll.
      */
     protected void update(AlarmWatch watch) {
+        if (!watch.isEnabled()) {
+            return;
+        }
         if (isAlarm(watch)) {
             updateState(getAlarmType(), watch);
         } else {

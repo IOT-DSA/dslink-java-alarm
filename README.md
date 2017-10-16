@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Sept 21, 2017
-* Version: 1.4.2
+* Date: Oct 16, 2017
+* Version: 1.5.0
 
 
 Overview
@@ -88,6 +88,9 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.5.0 - 2017-10-16_
+  - Alarm watches can now be disabled.
+  
 _1.4.2 - 2017-09-21_
   - Counts automatically updated on acks and deletes.
   
