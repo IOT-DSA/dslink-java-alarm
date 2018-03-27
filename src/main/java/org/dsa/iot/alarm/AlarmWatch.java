@@ -8,6 +8,7 @@
 
 package org.dsa.iot.alarm;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.UUID;
 import org.dsa.iot.dslink.DSLink;
@@ -79,6 +80,13 @@ public class AlarmWatch extends AbstractAlarmObject
     protected void doStop() {
         unsubscribePath();
         parentAlgorithm = null;
+    }
+
+    @Override
+    public void getOpenUUIDs(ArrayList<UUID> uuidList) {
+        UUID openUUID = getLastAlarmUuid();
+        //TODO JP: acknowledge the alarm for this watch set normal time to current time
+        if (openUUID != null) uuidList.add(openUUID);
     }
 
     /**
