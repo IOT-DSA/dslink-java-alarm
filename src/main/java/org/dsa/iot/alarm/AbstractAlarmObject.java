@@ -10,6 +10,8 @@ package org.dsa.iot.alarm;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.UUID;
+
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.actions.Action;
@@ -117,7 +119,20 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      * Convenience for delete actions.
      */
     public void deleteSelf() {
+        ArrayList<UUID> toClose = new ArrayList<UUID>();
+        getOpenUUIDs(toClose);
+        for (UUID id : toClose) {
+            Alarming.getProvider().acknowledge(id, "DELETED");
+            Alarming.getProvider().returnToNormal(id);
+        }
         getParent().removeChild(this);
+    }
+
+    @Override
+    public void getOpenUUIDs(ArrayList<UUID> uuidList) {
+        if (children != null)
+            for (AlarmObject child : children)
+                child.getOpenUUIDs(uuidList);
     }
 
     /**

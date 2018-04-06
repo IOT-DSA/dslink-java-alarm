@@ -10,6 +10,9 @@ package org.dsa.iot.alarm;
 
 import org.dsa.iot.dslink.node.Node;
 
+import java.util.ArrayList;
+import java.util.UUID;
+
 /**
  * The alarm link is a hierarchy of AlarmObjects that proxy the SDK node hierarchy.
  * This interface is used to manage the lifecycle so that resources are properly
@@ -105,4 +108,9 @@ public interface AlarmObject {
      */
     public void stop();
 
+    /**
+     * Closes the watch of the object or of its children.
+     * @param uuidList pass an empty arrayList to store the UUIDs.
+     */
+    public void getOpenUUIDs(ArrayList<UUID> uuidList);
 }
