@@ -122,7 +122,6 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         ArrayList<UUID> toClose = new ArrayList<UUID>();
         getOpenUUIDs(toClose);
         for (UUID id : toClose) {
-            //DEBUG System.out.println(id.toString());
             Alarming.getProvider().acknowledge(id, "DELETED");
             Alarming.getProvider().returnToNormal(id);
         }
