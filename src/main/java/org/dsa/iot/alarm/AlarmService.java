@@ -844,7 +844,10 @@ public class AlarmService extends AbstractAlarmObject {
             while (cursor.next()) {
                 watch = cursor.getAlarmWatch();
                 if (watch == null) {
-                    continue; //TODO JP: If get alarm class also equals null, add UUI to the bucket
+                    if (cursor.getAlarmClass() == null) {
+                        toDelete.add(cursor.getUuid());
+                    }
+                    continue;
                 } else if (cursor.isNormal()) {
                     continue;
                 } else if (watch.getLastAlarmUuid() == null) {

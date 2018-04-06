@@ -85,7 +85,6 @@ public class AlarmWatch extends AbstractAlarmObject
     @Override
     public void getOpenUUIDs(ArrayList<UUID> uuidList) {
         UUID openUUID = getLastAlarmUuid();
-        //TODO JP: acknowledge the alarm for this watch set normal time to current time
         if (openUUID != null) uuidList.add(openUUID);
     }
 

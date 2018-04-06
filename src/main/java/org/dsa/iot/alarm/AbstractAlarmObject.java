@@ -120,10 +120,10 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
      */
     public void deleteSelf() {
         ArrayList<UUID> toClose = new ArrayList<UUID>();
-        getOpenUUIDs(toClose);  //TODO JP: close the watches for each child algorithm and alarm
+        getOpenUUIDs(toClose);
         for (UUID id : toClose) {
             //DEBUG System.out.println(id.toString());
-            Alarming.getProvider().acknowledge(id, "DELETED"); //TODO JP: is DELETED the best way?
+            Alarming.getProvider().acknowledge(id, "DELETED");
             Alarming.getProvider().returnToNormal(id);
         }
         getParent().removeChild(this);
