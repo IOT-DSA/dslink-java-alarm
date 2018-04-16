@@ -455,6 +455,7 @@ public abstract class JdbcProvider extends AbstractProvider {
         rec.setAckUser(res.getString("AckUser"));
         rec.setMessage(res.getString("Message"));
         rec.setHasNotes(res.getBoolean("HasNotes"));
+        rec.setAlarmWatch(null);
         int handle = res.getInt("Watch");
         if (handle > 0) {
             Object obj = getService().getByHandle(handle);

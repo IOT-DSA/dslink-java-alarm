@@ -844,6 +844,9 @@ public class AlarmService extends AbstractAlarmObject {
             while (cursor.next()) {
                 watch = cursor.getAlarmWatch();
                 if (watch == null) {
+                    if (cursor.getAlarmClass() == null) {
+                        toDelete.add(cursor.getUuid());
+                    }
                     continue;
                 } else if (cursor.isNormal()) {
                     continue;

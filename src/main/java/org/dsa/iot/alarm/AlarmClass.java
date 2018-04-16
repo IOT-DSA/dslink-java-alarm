@@ -277,17 +277,16 @@ public class AlarmClass extends AbstractAlarmObject {
      * Calls execute on all child algorithms, then checks for escalations.
      */
     protected void execute() {
-        if (!isEnabled() || !getService().isEnabled()) {
-            return;
-        }
-        AlarmObject child;
-        for (int i = 0, len = childCount(); i < len; i++) {
-            child = getChild(i);
-            if (child instanceof AlarmAlgorithm) {
-                ((AlarmAlgorithm) child).execute();
+        if (isEnabled() && getService().isEnabled()) {
+            AlarmObject child;
+            for (int i = 0, len = childCount(); i < len; i++) {
+                child = getChild(i);
+                if (child instanceof AlarmAlgorithm) {
+                    ((AlarmAlgorithm) child).execute();
+                }
             }
+            checkEscalations();
         }
-        checkEscalations();
         checkAutoPurge();
     }
 
