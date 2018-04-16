@@ -41,7 +41,7 @@ wrapper {
 
 dependencies {
     provided 'com.google.code.findbugs:annotations:+'
-    compile 'org.iot-dsa:dslink:0.18.3'
+    compile 'org.iot-dsa:dslink:0.18.5'
     compile 'com.h2database:h2:1.+'
 }
 
