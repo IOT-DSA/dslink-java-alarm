@@ -16,10 +16,6 @@ package org.dsa.iot.alarm;
  */
 public abstract class AlarmCursor extends AlarmRecord {
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Methods
-    ///////////////////////////////////////////////////////////////////////////
-
     /**
      * Call this if terminating use of the cursor before next returns false.
      */
@@ -39,4 +35,10 @@ public abstract class AlarmCursor extends AlarmRecord {
      */
     public abstract boolean next();
 
-} //class
+    /**
+     * Must be called before the first call to next().  Advances the cursor to the
+     * appropriate start of page, and only returns pageSize number of rows.
+     */
+    public abstract void setPaging(int page, int pageSize);
+
+}

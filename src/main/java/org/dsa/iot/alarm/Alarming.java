@@ -8,9 +8,6 @@
 
 package org.dsa.iot.alarm;
 
-import org.h2.tools.Server;
-
-import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.UUID;
@@ -150,6 +147,26 @@ public class Alarming {
         public AlarmCursor queryAlarms(AlarmClass alarmClass, Calendar from, Calendar to);
 
         /**
+         * Returns a cursor of alarms from the given alarm class in specified
+         * time range.  Implementors should expect concurrent queries and database
+         * updates.
+         *
+         * @param alarmClass    If null, return all alarm classes.
+         * @param from          Inclusive start time, can be null.
+         * @param to            First excluded end time, can be null.
+         * @param openOnly      Whether on not to return only open alarms.
+         * @param sortBy        Column to sort by.  See AlarmConstants.SORT_TYPE
+         * @param sortAscending Whether to sort ascending or if false, descending.
+         */
+        public AlarmCursor queryAlarms(
+                AlarmClass alarmClass,
+                Calendar from,
+                Calendar to,
+                boolean openOnly,
+                String sortBy,
+                boolean sortAscending);
+
+        /**
          * Returns a cursor of open alarms for the given alarm class.  Implementors
          * should expect concurrent queries and database updates.
          *
@@ -159,6 +176,7 @@ public class Alarming {
 
         /**
          * Switch for controlling public access for Providers with public database option.
+         *
          * @param allow Set to true to allow access.
          */
         public void changeDatabaseAccessTo(boolean allow);

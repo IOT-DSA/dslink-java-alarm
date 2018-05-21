@@ -8,7 +8,6 @@
 
 package org.dsa.iot.alarm;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
@@ -24,6 +23,7 @@ import org.dsa.iot.dslink.node.value.ValuePair;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.dslink.util.handler.Handler;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Alarm algorithms evaluate the state of children AlarmWatch objects, and generate
@@ -219,16 +219,6 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         initProperty(TO_NORMAL_INHIBIT, new Value(0)).createFakeBuilder()
                                                      .setConfig("unit", new Value("sec"))
                                                      .setWritable(Writable.CONFIG);
-        //No longer used, remove the following after 1/1/18 TODO
-        initProperty(ALARM_WATCH_COUNT, new Value(0)).createFakeBuilder()
-                                                     .setSerializable(false)
-                                                     .setHidden(true)
-                                                     .setWritable(Writable.NEVER);
-        //No longer used, remove the following after 1/1/18 TODO
-        initProperty(NORMAL_WATCH_COUNT, new Value(0)).createFakeBuilder()
-                                                      .setSerializable(false)
-                                                      .setHidden(true)
-                                                      .setWritable(Writable.NEVER);
     }
 
     /**
@@ -324,10 +314,18 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
      * alarm record.  Inhibits are taken into account as well.
      */
     protected void updateState(AlarmState state, AlarmWatch watch) {
+        if (state == watch.getAlarmState()) {
+            return;
+        }
         if (!isValid() || !watch.isValid()) {
             return;
         }
-        if (state == watch.getAlarmState()) {
+        AlarmClass alarmClass = getAlarmClass();
+        if (!alarmClass.isValid()) {
+            return;
+        }
+        AlarmService service = getService();
+        if (!service.isValid()) {
             return;
         }
         if (state == AlarmState.NORMAL) {
@@ -343,7 +341,6 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
                 return;
             }
         }
-        AlarmClass alarmClass = getAlarmClass();
         watch.setAlarmState(state);
         if (state == AlarmState.NORMAL) {
             AlarmRecord rec = watch.getLastAlarmRecord();
@@ -353,11 +350,11 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
                 alarmClass.notifyAllUpdates(Alarming.getProvider().getAlarm(uuid));
             }
         } else {
-            AlarmRecord rec = getService().createAlarm(getAlarmClass(),
-                                                       watch,
-                                                       watch.getSourcePath(),
-                                                       state,
-                                                       getAlarmMessage(watch));
+            AlarmRecord rec = service.createAlarm(getAlarmClass(),
+                                                  watch,
+                                                  watch.getSourcePath(),
+                                                  state,
+                                                  getAlarmMessage(watch));
             watch.setLastAlarmUuid(rec.getUuid());
             alarmClass.notifyNewRecord(rec);
             alarmClass.notifyAllUpdates(rec);

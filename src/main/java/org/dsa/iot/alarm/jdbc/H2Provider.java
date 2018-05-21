@@ -8,7 +8,6 @@
 
 package org.dsa.iot.alarm.jdbc;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -24,6 +23,7 @@ import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.handler.Handler;
 import org.h2.tools.Server;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Uses an in memory instance of the H2 database.

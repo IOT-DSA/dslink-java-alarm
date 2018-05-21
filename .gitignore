@@ -21,5 +21,6 @@
 # Runtime files
 **/.key
 db
+dslink.properties
 nodes.json
 nodes.json.bak

@@ -8,21 +8,13 @@
 
 package org.dsa.iot.alarm;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import org.dsa.iot.alarm.AlarmService.Counts;
 import org.dsa.iot.dslink.methods.StreamState;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.Writable;
-import org.dsa.iot.dslink.node.actions.Action;
-import org.dsa.iot.dslink.node.actions.ActionResult;
-import org.dsa.iot.dslink.node.actions.EditorType;
-import org.dsa.iot.dslink.node.actions.Parameter;
-import org.dsa.iot.dslink.node.actions.ResultType;
+import org.dsa.iot.dslink.node.actions.*;
 import org.dsa.iot.dslink.node.actions.table.Table;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
@@ -32,9 +24,9 @@ import org.dsa.iot.dslink.util.handler.Handler;
 /**
  * An alarm class represents a group of alarms that are related in some way. Alarms can only be
  * created with an alarm class but some alarm lifecycle operations are handled on the service.
- *
  * <p>
- *
+ * <p>
+ * <p>
  * The alarm class offers many streams (as actions) for monitoring various states of alarms
  * including escalation.  Escalation happens when alarm goes unacknowledged for a certain period of
  * time and can be used to notify backup or higher seniority staff.
@@ -315,6 +307,59 @@ public class AlarmClass extends AbstractAlarmObject {
     }
 
     /**
+     * Action handler for getting a 'page' of alarms.
+     */
+    private void getAlarmPage(final ActionResult event) {
+        Calendar from = Calendar.getInstance();
+        Calendar to = Calendar.getInstance();
+        int page = 0;
+        int pageSize = 500;
+        String sortBy = null;
+        boolean ascending = true;
+        boolean openOnly = true;
+        Value value = event.getParameter(TIME_RANGE);
+        if (value != null) {
+            //just fail fast if invalid time range
+            String[] parts = value.getString().split("/");
+            TimeUtils.decode(parts[0], from);
+            TimeUtils.decode(parts[1], to);
+            to.setTimeInMillis(to.getTimeInMillis() + 1); //dglux uses inclusive end
+        } else {
+            //Default to today.
+            TimeUtils.alignDay(from);
+            TimeUtils.addDays(1, to);
+            TimeUtils.alignDay(to);
+        }
+        value = event.getParameter(PAGE);
+        if ((value != null) && (value.getNumber() != null)) {
+            page = value.getNumber().intValue();
+        }
+        value = event.getParameter(PAGE_SIZE);
+        if ((value != null) && (value.getNumber() != null)) {
+            pageSize = value.getNumber().intValue();
+        }
+        value = event.getParameter(OPEN_ONLY);
+        if ((value != null) && (value.getBool() != null)) {
+            openOnly = value.getBool().booleanValue();
+        }
+        value = event.getParameter(SORT_BY);
+        if ((value != null) && (value.getString() != null)) {
+            sortBy = value.getString().toString();
+        }
+        value = event.getParameter(SORT_ASCENDING);
+        if ((value != null) && (value.getBool() != null)) {
+            ascending = value.getBool().booleanValue();
+        }
+        AlarmCursor cursor = Alarming.getProvider().queryAlarms(
+                this, from, to, openOnly, sortBy, ascending);
+        if (pageSize > 0) {
+            cursor.setPaging(page, pageSize);
+        }
+        AlarmStreamer streamer = new AlarmStreamer(null, event, cursor);
+        AlarmUtil.run(streamer, "Get Alarms");
+    }
+
+    /**
      * Action handler for getting all open alarms followed by a stream of updates.
      */
     private void getOpenAlarms(final ActionResult event) {
@@ -416,6 +461,32 @@ public class AlarmClass extends AbstractAlarmObject {
         AlarmUtil.encodeAlarmColumns(action);
         node.createChild("Get Open Alarms", false).setSerializable(false).setAction(action)
             .build();
+        //Get Alarm Page
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                getAlarmPage(event);
+            }
+        });
+        action.addParameter(
+                new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
+                        .setEditorType(EditorType.DATE_RANGE));
+        action.addParameter(
+                new Parameter(PAGE, ValueType.NUMBER, new Value(0)));
+        action.addParameter(
+                new Parameter(PAGE_SIZE, ValueType.NUMBER, new Value(500)));
+        action.addParameter(
+                new Parameter(SORT_BY, SORT_TYPE, new Value(CREATED_TIME)));
+        action.addParameter(
+                new Parameter(SORT_ASCENDING, ValueType.BOOL, new Value(true)));
+        action.addParameter(
+                new Parameter(OPEN_ONLY, ValueType.BOOL, new Value(true)));
+        action.setResultType(ResultType.TABLE);
+        AlarmUtil.encodeAlarmColumns(action);
+        getNode().createChild("Get Alarm Page", false)
+                 .setSerializable(false)
+                 .setAction(action)
+                 .build();
         //Stream Escalation 1
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -464,16 +535,6 @@ public class AlarmClass extends AbstractAlarmObject {
         initProperty(ESCALATION2_DYS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION2_HRS, new Value(0)).setWritable(Writable.CONFIG);
         initProperty(ESCALATION2_MNS, new Value(0)).setWritable(Writable.CONFIG);
-        //No longer used, remove the following after 1/1/18 TODO
-        initProperty(ALARM_WATCH_COUNT, new Value(0)).createFakeBuilder()
-                                                     .setSerializable(false)
-                                                     .setHidden(true)
-                                                     .setWritable(Writable.NEVER);
-        //No longer used, remove the following after 1/1/18 TODO
-        initProperty(NORMAL_WATCH_COUNT, new Value(0)).createFakeBuilder()
-                                                      .setSerializable(false)
-                                                      .setHidden(true)
-                                                      .setWritable(Writable.NEVER);
         initProperty(IN_ALARM_COUNT, new Value(0)).createFakeBuilder()
                                                   .setSerializable(false)
                                                   .setWritable(Writable.NEVER);

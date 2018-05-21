@@ -27,7 +27,6 @@ public interface AlarmConstants {
     String ACKNOWLEDGE_ALL = "Acknowledge All";
     String ALARM_CLASS = "Alarm Class";
     String ALARM_TYPE = "Alarm Type";
-    String ALARM_WATCH_COUNT = "Alarm Watch Count"; //TODO delete after 1/1/18
     String ALERT = "Alert";
     String ENABLED = "Enabled";
     String CREATE_ALARM = "Create Alarm";
@@ -44,11 +43,15 @@ public interface AlarmConstants {
     String NAME = "Name";
     String NORMAL = "Normal";
     String NORMAL_TIME = "Normal Time";
-    String NORMAL_WATCH_COUNT = "Normal Watch Count"; //TODO delete after 1/1/18
     String NOTE = "Note";
     String OFFNORMAL = "Offnormal";
+    String OPEN_ONLY = "Open Only";
     String OPEN_ALARM_COUNT = "Open Alarm Count";
+    String PAGE = "Page";
+    String PAGE_SIZE = "Page Size";
     String PATH = "Path";
+    String SORT_BY = "Sort By";
+    String SORT_ASCENDING = "Sort Ascending";
     String SOURCE_PATH = "Source Path";
     String STREAM_UPDATES = "Stream Updates";
     String TIMESTAMP = "Timestamp";
@@ -76,14 +79,19 @@ public interface AlarmConstants {
 
     ValueType ENUM_LOG_LEVEL = ValueType.makeEnum("trace", "info", "warn", "error");
 
+    ValueType SORT_TYPE = ValueType.makeEnum(
+            UUID_STR,
+            CREATED_TIME,
+            SOURCE_PATH,
+            ALARM_CLASS,
+            ALARM_TYPE,
+            NORMAL_TIME,
+            ACK_TIME,
+            ACK_USER);
+
     ///////////////////////////////////////////////////////////////////////////
     // Tuning
     ///////////////////////////////////////////////////////////////////////////
-
-    /**
-     * How many alarm records to send without an interleaving call to table.sendReady.
-     */
-    int ALARM_RECORD_CHUNK = 50;
 
     /**
      * How long to wait for a stream to establish before failing.

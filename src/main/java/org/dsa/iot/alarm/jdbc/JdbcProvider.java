@@ -8,25 +8,11 @@
 
 package org.dsa.iot.alarm.jdbc;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.Calendar;
 import java.util.UUID;
-import org.dsa.iot.alarm.AbstractProvider;
-import org.dsa.iot.alarm.AlarmClass;
-import org.dsa.iot.alarm.AlarmCursor;
-import org.dsa.iot.alarm.AlarmRecord;
-import org.dsa.iot.alarm.AlarmService;
-import org.dsa.iot.alarm.AlarmState;
-import org.dsa.iot.alarm.AlarmUtil;
-import org.dsa.iot.alarm.AlarmWatch;
-import org.dsa.iot.alarm.Note;
-import org.dsa.iot.alarm.NoteCursor;
+import org.dsa.iot.alarm.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Alarming provider that uses a JDBC data source.  This uses a fixed schema, but
@@ -34,7 +20,7 @@ import org.dsa.iot.alarm.NoteCursor;
  *
  * @author Aaron Hansen
  */
-public abstract class JdbcProvider extends AbstractProvider {
+public abstract class JdbcProvider extends AbstractProvider implements AlarmConstants {
 
     ///////////////////////////////////////////////////////////////////////////
     // Constants
@@ -255,6 +241,34 @@ public abstract class JdbcProvider extends AbstractProvider {
         return null;
     }
 
+    private String getColumnName(String displayName) {
+        if (displayName.equals(UUID_STR)) {
+            return "Uuid";
+        }
+        if (displayName.equals(CREATED_TIME)) {
+            return "CreatedTime";
+        }
+        if (displayName.equals(SOURCE_PATH)) {
+            return "SourcePath";
+        }
+        if (displayName.equals(ALARM_CLASS)) {
+            return "AlarmClass";
+        }
+        if (displayName.equals(ALARM_TYPE)) {
+            return "AlarmType";
+        }
+        if (displayName.equals(NORMAL_TIME)) {
+            return "NormalTime";
+        }
+        if (displayName.equals(ACK_TIME)) {
+            return "AckTime";
+        }
+        if (displayName.equals(ACK_USER)) {
+            return "AckUser";
+        }
+        throw new IllegalArgumentException("Unknown column: " + displayName);
+    }
+
     /**
      * Subclasses are responsible for obtaining a connection.
      */
@@ -298,7 +312,8 @@ public abstract class JdbcProvider extends AbstractProvider {
     }
 
     @Override
-    public AlarmCursor queryAlarms(AlarmClass alarmClass, Calendar from,
+    public AlarmCursor queryAlarms(AlarmClass alarmClass,
+                                   Calendar from,
                                    Calendar to) {
         Connection conn = null;
         Statement statement = null;
@@ -306,7 +321,33 @@ public abstract class JdbcProvider extends AbstractProvider {
             conn = getConnection();
             statement = conn.createStatement();
             ResultSet results = statement.executeQuery(
-                    selectStatement(alarmClass, from, to, false));
+                    selectStatement(alarmClass,
+                                    from,
+                                    to,
+                                    false,
+                                    null,
+                                    true));
+            return new MyAlarmCursor(conn, statement, results);
+        } catch (Exception x) {
+            AlarmUtil.throwRuntime(x);
+        }
+        return null;
+    }
+
+    @Override
+    public AlarmCursor queryAlarms(AlarmClass alarmClass,
+                                   Calendar from,
+                                   Calendar to,
+                                   boolean openOnly,
+                                   String orderBy,
+                                   boolean ascending) {
+        Connection conn = null;
+        Statement statement = null;
+        try {
+            conn = getConnection();
+            statement = conn.createStatement();
+            ResultSet results = statement.executeQuery(
+                    selectStatement(alarmClass, from, to, openOnly, orderBy, ascending));
             return new MyAlarmCursor(conn, statement, results);
         } catch (Exception x) {
             AlarmUtil.throwRuntime(x);
@@ -320,7 +361,12 @@ public abstract class JdbcProvider extends AbstractProvider {
             Connection conn = getConnection();
             Statement statement = conn.createStatement();
             ResultSet results = statement.executeQuery(
-                    selectStatement(alarmClass, null, null, true));
+                    selectStatement(alarmClass,
+                                    null,
+                                    null,
+                                    true,
+                                    null,
+                                    true));
             return new MyAlarmCursor(conn, statement, results);
         } catch (Exception x) {
             AlarmUtil.throwRuntime(x);
@@ -387,10 +433,16 @@ public abstract class JdbcProvider extends AbstractProvider {
      * @param alarmClass Alarm class name, may be null.
      * @param from       Earliest inclusive created time, may be null.
      * @param to         First excluded created time, may be null.
-     * @param mustBeOpen Whether or not to only return only open records.
+     * @param openOnly   Whether or not to only return only open records.
+     * @param orderBy    Column to sort by.  See AlarmConstants.SORT_TYPE.
+     * @param ascending  True to sort ascending, false for descending.
      */
-    protected String selectStatement(AlarmClass alarmClass, Calendar from, Calendar to,
-                                     boolean mustBeOpen) {
+    protected String selectStatement(AlarmClass alarmClass,
+                                     Calendar from,
+                                     Calendar to,
+                                     boolean openOnly,
+                                     String orderBy,
+                                     boolean ascending) {
         StringBuilder buf = new StringBuilder();
         buf.append("select * from Alarm_Records");
         boolean hasWhere = false;
@@ -414,11 +466,20 @@ public abstract class JdbcProvider extends AbstractProvider {
             buf.append(new Timestamp(to.getTimeInMillis()));
             buf.append('\'');
         }
-        if (mustBeOpen) {
+        if (openOnly) {
             buf.append(hasWhere ? " and " : " where ");
             buf.append("IsOpen = true");
         }
-        buf.append(" order by CreatedTime;");
+        if (orderBy == null) {
+            buf.append(" order by CreatedTime;");
+        } else {
+            buf.append(" order by ").append(getColumnName(orderBy));
+            if (ascending) {
+                buf.append(" ASC;");
+            } else {
+                buf.append(" DESC;");
+            }
+        }
         return buf.toString();
     }
 
@@ -487,6 +548,8 @@ public abstract class JdbcProvider extends AbstractProvider {
     private class MyAlarmCursor extends AlarmCursor {
 
         private Connection conn;
+        private int limit;
+        private boolean paging = false;
         private ResultSet results;
         private Statement statement;
 
@@ -510,8 +573,15 @@ public abstract class JdbcProvider extends AbstractProvider {
                 if (results == null) {
                     return false;
                 }
+                if (paging && (limit <= 0)) {
+                    close();
+                    return false;
+                }
                 if (results.next()) {
                     toAlarm(results, this);
+                    if (paging) {
+                        limit--;
+                    }
                     return true;
                 } else {
                     close();
@@ -523,6 +593,37 @@ public abstract class JdbcProvider extends AbstractProvider {
             }
             return false;
         }
+
+        @Override
+        public void setPaging(int page, int pageSize) {
+            if (pageSize > 0) {
+                paging = true;
+                limit = pageSize;
+                skip(page * pageSize);
+            }
+        }
+
+        private void skip(int count) {
+            try {
+                if (results == null) {
+                    return;
+                }
+                if (count <= 0) {
+                    return;
+                }
+                while (results.next()) {
+                    if (--count <= 0) {
+                        return;
+                    }
+                }
+                close();
+            } catch (Exception x) {
+                AlarmUtil.logError("AlarmCursor.skip", x);
+                close();
+                AlarmUtil.throwRuntime(x);
+            }
+        }
+
     }
 
     private class MyNoteCursor extends NoteCursor {

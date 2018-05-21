@@ -11,7 +11,6 @@ package org.dsa.iot.alarm;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
-
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.actions.Action;
@@ -531,4 +530,4 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
     }
 
-} //class
+}
