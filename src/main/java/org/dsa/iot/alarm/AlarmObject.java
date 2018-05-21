@@ -8,10 +8,9 @@
 
 package org.dsa.iot.alarm;
 
-import org.dsa.iot.dslink.node.Node;
-
 import java.util.ArrayList;
 import java.util.UUID;
+import org.dsa.iot.dslink.node.Node;
 
 /**
  * The alarm link is a hierarchy of AlarmObjects that proxy the SDK node hierarchy.
@@ -65,6 +64,8 @@ public interface AlarmObject {
      */
     public void init(Node node);
 
+    public boolean isEnabled();
+
     /**
      * All object in the tree have been started.
      */
@@ -110,6 +111,7 @@ public interface AlarmObject {
 
     /**
      * Closes the watch of the object or of its children.
+     *
      * @param uuidList pass an empty arrayList to store the UUIDs.
      */
     public void getOpenUUIDs(ArrayList<UUID> uuidList);

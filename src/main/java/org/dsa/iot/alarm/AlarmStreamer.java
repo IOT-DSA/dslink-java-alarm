@@ -66,8 +66,9 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
         this.initialSet = initialSet;
         request.setStreamState(StreamState.INITIALIZED);
         this.table = request.getTable();
-        table.setMode(Mode.APPEND);
-        table.sendReady();
+        if (listenerContainer != null) {
+            table.setMode(Mode.STREAM);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -122,21 +123,18 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     public void run() {
         Calendar cal = TimeUtils.reuseCalendar();
         StringBuilder buf = new StringBuilder();
-        table.waitForStream(WAIT_FOR_STREAM, true);
+        if (listenerContainer != null) {
+            table.waitForStream(WAIT_FOR_STREAM, true);
+        }
         if (initialSet != null) {
-            int count = 1;
             while (isValid() && initialSet.next()) {
                 AlarmUtil.encodeAlarm(initialSet, table, cal, buf);
-                if ((++count % ALARM_RECORD_CHUNK) == 0) {
-                    table.sendReady();
-                    Thread.yield();
-                }
             }
         }
-        if (isValid()) {
+        if (isValid() && (listenerContainer != null)) {
             request.setStreamState(StreamState.OPEN);
+            table.setMode(Mode.STREAM);
             table.sendReady();
-            Thread.yield();
         }
         if (initialSet != null) {
             initialSet.close();
@@ -144,25 +142,17 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
         }
         AlarmRecord record;
         if (listenerContainer != null) {
-            int count = 0;
             while (isValid()) {
                 record = getNextUpdate();
                 if (record != null) {
                     AlarmUtil.encodeAlarm(record, table, cal, buf);
                 }
-                if (isValid()) {
-                    if (!hasUpdates() || (++count % ALARM_RECORD_CHUNK) == 0) {
-                        count = 0;
-                        table.sendReady();
-                        Thread.yield();
-                    }
-                }
             }
         }
         if (isOpen()) {
             request.setStreamState(StreamState.CLOSED);
-            table.sendReady();
-            Thread.yield();
+            table.close();
+            close();
         }
         updates = null;
         if (listenerContainer != null) {

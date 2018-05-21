@@ -8,13 +8,7 @@
 
 package org.dsa.iot.alarm;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.dsa.iot.dslink.DSLink;
@@ -24,11 +18,7 @@ import org.dsa.iot.dslink.methods.StreamState;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.Writable;
-import org.dsa.iot.dslink.node.actions.Action;
-import org.dsa.iot.dslink.node.actions.ActionResult;
-import org.dsa.iot.dslink.node.actions.EditorType;
-import org.dsa.iot.dslink.node.actions.Parameter;
-import org.dsa.iot.dslink.node.actions.ResultType;
+import org.dsa.iot.dslink.node.actions.*;
 import org.dsa.iot.dslink.node.actions.table.Row;
 import org.dsa.iot.dslink.node.actions.table.Table;
 import org.dsa.iot.dslink.node.value.Value;
@@ -38,6 +28,7 @@ import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.dslink.util.TimeUtils;
 import org.dsa.iot.dslink.util.handler.Handler;
 import org.dsa.iot.dslink.util.log.LogManager;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Represents the visible root node of the link.  Its purpose is to create alarm classes and manage
@@ -363,6 +354,59 @@ public class AlarmService extends AbstractAlarmObject {
     }
 
     /**
+     * Action handler for getting a 'page' of alarms.
+     */
+    private void getAlarmPage(final ActionResult event) {
+        Calendar from = Calendar.getInstance();
+        Calendar to = Calendar.getInstance();
+        int page = 0;
+        int pageSize = 500;
+        String sortBy = null;
+        boolean ascending = true;
+        boolean openOnly = true;
+        Value value = event.getParameter(TIME_RANGE);
+        if (value != null) {
+            //just fail fast if invalid time range
+            String[] parts = value.getString().split("/");
+            TimeUtils.decode(parts[0], from);
+            TimeUtils.decode(parts[1], to);
+            to.setTimeInMillis(to.getTimeInMillis() + 1); //dglux uses inclusive end
+        } else {
+            //Default to today.
+            TimeUtils.alignDay(from);
+            TimeUtils.addDays(1, to);
+            TimeUtils.alignDay(to);
+        }
+        value = event.getParameter(PAGE);
+        if ((value != null) && (value.getNumber() != null)) {
+            page = value.getNumber().intValue();
+        }
+        value = event.getParameter(PAGE_SIZE);
+        if ((value != null) && (value.getNumber() != null)) {
+            pageSize = value.getNumber().intValue();
+        }
+        value = event.getParameter(OPEN_ONLY);
+        if ((value != null) && (value.getBool() != null)) {
+            openOnly = value.getBool().booleanValue();
+        }
+        value = event.getParameter(SORT_BY);
+        if ((value != null) && (value.getString() != null)) {
+            sortBy = value.getString().toString();
+        }
+        value = event.getParameter(SORT_ASCENDING);
+        if ((value != null) && (value.getBool() != null)) {
+            ascending = value.getBool().booleanValue();
+        }
+        AlarmCursor cursor = Alarming.getProvider().queryAlarms(
+                null, from, to, openOnly, sortBy, ascending);
+        if (pageSize > 0) {
+            cursor.setPaging(page, pageSize);
+        }
+        AlarmStreamer streamer = new AlarmStreamer(null, event, cursor);
+        AlarmUtil.run(streamer, "Get Alarms");
+    }
+
+    /**
      * Returns the object mapped to the given handle.
      */
     public synchronized AlarmObject getByHandle(int handle) {
@@ -588,6 +632,32 @@ public class AlarmService extends AbstractAlarmObject {
                  .setSerializable(false)
                  .setAction(action)
                  .build();
+        //Get Alarm Page
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                getAlarmPage(event);
+            }
+        });
+        action.addParameter(
+                new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
+                        .setEditorType(EditorType.DATE_RANGE));
+        action.addParameter(
+                new Parameter(PAGE, ValueType.NUMBER, new Value(0)));
+        action.addParameter(
+                new Parameter(PAGE_SIZE, ValueType.NUMBER, new Value(500)));
+        action.addParameter(
+                new Parameter(SORT_BY, SORT_TYPE, new Value(CREATED_TIME)));
+        action.addParameter(
+                new Parameter(SORT_ASCENDING, ValueType.BOOL, new Value(true)));
+        action.addParameter(
+                new Parameter(OPEN_ONLY, ValueType.BOOL, new Value(true)));
+        action.setResultType(ResultType.TABLE);
+        AlarmUtil.encodeAlarmColumns(action);
+        getNode().createChild("Get Alarm Page", false)
+                 .setSerializable(false)
+                 .setAction(action)
+                 .build();
         //Get Notes
         action = new Action(Permission.READ, new Handler<ActionResult>() {
             @Override
@@ -627,79 +697,7 @@ public class AlarmService extends AbstractAlarmObject {
                  .setSerializable(false)
                  .setAction(action)
                  .build();
-        /* Temporary, here for some v2 performance tests
-        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                test();
-            }
-        });
-        getNode().createChild("Test", false).setSerializable(false).setAction(action)
-                 .build();
-        */
     }
-
-    /*
-    private void test() {
-        System.out.println("Begin test");
-        long time = System.currentTimeMillis();
-        Node TestClass;
-        Node TestSubClass;
-        Node TestWatch;
-        String name;
-        for (int i = 0; i < 10; i++) {
-            name = "TestClass" + i;
-            TestClass = addNode(getNode(), name, name);
-            addAction(TestClass, "Test1", new Parameter("ID1", ValueType.STRING),
-                      new Parameter("Result", ValueType.STRING));
-            addAction(TestClass, "Test2", new Parameter("ID2", ValueType.STRING),
-                      new Parameter("Result", ValueType.STRING));
-            addAction(TestClass, "Test3", new Parameter("ID3", ValueType.STRING),
-                      new Parameter("Result", ValueType.STRING));
-            for (int j = 0; j < 100; j++) {
-                name = "TestSubClass" + j;
-                TestSubClass = addNode(TestClass, name, name);
-                addAction(TestSubClass, "Test1", new Parameter("ID1", ValueType.STRING),
-                          new Parameter("Result", ValueType.STRING));
-                addAction(TestSubClass, "Test2", new Parameter("ID2", ValueType.STRING),
-                          new Parameter("Result", ValueType.STRING));
-                addAction(TestSubClass, "Test3", new Parameter("ID3", ValueType.STRING),
-                          new Parameter("Result", ValueType.STRING));
-                for (int k = 0; k < 100; k++) {
-                    name = "TestWatch" + k;
-                    TestWatch = addNode(TestSubClass, name, name);
-                    TestWatch.setValueType(ValueType.NUMBER);
-                    TestWatch.setValue(new Value(k));
-                    addAction(TestWatch, "Test1", new Parameter("ID1", ValueType.STRING),
-                              new Parameter("Result", ValueType.STRING));
-                    addAction(TestWatch, "Test2", new Parameter("ID2", ValueType.STRING),
-                              new Parameter("Result", ValueType.STRING));
-                    addAction(TestWatch, "Test3", new Parameter("ID3", ValueType.STRING),
-                              new Parameter("Result", ValueType.STRING));
-                }
-                System.out.println("  j: " + j);
-            }
-            System.out.println("i: " + i);
-        }
-        time = System.currentTimeMillis() - time;
-        System.out.println("**********Finished: " + time + "ms");
-    }
-
-    private Node addNode(Node node, String name, String displayname) {
-        node.createChild(name, false)
-            .setDisplayName(displayname)
-            .setSerializable(true)
-            .build();
-        return node.getChild(name, false);
-
-    }
-
-    private void addAction(Node node, String name, Parameter parameter, Parameter result) {
-        Action action = createAction(node, name);
-        action.addParameter(parameter);
-        action.addResult(result);
-    }
-    */
 
     private Action createAction(Node node, String name) {
         Action action = new Action(Permission.WRITE,
@@ -725,16 +723,6 @@ public class AlarmService extends AbstractAlarmObject {
                 .createFakeBuilder()
                 .setSerializable(false)
                 .setWritable(Writable.NEVER);
-        //No longer used, remove the following after 1/1/18 TODO
-        initProperty(ALARM_WATCH_COUNT, new Value(0)).createFakeBuilder()
-                                                     .setSerializable(false)
-                                                     .setHidden(true)
-                                                     .setWritable(Writable.NEVER);
-        //No longer used, remove the following after 1/1/18 TODO
-        initProperty(NORMAL_WATCH_COUNT, new Value(0)).createFakeBuilder()
-                                                      .setSerializable(false)
-                                                      .setHidden(true)
-                                                      .setWritable(Writable.NEVER);
         initProperty(IN_ALARM_COUNT, new Value(0)).createFakeBuilder()
                                                   .setSerializable(false)
                                                   .setWritable(Writable.NEVER);

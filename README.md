@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Oct 16, 2017
-* Version: 1.5.0
+* Date: May 21, 2018
+* Version: 1.6.0
 
 
 Overview
@@ -14,10 +14,8 @@ This is a [DSA link](https://github.com/IOT-DSA).  It records details
 
 This link serves two purposes:  
 
-1.  It is a framework upon which alarm links for different data stores 
-can be developed.  
-2.  It has three implementations, one of which, the default, can be 
-deployed as-is.
+1.  It is a framework upon which alarm links for different data stores can be developed.
+2.  It has default implementations that can be deployed as-is.
 
 To understand link usage, view the [Alarm Link User Guide](https://github.com/IOT-DSA/dslink-java-alarm/blob/master/Alarm-Link-User-Guide.pdf).
 
@@ -38,11 +36,8 @@ The provided implementations are:
 * org.dsa.iot.alarm.jdbc.H2Main - Uses an embedded instance of the H2
 database for persistence.  This is default handler_class in dslink.json.
 * org.dsa.iot.alarm.jdbc.JdbcMain - Uses remote JDBC connections for 
-persistence.  The JDBC driver jar file will need to be added to the 
+persistence.  The specific JDBC driver jar file will need to be added to the
 deployment.
-* org.dsa.iot.alarm.inMemory.Main - Uses Java collections for transient
-storage.  This was developed primarily for testing purposes and may
-help with development of additional alarm links.
 
 
 Creating Custom Alarm Links
@@ -88,6 +83,12 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.6.0 - 2018-5-21_
+  - Added getAlarmPage to the service and class.
+  - Bug fix for watch deletion.
+  - Buf fix where alarms were not be acknowledged.
+  - Bug fix for purging old alarms.
+
 _1.5.0 - 2017-10-16_
   - Alarm watches can now be disabled.
   
