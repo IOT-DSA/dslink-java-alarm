@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Oct 16, 2017
-* Version: 1.5.0
+* Date: May 21, 2018
+* Version: 1.6.0
 
 
 Overview
