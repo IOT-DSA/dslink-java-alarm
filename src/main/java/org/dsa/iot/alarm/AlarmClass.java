@@ -317,6 +317,7 @@ public class AlarmClass extends AbstractAlarmObject {
         String sortBy = null;
         boolean ascending = true;
         boolean openOnly = true;
+        AckMode ackMode = AckMode.ANY;
         Value value = event.getParameter(TIME_RANGE);
         if (value != null) {
             //just fail fast if invalid time range
@@ -340,18 +341,22 @@ public class AlarmClass extends AbstractAlarmObject {
         }
         value = event.getParameter(OPEN_ONLY);
         if ((value != null) && (value.getBool() != null)) {
-            openOnly = value.getBool().booleanValue();
+            openOnly = value.getBool();
+        }
+        value = event.getParameter(ACK_MODE);
+        if ((value != null) && (value.getString() != null)) {
+            ackMode = AckMode.getMode(value.getString());
         }
         value = event.getParameter(SORT_BY);
         if ((value != null) && (value.getString() != null)) {
-            sortBy = value.getString().toString();
+            sortBy = value.getString();
         }
         value = event.getParameter(SORT_ASCENDING);
         if ((value != null) && (value.getBool() != null)) {
-            ascending = value.getBool().booleanValue();
+            ascending = value.getBool();
         }
         AlarmCursor cursor = Alarming.getProvider().queryAlarms(
-                this, from, to, openOnly, sortBy, ascending);
+                this, from, to, openOnly, ackMode, sortBy, ascending);
         if (pageSize > 0) {
             cursor.setPaging(page, pageSize);
         }
@@ -481,6 +486,8 @@ public class AlarmClass extends AbstractAlarmObject {
                 new Parameter(SORT_ASCENDING, ValueType.BOOL, new Value(true)));
         action.addParameter(
                 new Parameter(OPEN_ONLY, ValueType.BOOL, new Value(true)));
+        action.addParameter(
+                new Parameter(ACK_MODE, ACK_TYPE, new Value(ANY)));
         action.setResultType(ResultType.TABLE);
         AlarmUtil.encodeAlarmColumns(action);
         getNode().createChild("Get Alarm Page", false)

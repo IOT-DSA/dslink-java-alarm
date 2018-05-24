@@ -22,12 +22,15 @@ public interface AlarmConstants {
     // Strings
     ///////////////////////////////////////////////////////////////////////////
 
+    String ACKED = "Acked";
+    String ACK_MODE = "Ack Mode";
     String ACK_TIME = "Ack Time";
     String ACK_USER = "Ack User";
     String ACKNOWLEDGE_ALL = "Acknowledge All";
     String ALARM_CLASS = "Alarm Class";
     String ALARM_TYPE = "Alarm Type";
     String ALERT = "Alert";
+    String ANY = "Any";
     String ENABLED = "Enabled";
     String CREATE_ALARM = "Create Alarm";
     String CREATE_STATE = "Create State";
@@ -58,6 +61,7 @@ public interface AlarmConstants {
     String TIME_RANGE = "Time Range";
     String TTL_ALARM_COUNT = "Total Alarm Count";
     String TYPE = "Type";
+    String UNACKED = "Unacked";
     String UNACKED_ALARM_COUNT = "Unacked Alarm Count";
     String USER = "User";
     String UUID_STR = "UUID";
@@ -88,6 +92,11 @@ public interface AlarmConstants {
             NORMAL_TIME,
             ACK_TIME,
             ACK_USER);
+
+    ValueType ACK_TYPE = ValueType.makeEnum(
+            ACKED,
+            UNACKED,
+            ANY);
 
     ///////////////////////////////////////////////////////////////////////////
     // Tuning

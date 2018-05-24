@@ -325,6 +325,7 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
                                     from,
                                     to,
                                     false,
+                                    AckMode.ANY,
                                     null,
                                     true));
             return new MyAlarmCursor(conn, statement, results);
@@ -339,6 +340,7 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
                                    Calendar from,
                                    Calendar to,
                                    boolean openOnly,
+                                   AckMode ackMode,
                                    String orderBy,
                                    boolean ascending) {
         Connection conn = null;
@@ -346,8 +348,8 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
         try {
             conn = getConnection();
             statement = conn.createStatement();
-            ResultSet results = statement.executeQuery(
-                    selectStatement(alarmClass, from, to, openOnly, orderBy, ascending));
+            ResultSet results = statement.executeQuery(selectStatement(
+                    alarmClass, from, to, openOnly, ackMode, orderBy, ascending));
             return new MyAlarmCursor(conn, statement, results);
         } catch (Exception x) {
             AlarmUtil.throwRuntime(x);
@@ -365,6 +367,7 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
                                     null,
                                     null,
                                     true,
+                                    AckMode.ANY,
                                     null,
                                     true));
             return new MyAlarmCursor(conn, statement, results);
@@ -441,6 +444,7 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
                                      Calendar from,
                                      Calendar to,
                                      boolean openOnly,
+                                     AckMode ackMode,
                                      String orderBy,
                                      boolean ascending) {
         StringBuilder buf = new StringBuilder();
@@ -468,7 +472,15 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
         }
         if (openOnly) {
             buf.append(hasWhere ? " and " : " where ");
+            hasWhere = true;
             buf.append("IsOpen = true");
+        }
+        if (ackMode == AckMode.ACKED) {
+            buf.append(hasWhere ? " and " : " where ");
+            buf.append("AckTime > CreatedTime");
+        } else if (ackMode == AckMode.UNACKED) {
+            buf.append(hasWhere ? " and " : " where ");
+            buf.append("AckTime < CreatedTime");
         }
         if (orderBy == null) {
             buf.append(" order by CreatedTime;");

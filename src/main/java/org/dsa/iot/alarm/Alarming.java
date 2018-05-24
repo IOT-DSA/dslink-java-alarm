@@ -155,6 +155,7 @@ public class Alarming {
          * @param from          Inclusive start time, can be null.
          * @param to            First excluded end time, can be null.
          * @param openOnly      Whether on not to return only open alarms.
+         * @param ackMode       The ack state of the desired alarms.
          * @param sortBy        Column to sort by.  See AlarmConstants.SORT_TYPE
          * @param sortAscending Whether to sort ascending or if false, descending.
          */
@@ -163,6 +164,7 @@ public class Alarming {
                 Calendar from,
                 Calendar to,
                 boolean openOnly,
+                AckMode ackMode,
                 String sortBy,
                 boolean sortAscending);
 
