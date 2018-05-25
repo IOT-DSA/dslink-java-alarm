@@ -123,9 +123,6 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     public void run() {
         Calendar cal = TimeUtils.reuseCalendar();
         StringBuilder buf = new StringBuilder();
-        if (listenerContainer != null) {
-            table.waitForStream(WAIT_FOR_STREAM, true);
-        }
         if (initialSet != null) {
             while (isValid() && initialSet.next()) {
                 AlarmUtil.encodeAlarm(initialSet, table, cal, buf);
@@ -135,6 +132,9 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
             request.setStreamState(StreamState.OPEN);
             table.setMode(Mode.STREAM);
             table.sendReady();
+            // Fail if we can't get a response.  Otherwise we could buffer updates
+            // until we run out of memeory.
+            table.waitForStream(WAIT_FOR_STREAM, true);
         }
         if (initialSet != null) {
             initialSet.close();

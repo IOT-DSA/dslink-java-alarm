@@ -108,7 +108,7 @@ public interface AlarmConstants {
             ACK_TIME,
             ACK_USER);
 
-   ValueType OPEN_STATE_ENUM = ValueType.makeEnum(
+    ValueType OPEN_STATE_ENUM = ValueType.makeEnum(
             OPEN,
             CLOSED,
             ANY);
@@ -120,6 +120,6 @@ public interface AlarmConstants {
     /**
      * How long to wait for a stream to establish before failing.
      */
-    long WAIT_FOR_STREAM = 1000;
+    long WAIT_FOR_STREAM = 60000;
 
 }
