@@ -35,7 +35,6 @@ public class AlarmWatch extends AbstractAlarmObject
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
-    private static final String ALARM_STATE = "Alarm State";
     private static final String ALARM_STATE_TIME = "Alarm State Time";
     protected static final String CURRENT_VALUE = "Current Value";
     private static final String LAST_ALARM_RECORD = "Last Alarm Record";
