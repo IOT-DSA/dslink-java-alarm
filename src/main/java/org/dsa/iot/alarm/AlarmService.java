@@ -363,8 +363,9 @@ public class AlarmService extends AbstractAlarmObject {
         int pageSize = 500;
         String sortBy = null;
         boolean ascending = true;
-        boolean openOnly = true;
-        AckMode ackMode = AckMode.ANY;
+        AckFilter ackFilter = AckFilter.ANY;
+        AlarmFilter alarmFilter = AlarmFilter.ANY;
+        OpenFilter openFilter = OpenFilter.ANY;
         Value value = event.getParameter(TIME_RANGE);
         if (value != null) {
             //just fail fast if invalid time range
@@ -386,13 +387,17 @@ public class AlarmService extends AbstractAlarmObject {
         if ((value != null) && (value.getNumber() != null)) {
             pageSize = value.getNumber().intValue();
         }
-        value = event.getParameter(OPEN_ONLY);
-        if ((value != null) && (value.getBool() != null)) {
-            openOnly = value.getBool();
-        }
-        value = event.getParameter(ACK_MODE);
+        value = event.getParameter(ACK_STATE);
         if ((value != null) && (value.getString() != null)) {
-            ackMode = AckMode.getMode(value.getString());
+            ackFilter = AckFilter.getMode(value.getString());
+        }
+        value = event.getParameter(ALARM_STATE);
+        if ((value != null) && (value.getString() != null)) {
+            alarmFilter = AlarmFilter.getMode(value.getString());
+        }
+        value = event.getParameter(OPEN_STATE);
+        if ((value != null) && (value.getString() != null)) {
+            openFilter = OpenFilter.getMode(value.getString());
         }
         value = event.getParameter(SORT_BY);
         if ((value != null) && (value.getString() != null)) {
@@ -403,7 +408,7 @@ public class AlarmService extends AbstractAlarmObject {
             ascending = value.getBool();
         }
         AlarmCursor cursor = Alarming.getProvider().queryAlarms(
-                null, from, to, openOnly, ackMode, sortBy, ascending);
+                null, from, to, ackFilter, alarmFilter, openFilter, sortBy, ascending);
         if (pageSize > 0) {
             cursor.setPaging(page, pageSize);
         }
@@ -652,13 +657,15 @@ public class AlarmService extends AbstractAlarmObject {
         action.addParameter(
                 new Parameter(PAGE_SIZE, ValueType.NUMBER, new Value(500)));
         action.addParameter(
+                new Parameter(ACK_STATE, ACK_STATE_ENUM, new Value(ANY)));
+        action.addParameter(
+                new Parameter(ALARM_STATE, ALARM_STATE_ENUM, new Value(ANY)));
+        action.addParameter(
+                new Parameter(OPEN_STATE, OPEN_STATE_ENUM, new Value(ANY)));
+        action.addParameter(
                 new Parameter(SORT_BY, SORT_TYPE, new Value(CREATED_TIME)));
         action.addParameter(
                 new Parameter(SORT_ASCENDING, ValueType.BOOL, new Value(true)));
-        action.addParameter(
-                new Parameter(OPEN_ONLY, ValueType.BOOL, new Value(true)));
-        action.addParameter(
-                new Parameter(ACK_MODE, ACK_TYPE, new Value(ANY)));
         action.setResultType(ResultType.TABLE);
         AlarmUtil.encodeAlarmColumns(action);
         getNode().createChild("Get Alarm Page", false)

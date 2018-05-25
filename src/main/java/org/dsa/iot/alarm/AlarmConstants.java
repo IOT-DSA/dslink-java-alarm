@@ -23,18 +23,21 @@ public interface AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     String ACKED = "Acked";
-    String ACK_MODE = "Ack Mode";
+    String ACK_STATE = "Ack State";
     String ACK_TIME = "Ack Time";
     String ACK_USER = "Ack User";
     String ACKNOWLEDGE_ALL = "Acknowledge All";
+    String ALARM = "Alarm";
     String ALARM_CLASS = "Alarm Class";
+    String ALARM_STATE = "Alarm State";
     String ALARM_TYPE = "Alarm Type";
     String ALERT = "Alert";
     String ANY = "Any";
-    String ENABLED = "Enabled";
+    String CLOSED = "Closed";
     String CREATE_ALARM = "Create Alarm";
     String CREATE_STATE = "Create State";
     String CREATED_TIME = "Created Time";
+    String ENABLED = "Enabled";
     String FAULT = "Fault";
     String HAS_NOTES = "Has Notes";
     String HANDLE = "Handle";
@@ -48,6 +51,8 @@ public interface AlarmConstants {
     String NORMAL_TIME = "Normal Time";
     String NOTE = "Note";
     String OFFNORMAL = "Offnormal";
+    String OPEN = "Open";
+    String OPEN_STATE = "Open State";
     String OPEN_ONLY = "Open Only";
     String OPEN_ALARM_COUNT = "Open Alarm Count";
     String PAGE = "Page";
@@ -79,6 +84,16 @@ public interface AlarmConstants {
     // Enums
     ///////////////////////////////////////////////////////////////////////////
 
+    ValueType ACK_STATE_ENUM = ValueType.makeEnum(
+            ACKED,
+            UNACKED,
+            ANY);
+
+    ValueType ALARM_STATE_ENUM = ValueType.makeEnum(
+            ALARM,
+            NORMAL,
+            ANY);
+
     ValueType ENUM_ALARM_TYPE = ValueType.makeEnum(ALERT, FAULT, OFFNORMAL);
 
     ValueType ENUM_LOG_LEVEL = ValueType.makeEnum("trace", "info", "warn", "error");
@@ -93,9 +108,9 @@ public interface AlarmConstants {
             ACK_TIME,
             ACK_USER);
 
-    ValueType ACK_TYPE = ValueType.makeEnum(
-            ACKED,
-            UNACKED,
+   ValueType OPEN_STATE_ENUM = ValueType.makeEnum(
+            OPEN,
+            CLOSED,
             ANY);
 
     ///////////////////////////////////////////////////////////////////////////

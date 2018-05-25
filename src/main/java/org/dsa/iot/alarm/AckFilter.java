@@ -1,12 +1,12 @@
 package org.dsa.iot.alarm;
 
-public enum AckMode {
+public enum AckFilter {
 
     ACKED,
     UNACKED,
     ANY;
 
-    public static AckMode getMode(String arg) {
+    public static AckFilter getMode(String arg) {
         if (AlarmConstants.ACKED.equalsIgnoreCase(arg)) {
             return ACKED;
         }

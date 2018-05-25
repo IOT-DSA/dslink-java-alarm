@@ -324,8 +324,9 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
                     selectStatement(alarmClass,
                                     from,
                                     to,
-                                    false,
-                                    AckMode.ANY,
+                                    AckFilter.ANY,
+                                    AlarmFilter.ANY,
+                                    OpenFilter.ANY,
                                     null,
                                     true));
             return new MyAlarmCursor(conn, statement, results);
@@ -339,8 +340,9 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
     public AlarmCursor queryAlarms(AlarmClass alarmClass,
                                    Calendar from,
                                    Calendar to,
-                                   boolean openOnly,
-                                   AckMode ackMode,
+                                   AckFilter ackFilter,
+                                   AlarmFilter alarmFilter,
+                                   OpenFilter openFilter,
                                    String orderBy,
                                    boolean ascending) {
         Connection conn = null;
@@ -348,8 +350,9 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
         try {
             conn = getConnection();
             statement = conn.createStatement();
-            ResultSet results = statement.executeQuery(selectStatement(
-                    alarmClass, from, to, openOnly, ackMode, orderBy, ascending));
+            ResultSet results = statement.executeQuery(
+                    selectStatement(alarmClass, from, to, ackFilter, alarmFilter,
+                                    openFilter, orderBy, ascending));
             return new MyAlarmCursor(conn, statement, results);
         } catch (Exception x) {
             AlarmUtil.throwRuntime(x);
@@ -366,8 +369,9 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
                     selectStatement(alarmClass,
                                     null,
                                     null,
-                                    true,
-                                    AckMode.ANY,
+                                    AckFilter.ANY,
+                                    AlarmFilter.ANY,
+                                    OpenFilter.ANY,
                                     null,
                                     true));
             return new MyAlarmCursor(conn, statement, results);
@@ -433,54 +437,72 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
     /**
      * Creates a select statement based on the given parameters.
      *
-     * @param alarmClass Alarm class name, may be null.
-     * @param from       Earliest inclusive created time, may be null.
-     * @param to         First excluded created time, may be null.
-     * @param openOnly   Whether or not to only return only open records.
-     * @param orderBy    Column to sort by.  See AlarmConstants.SORT_TYPE.
-     * @param ascending  True to sort ascending, false for descending.
+     * @param alarmClass   Alarm class name, may be null.
+     * @param from         Earliest inclusive created time, may be null.
+     * @param to           First excluded created time, may be null.
+     * @param ackFilter    Filter for ack state.
+     * @param alarmFilter Filter for normal state.
+     * @param openFilter   Filter for open state.
+     * @param orderBy      Column to sort by.  See AlarmConstants.SORT_TYPE.
+     * @param ascending    True to sort ascending, false for descending.
      */
     protected String selectStatement(AlarmClass alarmClass,
                                      Calendar from,
                                      Calendar to,
-                                     boolean openOnly,
-                                     AckMode ackMode,
+                                     AckFilter ackFilter,
+                                     AlarmFilter alarmFilter,
+                                     OpenFilter openFilter,
                                      String orderBy,
                                      boolean ascending) {
         StringBuilder buf = new StringBuilder();
         buf.append("select * from Alarm_Records");
         boolean hasWhere = false;
         if (alarmClass != null) {
-            hasWhere = true;
             buf.append(" where AlarmClass = '");
             buf.append(alarmClass.getNode().getName());
             buf.append('\'');
+            hasWhere = true;
         }
         if ((from != null) && (from.getTimeInMillis() > 0)) {
             buf.append(hasWhere ? " and " : " where ");
-            hasWhere = true;
             buf.append("CreatedTime >= '");
             buf.append(new Timestamp(from.getTimeInMillis()));
             buf.append('\'');
+            hasWhere = true;
         }
         if ((to != null) && (to.getTimeInMillis() > 0)) {
             buf.append(hasWhere ? " and " : " where ");
-            hasWhere = true;
             buf.append("CreatedTime < '");
             buf.append(new Timestamp(to.getTimeInMillis()));
             buf.append('\'');
-        }
-        if (openOnly) {
-            buf.append(hasWhere ? " and " : " where ");
             hasWhere = true;
-            buf.append("IsOpen = true");
         }
-        if (ackMode == AckMode.ACKED) {
+        if (ackFilter == AckFilter.ACKED) {
             buf.append(hasWhere ? " and " : " where ");
             buf.append("AckTime > CreatedTime");
-        } else if (ackMode == AckMode.UNACKED) {
+            hasWhere = true;
+        } else if (ackFilter == AckFilter.UNACKED) {
             buf.append(hasWhere ? " and " : " where ");
             buf.append("AckTime < CreatedTime");
+            hasWhere = true;
+        }
+        if (alarmFilter == AlarmFilter.ALARM) {
+            buf.append(hasWhere ? " and " : " where ");
+            buf.append("NormalTime < CreatedTime");
+            hasWhere = true;
+        } else if (alarmFilter == AlarmFilter.NORMAL) {
+            buf.append(hasWhere ? " and " : " where ");
+            buf.append("NormalTime > CreatedTime");
+            hasWhere = true;
+        }
+        if (openFilter == OpenFilter.OPEN) {
+            buf.append(hasWhere ? " and " : " where ");
+            buf.append("IsOpen = true");
+            hasWhere = true;
+        } else if (openFilter == OpenFilter.CLOSED) {
+            buf.append(hasWhere ? " and " : " where ");
+            buf.append("IsOpen = false");
+            hasWhere = true;
         }
         if (orderBy == null) {
             buf.append(" order by CreatedTime;");
