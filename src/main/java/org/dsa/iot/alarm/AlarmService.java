@@ -357,10 +357,55 @@ public class AlarmService extends AbstractAlarmObject {
      * Action handler for getting a 'page' of alarms.
      */
     private void getAlarmPage(final ActionResult event) {
+        AlarmCursor cursor = getAlarmPageCursor(event);
+        int pageSize = 500;
+        Value value = event.getParameter(PAGE_SIZE);
+        if ((value != null) && (value.getNumber() != null)) {
+            pageSize = value.getNumber().intValue();
+        }
+        if (pageSize > 0) {
+            int page = 0;
+            value = event.getParameter(PAGE);
+            if ((value != null) && (value.getNumber() != null)) {
+                page = value.getNumber().intValue();
+            }
+            cursor.setPaging(page, pageSize);
+        }
+        AlarmStreamer streamer = new AlarmStreamer(null, event, cursor);
+        AlarmUtil.run(streamer, "Get Alarm Page");
+    }
+
+    /**
+     * Action handler for getting a 'page' of alarms.
+     */
+    private void getAlarmPageCount(final ActionResult event) {
+        int pageSize = 500;
+        Value value = event.getParameter(PAGE_SIZE);
+        if ((value != null) && (value.getNumber() != null)) {
+            pageSize = value.getNumber().intValue();
+        }
+        int pages = 0;
+        if (pageSize > 0) {
+            AlarmCursor cursor = getAlarmPageCursor(event);
+            int count = 0;
+            while (cursor.next()) {
+                count++;
+            }
+            pages = count / pageSize;
+            if (count % pageSize > 0) {
+                pages++;
+            }
+        }
+        Table table = event.getTable();
+        table.addRow(Row.make(new Value(pages)));
+    }
+
+    /**
+     * Executes the alarm page query.
+     */
+    private AlarmCursor getAlarmPageCursor(final ActionResult event) {
         Calendar from = Calendar.getInstance();
         Calendar to = Calendar.getInstance();
-        int page = 0;
-        int pageSize = 500;
         String sortBy = null;
         boolean ascending = true;
         AckFilter ackFilter = AckFilter.ANY;
@@ -378,14 +423,6 @@ public class AlarmService extends AbstractAlarmObject {
             TimeUtils.alignDay(from);
             TimeUtils.addDays(1, to);
             TimeUtils.alignDay(to);
-        }
-        value = event.getParameter(PAGE);
-        if ((value != null) && (value.getNumber() != null)) {
-            page = value.getNumber().intValue();
-        }
-        value = event.getParameter(PAGE_SIZE);
-        if ((value != null) && (value.getNumber() != null)) {
-            pageSize = value.getNumber().intValue();
         }
         value = event.getParameter(ACK_STATE);
         if ((value != null) && (value.getString() != null)) {
@@ -407,13 +444,8 @@ public class AlarmService extends AbstractAlarmObject {
         if ((value != null) && (value.getBool() != null)) {
             ascending = value.getBool();
         }
-        AlarmCursor cursor = Alarming.getProvider().queryAlarms(
+        return Alarming.getProvider().queryAlarms(
                 null, from, to, ackFilter, alarmFilter, openFilter, sortBy, ascending);
-        if (pageSize > 0) {
-            cursor.setPaging(page, pageSize);
-        }
-        AlarmStreamer streamer = new AlarmStreamer(null, event, cursor);
-        AlarmUtil.run(streamer, "Get Alarms");
     }
 
     /**
@@ -470,7 +502,6 @@ public class AlarmService extends AbstractAlarmObject {
         Value stream = event.getParameter(STREAM_UPDATES);
         if ((stream != null) && (stream.getBool() != null)) {
             updates = stream.getBool();
-            System.out.println("updates: " + updates);
         }
         final AlarmCursor cursor = Alarming.getProvider().queryOpenAlarms(null);
         AlarmStreamer streamer = null;
@@ -669,6 +700,30 @@ public class AlarmService extends AbstractAlarmObject {
         action.setResultType(ResultType.TABLE);
         AlarmUtil.encodeAlarmColumns(action);
         getNode().createChild("Get Alarm Page", false)
+                 .setSerializable(false)
+                 .setAction(action)
+                 .build();
+        //Get Alarm Page Count
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                getAlarmPageCount(event);
+            }
+        });
+        action.addParameter(
+                new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
+                        .setEditorType(EditorType.DATE_RANGE));
+        action.addParameter(
+                new Parameter(PAGE_SIZE, ValueType.NUMBER, new Value(500)));
+        action.addParameter(
+                new Parameter(ACK_STATE, ACK_STATE_ENUM, new Value(ANY)));
+        action.addParameter(
+                new Parameter(ALARM_STATE, ALARM_STATE_ENUM, new Value(ANY)));
+        action.addParameter(
+                new Parameter(OPEN_STATE, OPEN_STATE_ENUM, new Value(ANY)));
+        action.setResultType(ResultType.VALUES);
+        action.addResult(new Parameter(RESULT, ValueType.NUMBER));
+        getNode().createChild("Get Alarm Page Count", false)
                  .setSerializable(false)
                  .setAction(action)
                  .build();
