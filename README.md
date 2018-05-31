@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: May 21, 2018
-* Version: 1.6.0
+* Date: May 31, 2018
+* Version: 1.8.0
 
 
 Overview
@@ -83,8 +83,13 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
-_1.6.0 - 2018-5-21_
-  - Added getAlarmPage to the service and class.
+_1.8.0 - 2018-5-21
+  - Added Get Alarm Page Count to the service and class objects.
+
+_1.7.0 - 2018-5-25_
+  - Added Get Alarm Page to the service and class objects.
+
+_1.6.0 - 2018-4-06
   - Bug fix for watch deletion.
   - Buf fix where alarms were not be acknowledged.
   - Bug fix for purging old alarms.

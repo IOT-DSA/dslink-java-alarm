@@ -58,6 +58,7 @@ public interface AlarmConstants {
     String PAGE = "Page";
     String PAGE_SIZE = "Page Size";
     String PATH = "Path";
+    String RESULT = "Result";
     String SORT_BY = "Sort By";
     String SORT_ASCENDING = "Sort Ascending";
     String SOURCE_PATH = "Source Path";
