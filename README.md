@@ -83,6 +83,9 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.8.1 - 2018-7-11
+  - Update gradle wrapper version.
+
 _1.8.0 - 2018-5-21
   - Added Get Alarm Page Count to the service and class objects.
 

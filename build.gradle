@@ -4,7 +4,7 @@ apply plugin: 'idea'
 apply plugin: 'java'
 
 group 'org.iot-dsa'
-version '1.8.0'
+version '1.8.1'
 
 mainClassName = 'org.dsa.iot.alarm.jdbc.H2Main'
 sourceCompatibility = 1.7
@@ -35,8 +35,8 @@ findbugsMain {
     }
 }
 
-wrapper {
-    gradleVersion = '4.0'
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.8.1'
 }
 
 dependencies {
