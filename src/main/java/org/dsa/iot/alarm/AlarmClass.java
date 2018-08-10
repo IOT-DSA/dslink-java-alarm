@@ -90,7 +90,7 @@ public class AlarmClass extends AbstractAlarmObject {
                     notifyAllUpdates(rec);
                 }
             }
-            getService().updateCounts(true);
+            getService().updateCounts();
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);

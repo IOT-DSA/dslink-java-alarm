@@ -346,7 +346,7 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
             AlarmRecord rec = watch.getLastAlarmRecord();
             if (rec != null) {
                 UUID uuid = rec.getUuid();
-                Alarming.getProvider().returnToNormal(uuid);
+                service.returnToNormal(uuid);
                 alarmClass.notifyAllUpdates(Alarming.getProvider().getAlarm(uuid));
             }
         } else {
