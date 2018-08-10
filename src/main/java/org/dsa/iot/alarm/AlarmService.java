@@ -53,7 +53,6 @@ public class AlarmService extends AbstractAlarmObject {
     private ScheduledFuture executeFuture;
     private boolean executing = false;
     private HashMap<Number, AlarmObject> handles = new HashMap<>();
-    private long nextUpdateCounts = 0;
     private HashSet<AlarmStreamer> openAlarmStreamListeners = new HashSet<>();
     private ArrayList<AlarmStreamer> openAlarmStreamListenerCache = new ArrayList<>();
     private boolean updating = false;
@@ -92,7 +91,7 @@ public class AlarmService extends AbstractAlarmObject {
                 AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
                 rec.getAlarmClass().notifyAllUpdates(rec);
             }
-            updateCounts(true);
+            updateCounts();
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
@@ -117,7 +116,7 @@ public class AlarmService extends AbstractAlarmObject {
                     rec.getAlarmClass().notifyAllUpdates(rec);
                 }
             }
-            updateCounts(true);
+            updateCounts();
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
@@ -211,7 +210,7 @@ public class AlarmService extends AbstractAlarmObject {
                                   + "= "
                                   + uuid);
         Alarming.getProvider().addAlarm(alarmRecord);
-        updateCounts = true;
+        updateCounts();
         return alarmRecord;
     }
 
@@ -226,7 +225,7 @@ public class AlarmService extends AbstractAlarmObject {
             }
             AlarmUtil.logTrace(getNode().getPath() + " deleting alarm " + uuid);
             Alarming.getProvider().deleteRecord(UUID.fromString(uuid.getString()));
-            updateCounts = true;
+            updateCounts();
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
@@ -608,7 +607,7 @@ public class AlarmService extends AbstractAlarmObject {
             @Override
             public void handle(ActionResult event) {
                 Alarming.getProvider().deleteAllRecords();
-                updateCounts(true);
+                updateCounts();
             }
         });
         getNode().createChild("Delete All Records", false)
@@ -620,7 +619,6 @@ public class AlarmService extends AbstractAlarmObject {
             @Override
             public void handle(ActionResult event) {
                 deleteRecord(event);
-                updateCounts(true);
             }
         });
         action.addParameter(new Parameter(UUID_STR, ValueType.STRING));
@@ -855,11 +853,22 @@ public class AlarmService extends AbstractAlarmObject {
             if (uuid == null) {
                 throw new NullPointerException("Missing UUID");
             }
-            UUID uuidObj = UUID.fromString(uuid.getString());
+            returnToNormal(UUID.fromString(uuid.getString()));
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(), x);
+            AlarmUtil.throwRuntime(x);
+        }
+    }
+
+    /**
+     * Calls  Alarming.getProvider().returnToNormal() and notifies all update streams.
+     */
+    void returnToNormal(UUID uuidObj) {
+        try {
             Alarming.getProvider().returnToNormal(uuidObj);
             AlarmRecord rec = Alarming.getProvider().getAlarm(uuidObj);
             rec.getAlarmClass().notifyAllUpdates(rec);
-            updateCounts = true;
+            updateCounts();
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
             AlarmUtil.throwRuntime(x);
@@ -931,15 +940,21 @@ public class AlarmService extends AbstractAlarmObject {
                 }
                 watches.remove(watch);
             }
+            boolean update = false;
             for (UUID uuid : toDelete) {
                 AlarmUtil.logTrace("syncWatches delete: " + cursor.getUuid());
                 Alarming.getProvider().deleteRecord(uuid);
+                update = true;
             }
             //The following watches did not have an open alarm record
             for (AlarmWatch w : watches) {
                 if (w.getAlarmState() != AlarmState.NORMAL) {
                     w.setAlarmState(AlarmState.NORMAL);
+                    update = true;
                 }
+            }
+            if (update) {
+                updateCounts();
             }
         } catch (Exception x) {
             AlarmUtil.logError("syncWatchesToDatabase", x);
@@ -975,9 +990,6 @@ public class AlarmService extends AbstractAlarmObject {
             if (!updateCounts) {
                 return;
             }
-            if (System.currentTimeMillis() < nextUpdateCounts) {
-                return;
-            }
         }
         synchronized (this) {
             if (updating) {
@@ -987,7 +999,6 @@ public class AlarmService extends AbstractAlarmObject {
         }
         try {
             updateCounts = false;
-            nextUpdateCounts = System.currentTimeMillis() + 30000;
             Counts svc = new Counts();
             AlarmCursor cursor = Alarming.getProvider()
                                          .queryAlarms(null, null, null);
@@ -1045,7 +1056,6 @@ public class AlarmService extends AbstractAlarmObject {
      * Used for updating various alarm counts in the service and child classes.
      */
     static class Counts {
-
         int alarms = 0; //in alarm
         int open = 0;
         int ttl = 0;
