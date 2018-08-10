@@ -83,20 +83,20 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
-_1.8.2 - 2018-8-10
+_1.8.2 - 2018-8-10_
   - Update gradle.
   - Rapidly acking alarms one-by-one could result in inaccurate
     alarm counts.
-_1.8.1 - 2018-7-11
+_1.8.1 - 2018-7-11_
   - Update gradle wrapper version.
 
-_1.8.0 - 2018-5-21
+_1.8.0 - 2018-5-21_
   - Added Get Alarm Page Count to the service and class objects.
 
 _1.7.0 - 2018-5-25_
   - Added Get Alarm Page to the service and class objects.
 
-_1.6.0 - 2018-4-06
+_1.6.0 - 2018-4-06_
   - Bug fix for watch deletion.
   - Buf fix where alarms were not be acknowledged.
   - Bug fix for purging old alarms.
