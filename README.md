@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Aug 10, 2018
-* Version: 1.8.2
+* Date: Aug 29, 2018
+* Version: 1.9.0
 
 
 Overview
@@ -83,10 +83,16 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.9.0 - 2018-8-29_
+  - Update gradle.
+  - Update sdk.
+  - Build.gradle changes.
+
 _1.8.2 - 2018-8-10_
   - Update gradle.
   - Rapidly acking alarms one-by-one could result in inaccurate
     alarm counts.
+
 _1.8.1 - 2018-7-11_
   - Update gradle wrapper version.
 
