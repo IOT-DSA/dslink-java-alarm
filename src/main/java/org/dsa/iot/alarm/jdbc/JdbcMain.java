@@ -19,11 +19,6 @@ import org.dsa.iot.dslink.DSLinkFactory;
  */
 public class JdbcMain extends AlarmLinkHandler {
 
-    // The provider needs to be specified before the link handler is started.
-    static {
-        Alarming.setProvider(new RemoteJdbcProvider());
-    }
-
     /**
      * Command line bootstrap.
      *
@@ -31,6 +26,11 @@ public class JdbcMain extends AlarmLinkHandler {
      */
     public static void main(String[] args) {
         DSLinkFactory.start(args, new JdbcMain());
+    }
+
+    // The provider needs to be specified before the link handler is started.
+    static {
+        Alarming.setProvider(new RemoteJdbcProvider());
     }
 
 }

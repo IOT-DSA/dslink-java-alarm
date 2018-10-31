@@ -47,31 +47,6 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
         return String.format(pattern, String.valueOf(watch.getCurrentValue()));
     }
 
-    /**
-     * Try to extract a numeric from the value, even if it's another type.
-     *
-     * @return Double.NaN if a double can't be extracted.
-     */
-    private double getNumeric(Value value) {
-        Number num = value.getNumber();
-        if (num != null) {
-            return num.doubleValue();
-        }
-        Boolean bool = value.getBool();
-        if (bool != null) {
-            return bool ? 1 : 0;
-        }
-        String str = value.getString();
-        if (str != null) {
-            try {
-                return Double.parseDouble(str);
-            } catch (Exception x) {
-                AlarmUtil.logError(str, x);
-            }
-        }
-        return Double.NaN;
-    }
-
     @Override
     protected void initData() {
         super.initData();
@@ -125,6 +100,31 @@ public class OutOfRangeAlgorithm extends AlarmAlgorithm {
             }
         }
         super.onPropertyChange(child, valuePair);
+    }
+
+    /**
+     * Try to extract a numeric from the value, even if it's another type.
+     *
+     * @return Double.NaN if a double can't be extracted.
+     */
+    private double getNumeric(Value value) {
+        Number num = value.getNumber();
+        if (num != null) {
+            return num.doubleValue();
+        }
+        Boolean bool = value.getBool();
+        if (bool != null) {
+            return bool ? 1 : 0;
+        }
+        String str = value.getString();
+        if (str != null) {
+            try {
+                return Double.parseDouble(str);
+            } catch (Exception x) {
+                AlarmUtil.logError(str, x);
+            }
+        }
+        return Double.NaN;
     }
 
 }

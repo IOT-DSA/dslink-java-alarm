@@ -61,14 +61,14 @@ public class StaleAlgorithm extends AlarmAlgorithm {
 
     @Override
     protected boolean isAlarm(AlarmWatch watch) {
-        long start = watch.getStateTime();
+        long start = watch.getLastCov();
         Calendar from = AlarmUtil.getCalendar(start);
         TimeUtils.addDays(getProperty(STALE_DAYS).getNumber().intValue(), from);
         TimeUtils.addHours(getProperty(STALE_HOURS).getNumber().intValue(), from);
         TimeUtils.addMinutes(getProperty(STALE_MINUTES).getNumber().intValue(), from);
         long end = from.getTimeInMillis();
         AlarmUtil.recycle(from);
-        return ((end - start) > watch.getTimeInCurrentState());
+        return System.currentTimeMillis() > end;
     }
 
     @Override

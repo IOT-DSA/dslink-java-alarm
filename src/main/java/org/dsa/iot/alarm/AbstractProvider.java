@@ -72,12 +72,6 @@ public abstract class AbstractProvider implements Alarming.Provider {
     }
 
     /**
-     * Called by the other addNote method, after the alarm record has been updated
-     * to indicate it has notes.
-     */
-    protected abstract void addNote(Note note);
-
-    /**
      * {@inheritDoc} <p/>
      * This implementation returns a map with all the algorithms defined in the
      * core alarm sdk.
@@ -90,13 +84,6 @@ public abstract class AbstractProvider implements Alarming.Provider {
         ret.put("Stale Algorithm", StaleAlgorithm.class);
         ret.put("String Algorithm", StringAlgorithm.class);
         return ret;
-    }
-
-    /**
-     * The service passed to the start method.
-     */
-    protected AlarmService getService() {
-        return service;
     }
 
     /**
@@ -158,6 +145,19 @@ public abstract class AbstractProvider implements Alarming.Provider {
      */
     @Override
     public void stop() {
+    }
+
+    /**
+     * Called by the other addNote method, after the alarm record has been updated
+     * to indicate it has notes.
+     */
+    protected abstract void addNote(Note note);
+
+    /**
+     * The service passed to the start method.
+     */
+    protected AlarmService getService() {
+        return service;
     }
 
     /**

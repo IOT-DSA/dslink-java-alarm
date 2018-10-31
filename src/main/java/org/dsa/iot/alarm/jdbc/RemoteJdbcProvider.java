@@ -37,6 +37,21 @@ public class RemoteJdbcProvider extends JdbcProvider {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
+    @Override
+    public void changeDatabaseAccessTo(boolean allow) {
+        //Do nothing. This option is absent.
+    }
+
+    /**
+     * {@inheritDoc} <p/>
+     *
+     * @return RemoteJdbcAlarmService instance.
+     */
+    @Override
+    public AlarmService newAlarmService() {
+        return new RemoteJdbcAlarmService();
+    }
+
     /**
      * {@inheritDoc} <p/>
      * Uses the connection information from the RemoteJdbcAlarmService to acquire
@@ -56,21 +71,6 @@ public class RemoteJdbcProvider extends JdbcProvider {
             AlarmUtil.throwRuntime(x);
         }
         return null; //this will never be reached.
-    }
-
-    /**
-     * {@inheritDoc} <p/>
-     *
-     * @return RemoteJdbcAlarmService instance.
-     */
-    @Override
-    public AlarmService newAlarmService() {
-        return new RemoteJdbcAlarmService();
-    }
-
-    @Override
-    public void changeDatabaseAccessTo(boolean allow) {
-        //Do nothing. This option is absent.
     }
 
     ///////////////////////////////////////////////////////////////////////////

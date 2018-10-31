@@ -52,20 +52,6 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    public void initDBPassword(String str) {
-        if (node.getPassword() == null) {
-            setDBPassword(str);
-        }
-    }
-
-    public void setDBPassword(String str) {
-        node.setPassword(str.toCharArray());
-    }
-
-    public String getDBPassword() {
-        return String.valueOf(node.getPassword());
-    }
-
     @Override
     public synchronized void addChild(AlarmObject child) {
         AlarmUtil.logTrace("Add " + child.getNode().getPath());
@@ -97,15 +83,6 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         node.createChild(actionName, false).setSerializable(false).setAction(action).build();
     }
 
-    /**
-     * A convenience, throws an IllegalStateException if not steady.
-     */
-    protected final void checkSteady() {
-        if (!steady) {
-            throw new IllegalStateException("Not steady");
-        }
-    }
-
     @Override
     public int childCount() {
         if (children == null) {
@@ -128,65 +105,11 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     }
 
     @Override
-    public void getOpenUUIDs(ArrayList<UUID> uuidList) {
-        if (children != null)
-            for (AlarmObject child : children)
-                child.getOpenUUIDs(uuidList);
-    }
-
-    /**
-     * Override point, called by the start().  Started will be true, steady will be false.
-     */
-    protected void doStart() {
-    }
-
-    /**
-     * Override point, called by the steady().  Started and steady will be true.
-     */
-    protected void doSteady() {
-    }
-
-    /**
-     * Override point, called by the stop().  Started and steady will be false.
-     */
-    protected void doStop() {
-    }
-
-    @Override
     public AlarmObject getChild(int index) {
         if (children == null) {
             return null;
         }
         return children.get(index);
-    }
-
-    /**
-     * The SDK node this object represents.
-     */
-    public Node getNode() {
-        return this.node;
-    }
-
-    @Override
-    public AlarmObject getParent() {
-        return parent;
-    }
-
-    /**
-     * The alarm service, or null if this isn't mounted.
-     */
-    public AlarmService getService() {
-        if (service == null) {
-            AlarmObject tmp = getParent();
-            while (tmp != null) {
-                if (tmp instanceof AlarmService) {
-                    service = (AlarmService) tmp;
-                    break;
-                }
-                tmp = tmp.getParent();
-            }
-        }
-        return service;
     }
 
     /**
@@ -203,6 +126,10 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         return value;
     }
 
+    public String getDBPassword() {
+        return String.valueOf(node.getPassword());
+    }
+
     @Override
     public int getHandle() {
         Value value = getConfig(HANDLE);
@@ -210,6 +137,27 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
             return 0;
         }
         return value.getNumber().intValue();
+    }
+
+    /**
+     * The SDK node this object represents.
+     */
+    public Node getNode() {
+        return this.node;
+    }
+
+    @Override
+    public void getOpenUUIDs(ArrayList<UUID> uuidList) {
+        if (children != null) {
+            for (AlarmObject child : children) {
+                child.getOpenUUIDs(uuidList);
+            }
+        }
+    }
+
+    @Override
+    public AlarmObject getParent() {
+        return parent;
     }
 
     /**
@@ -230,6 +178,23 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
             return null;
         }
         return child.getValue();
+    }
+
+    /**
+     * The alarm service, or null if this isn't mounted.
+     */
+    public AlarmService getService() {
+        if (service == null) {
+            AlarmObject tmp = getParent();
+            while (tmp != null) {
+                if (tmp instanceof AlarmService) {
+                    service = (AlarmService) tmp;
+                    break;
+                }
+                tmp = tmp.getParent();
+            }
+        }
+        return service;
     }
 
     /**
@@ -266,51 +231,10 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         }
     }
 
-    /**
-     * Only adds an attribute that isn't already present, otherwise does nothing.
-     *
-     * @param name  The name of the attribute.
-     * @param value Only used when the attribute is not present.
-     */
-    protected void initAttribute(String name, Value value) {
-        Value tmp = node.getAttribute(name);
-        if (tmp != null) {
-            return;
+    public void initDBPassword(String str) {
+        if (node.getPassword() == null) {
+            setDBPassword(str);
         }
-        node.setAttribute(name, value);
-    }
-
-    /**
-     * Subclass hook for adding actions, called by init(node) after the subtree has been
-     * loaded.
-     */
-    protected void initActions() {
-    }
-
-    /**
-     * Only adds a config that isn't already present, otherwise does nothing.
-     *
-     * @param name     The name of the config.
-     * @param value    Only used when the config is not present.
-     * @param readOnly Whether or not the config is writable or not.
-     */
-    protected void initConfig(String name, Value value, boolean readOnly) {
-        Value tmp = getConfig(name);
-        if (tmp != null) {
-            return;
-        }
-        if (readOnly) {
-            node.setRoConfig(name, value);
-        } else {
-            node.setConfig(name, value);
-        }
-    }
-
-    /**
-     * Subclass hook for initializing data on the inner node, called by init(node) after
-     * the subtree has been loaded.
-     */
-    protected void initData() {
     }
 
     /**
@@ -409,32 +333,6 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         return ret;
     }
 
-    /**
-     * Callback for property changes (value changes in child nodes).  The property
-     * must have been calling initProperty.
-     */
-    protected void onPropertyChange(Node child, ValuePair valuePair) {
-    }
-
-    /**
-     * Will remove all descendant alarm objects thus they will get the removed callback
-     * as well.
-     * <p/>{@inheritDoc}
-     */
-    @Override
-    public void removed() {
-        removeAllDescendants();
-    }
-
-    /**
-     * A convenience that calls removeChild for all direct descendants.
-     */
-    protected void removeAllDescendants() {
-        for (int i = childCount(); --i >= 0; ) {
-            removeChild(getChild(i));
-        }
-    }
-
     @Override
     public synchronized void removeChild(AlarmObject child) {
         AlarmUtil.logTrace("Remove " + child.getNode().getPath());
@@ -451,6 +349,20 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         if (tmp != null) {
             node.removeChild(tmp, false);
         }
+    }
+
+    /**
+     * Will remove all descendant alarm objects thus they will get the removed callback
+     * as well.
+     * <p/>{@inheritDoc}
+     */
+    @Override
+    public void removed() {
+        removeAllDescendants();
+    }
+
+    public void setDBPassword(String str) {
+        node.setPassword(str.toCharArray());
     }
 
     @Override
@@ -527,6 +439,96 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
             if (svc != null) {
                 svc.unregister(this);
             }
+        }
+    }
+
+    /**
+     * A convenience, throws an IllegalStateException if not steady.
+     */
+    protected final void checkSteady() {
+        if (!steady) {
+            throw new IllegalStateException("Not steady");
+        }
+    }
+
+    /**
+     * Override point, called by the start().  Started will be true, steady will be false.
+     */
+    protected void doStart() {
+    }
+
+    /**
+     * Override point, called by the steady().  Started and steady will be true.
+     */
+    protected void doSteady() {
+    }
+
+    /**
+     * Override point, called by the stop().  Started and steady will be false.
+     */
+    protected void doStop() {
+    }
+
+    /**
+     * Subclass hook for adding actions, called by init(node) after the subtree has been
+     * loaded.
+     */
+    protected void initActions() {
+    }
+
+    /**
+     * Only adds an attribute that isn't already present, otherwise does nothing.
+     *
+     * @param name  The name of the attribute.
+     * @param value Only used when the attribute is not present.
+     */
+    protected void initAttribute(String name, Value value) {
+        Value tmp = node.getAttribute(name);
+        if (tmp != null) {
+            return;
+        }
+        node.setAttribute(name, value);
+    }
+
+    /**
+     * Only adds a config that isn't already present, otherwise does nothing.
+     *
+     * @param name     The name of the config.
+     * @param value    Only used when the config is not present.
+     * @param readOnly Whether or not the config is writable or not.
+     */
+    protected void initConfig(String name, Value value, boolean readOnly) {
+        Value tmp = getConfig(name);
+        if (tmp != null) {
+            return;
+        }
+        if (readOnly) {
+            node.setRoConfig(name, value);
+        } else {
+            node.setConfig(name, value);
+        }
+    }
+
+    /**
+     * Subclass hook for initializing data on the inner node, called by init(node) after
+     * the subtree has been loaded.
+     */
+    protected void initData() {
+    }
+
+    /**
+     * Callback for property changes (value changes in child nodes).  The property
+     * must have been calling initProperty.
+     */
+    protected void onPropertyChange(Node child, ValuePair valuePair) {
+    }
+
+    /**
+     * A convenience that calls removeChild for all direct descendants.
+     */
+    protected void removeAllDescendants() {
+        for (int i = childCount(); --i >= 0; ) {
+            removeChild(getChild(i));
         }
     }
 

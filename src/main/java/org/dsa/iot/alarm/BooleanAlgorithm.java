@@ -80,6 +80,16 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
         return false;
     }
 
+    @Override
+    protected void onPropertyChange(Node child, ValuePair valuePair) {
+        if (isSteady()) {
+            if (ALARM_VALUE.equals(child.getName())) {
+                AlarmUtil.enqueue(this);
+            }
+        }
+        super.onPropertyChange(child, valuePair);
+    }
+
     /**
      * Returns true if the arg is a well known string representation of false.
      */
@@ -110,16 +120,6 @@ public class BooleanAlgorithm extends AlarmAlgorithm implements Runnable {
             return true;
         }
         return false;
-    }
-
-    @Override
-    protected void onPropertyChange(Node child, ValuePair valuePair) {
-        if (isSteady()) {
-            if (ALARM_VALUE.equals(child.getName())) {
-                AlarmUtil.enqueue(this);
-            }
-        }
-        super.onPropertyChange(child, valuePair);
     }
 
 }

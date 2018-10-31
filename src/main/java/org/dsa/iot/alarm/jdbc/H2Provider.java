@@ -23,7 +23,6 @@ import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.handler.Handler;
 import org.h2.tools.Server;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Uses an in memory instance of the H2 database.
@@ -32,61 +31,43 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 public class H2Provider extends JdbcProvider {
 
+    private static String DEF_DB_NAME = "./db/Alarms";
+    private static String DEF_PASS = "alarmLink";
+    private static String DEF_USR = "alarmLink";
+    private static String NO_URL = "No Access";
     private static Server server;
     private static AlarmService service;
-    private static String DEF_DB_NAME = "./db/Alarms";
-    private static String DEF_USR = "alarmLink";
-    private static String DEF_PASS = "alarmLink";
-    private static String NO_URL = "No Access";
 
-    static {
+    @Override
+    public void changeDatabaseAccessTo(boolean allow) {
+        if (allow) {
+            startTCPServer();
+        } else {
+            stopTCPServer();
+        }
+    }
+
+    @Override
+    protected Connection getConnection() {
+        if (service == null) {
+            service = getService();
+            initData();
+            initActions();
+            if (service.getProperty(AlarmService.EXTERNAL_DB_ACCESS_ENABLED).getBool()) {
+                startTCPServer();
+            }
+        }
+
         try {
-            Class.forName("org.h2.Driver");
+            updateServerURL();
+            return DriverManager.getConnection("jdbc:h2:" + getCurDBName(), //"jdbc:h2:~/test"
+                                               service.getProperty(AlarmService.DATABASE_USER)
+                                                      .getString(), //"sa"
+                                               service.getDBPassword()); //""
         } catch (Exception x) {
-            AlarmUtil.logError("Cannot load org.h2.Driver", x);
+            AlarmUtil.logError("Failed to login:", x);
         }
-    }
-
-    private void startTCPServer() {
-        try {
-            server = Server.createTcpServer("-tcpAllowOthers").start();
-        } catch (SQLException e) {
-            AlarmUtil.logError("Cannot start Web Server", e);
-        }
-        updateServerURL();
-    }
-
-    private void stopTCPServer() {
-        if (server != null) {
-            server.stop();
-            server = null;
-        }
-        service.setProperty(AlarmService.DATABASE_URL, new Value(NO_URL));
-    }
-
-    private String getCurDBName() {
-        return DEF_DB_NAME;
-    }
-
-    private String getServerURL() {
-        return (server != null) ? "jdbc:h2:" + server.getURL() + "/" + getCurDBName() : NO_URL;
-    }
-
-    private void updateServerURL() {
-        service.setProperty(AlarmService.DATABASE_URL, new Value(getServerURL()));
-    }
-
-
-    protected void initData() {
-        service.initProperty(AlarmService.JDBC_DRIVER, new Value("org.h2.Driver"))
-               .setWritable(Writable.NEVER);
-        service.initProperty(AlarmService.DATABASE_URL, new Value(getServerURL()))
-               .setWritable(Writable.NEVER);
-        service.initProperty(AlarmService.DATABASE_USER, new Value(DEF_USR))
-               .setWritable(Writable.NEVER);
-        service.initProperty(AlarmService.EXTERNAL_DB_ACCESS_ENABLED, new Value(false))
-               .setWritable(Writable.CONFIG);
-        service.initDBPassword(DEF_PASS);
+        return null;
     }
 
     protected void initActions() {
@@ -102,6 +83,26 @@ public class H2Provider extends JdbcProvider {
                .setSerializable(false)
                .setAction(action)
                .build();
+    }
+
+    protected void initData() {
+        service.initProperty(AlarmService.JDBC_DRIVER, new Value("org.h2.Driver"))
+               .setWritable(Writable.NEVER);
+        service.initProperty(AlarmService.DATABASE_URL, new Value(getServerURL()))
+               .setWritable(Writable.NEVER);
+        service.initProperty(AlarmService.DATABASE_USER, new Value(DEF_USR))
+               .setWritable(Writable.NEVER);
+        service.initProperty(AlarmService.EXTERNAL_DB_ACCESS_ENABLED, new Value(false))
+               .setWritable(Writable.CONFIG);
+        service.initDBPassword(DEF_PASS);
+    }
+
+    private String getCurDBName() {
+        return DEF_DB_NAME;
+    }
+
+    private String getServerURL() {
+        return (server != null) ? "jdbc:h2:" + server.getURL() + "/" + getCurDBName() : NO_URL;
     }
 
     private void handleTCPSetup(ActionResult event) {
@@ -131,37 +132,32 @@ public class H2Provider extends JdbcProvider {
         service.setDBPassword(newPass.getString());
     }
 
-
-    @SuppressFBWarnings("DMI_CONSTANT_DB_PASSWORD")
-    @Override
-    protected Connection getConnection() {
-        if (service == null) {
-            service = getService();
-            initData();
-            initActions();
-            if (service.getProperty(AlarmService.EXTERNAL_DB_ACCESS_ENABLED).getBool()) {
-                startTCPServer();
-            }
-        }
-
+    private void startTCPServer() {
         try {
-            updateServerURL();
-            return DriverManager.getConnection("jdbc:h2:" + getCurDBName(), //"jdbc:h2:~/test"
-                                               service.getProperty(AlarmService.DATABASE_USER)
-                                                      .getString(), //"sa"
-                                               service.getDBPassword()); //""
-        } catch (Exception x) {
-            AlarmUtil.logError("Failed to login:", x);
+            server = Server.createTcpServer("-tcpAllowOthers").start();
+        } catch (SQLException e) {
+            AlarmUtil.logError("Cannot start Web Server", e);
         }
-        return null;
+        updateServerURL();
     }
 
-    @Override
-    public void changeDatabaseAccessTo(boolean allow) {
-        if (allow) {
-            startTCPServer();
-        } else {
-            stopTCPServer();
+    private void stopTCPServer() {
+        if (server != null) {
+            server.stop();
+            server = null;
+        }
+        service.setProperty(AlarmService.DATABASE_URL, new Value(NO_URL));
+    }
+
+    private void updateServerURL() {
+        service.setProperty(AlarmService.DATABASE_URL, new Value(getServerURL()));
+    }
+
+    static {
+        try {
+            Class.forName("org.h2.Driver");
+        } catch (Exception x) {
+            AlarmUtil.logError("Cannot load org.h2.Driver", x);
         }
     }
 

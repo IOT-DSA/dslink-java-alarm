@@ -23,7 +23,6 @@ import org.dsa.iot.dslink.node.value.ValuePair;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.dslink.util.handler.Handler;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Alarm algorithms evaluate the state of children AlarmWatch objects, and generate
@@ -37,7 +36,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *
  * @author Aaron Hansen
  */
-@SuppressFBWarnings("IS2_INCONSISTENT_SYNC")
 public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runnable {
 
     ///////////////////////////////////////////////////////////////////////////
@@ -63,6 +61,32 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Schedules the auto update timer.
+     */
+    @Override
+    public void doSteady() {
+        rescheduleAutoUpdate();
+    }
+
+    /**
+     * Cancels the auto update timer.
+     */
+    @Override
+    public void doStop() {
+        if (autoUpdateFuture != null) {
+            autoUpdateFuture.cancel(false);
+            autoUpdateFuture = null;
+        }
+    }
+
+    /**
+     * Calls updateAll(), enabling async updates.
+     */
+    public void run() {
+        updateAll();
+    }
 
     /**
      * Action handler for adding watches for alarm sources.
@@ -93,25 +117,6 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
     }
 
     /**
-     * Schedules the auto update timer.
-     */
-    @Override
-    public void doSteady() {
-        rescheduleAutoUpdate();
-    }
-
-    /**
-     * Cancels the auto update timer.
-     */
-    @Override
-    public void doStop() {
-        if (autoUpdateFuture != null) {
-            autoUpdateFuture.cancel(false);
-            autoUpdateFuture = null;
-        }
-    }
-
-    /**
      * Calls execute on all child watches.
      */
     protected void execute() {
@@ -125,13 +130,6 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
                 ((AlarmWatch) child).execute();
             }
         }
-    }
-
-    /**
-     * A convenience that casts the parent.
-     */
-    AlarmClass getAlarmClass() {
-        return (AlarmClass) getParent();
     }
 
     /**
@@ -162,19 +160,6 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
      */
     protected long getToNormalInhibit() {
         return getProperty(TO_NORMAL_INHIBIT).getNumber().longValue() * 1000l;
-    }
-
-    /**
-     * Adds all child watch objects to the given bucket.
-     */
-    void getWatches(Collection<AlarmWatch> bucket) {
-        AlarmObject child;
-        for (int i = 0, len = childCount(); i < len; i++) {
-            child = getChild(i);
-            if (child instanceof AlarmWatch) {
-                bucket.add((AlarmWatch) child);
-            }
-        }
     }
 
     @Override
@@ -211,7 +196,7 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         initProperty(ALARM_TYPE, ENUM_ALARM_TYPE, new Value(ALERT))
                 .setWritable(Writable.CONFIG);
         initProperty(AUTO_UPDATE_INTERVAL, new Value(0)).createFakeBuilder()
-                                                        .setConfig("unit", new Value("sec"))
+                                                        .setConfig("unit", new Value("s"))
                                                         .setWritable(Writable.CONFIG);
         initProperty(TO_ALARM_INHIBIT, new Value(0)).createFakeBuilder()
                                                     .setConfig("unit", new Value("sec"))
@@ -231,36 +216,18 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
     protected void onPropertyChange(Node node, ValuePair valuePair) {
         if (isSteady()) {
             if (AUTO_UPDATE_INTERVAL.equals(node.getName())) {
+                AlarmUtil.enqueue(new Runnable() {
+                    @Override
+                    public void run() {
+                        rescheduleAutoUpdate();
+                    }
+                }, 500);
                 rescheduleAutoUpdate();
             }
             if (ALARM_TYPE.equals(node.getName())) {
                 alarmType = null;
             }
         }
-    }
-
-    /**
-     * Cancels an existing timer, then schedules a new one if the auto update interval
-     * is greater than zero.
-     */
-    private void rescheduleAutoUpdate() {
-        if (autoUpdateFuture != null) {
-            autoUpdateFuture.cancel(false);
-            autoUpdateFuture = null;
-        }
-        int interval = getProperty(AUTO_UPDATE_INTERVAL).getNumber().intValue();
-        if (interval > 0) {
-            int delay = Math.min(5, interval);
-            autoUpdateFuture = Objects.getDaemonThreadPool()
-                                      .scheduleAtFixedRate(this, delay, interval, TimeUnit.SECONDS);
-        }
-    }
-
-    /**
-     * Calls updateAll(), enabling async updates.
-     */
-    public void run() {
-        updateAll();
     }
 
     /**
@@ -367,6 +334,43 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
      */
     protected Class watchType() {
         return AlarmWatch.class;
+    }
+
+    /**
+     * A convenience that casts the parent.
+     */
+    AlarmClass getAlarmClass() {
+        return (AlarmClass) getParent();
+    }
+
+    /**
+     * Adds all child watch objects to the given bucket.
+     */
+    void getWatches(Collection<AlarmWatch> bucket) {
+        AlarmObject child;
+        for (int i = 0, len = childCount(); i < len; i++) {
+            child = getChild(i);
+            if (child instanceof AlarmWatch) {
+                bucket.add((AlarmWatch) child);
+            }
+        }
+    }
+
+    /**
+     * Cancels an existing timer, then schedules a new one if the auto update interval
+     * is greater than zero.
+     */
+    private void rescheduleAutoUpdate() {
+        if (autoUpdateFuture != null) {
+            autoUpdateFuture.cancel(false);
+            autoUpdateFuture = null;
+        }
+        int interval = getProperty(AUTO_UPDATE_INTERVAL).getNumber().intValue();
+        if (interval > 0) {
+            int delay = Math.min(5, interval);
+            autoUpdateFuture = Objects.getDaemonThreadPool()
+                                      .scheduleAtFixedRate(this, delay, interval, TimeUnit.SECONDS);
+        }
     }
 
 }

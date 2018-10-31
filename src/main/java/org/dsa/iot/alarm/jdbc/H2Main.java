@@ -19,10 +19,6 @@ import org.dsa.iot.dslink.DSLinkFactory;
  */
 public class H2Main extends AlarmLinkHandler {
 
-    static {
-        Alarming.setProvider(new H2Provider());
-    }
-
     /**
      * Command line bootstrap.
      *
@@ -30,6 +26,10 @@ public class H2Main extends AlarmLinkHandler {
      */
     public static void main(String[] args) {
         DSLinkFactory.start(args, new H2Main());
+    }
+
+    static {
+        Alarming.setProvider(new H2Provider());
     }
 
 }

@@ -8,13 +8,21 @@
 
 package org.dsa.iot.alarm;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import org.dsa.iot.alarm.AlarmService.Counts;
 import org.dsa.iot.dslink.methods.StreamState;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.Writable;
-import org.dsa.iot.dslink.node.actions.*;
+import org.dsa.iot.dslink.node.actions.Action;
+import org.dsa.iot.dslink.node.actions.ActionResult;
+import org.dsa.iot.dslink.node.actions.EditorType;
+import org.dsa.iot.dslink.node.actions.Parameter;
+import org.dsa.iot.dslink.node.actions.ResultType;
 import org.dsa.iot.dslink.node.actions.table.Row;
 import org.dsa.iot.dslink.node.actions.table.Table;
 import org.dsa.iot.dslink.node.value.Value;
@@ -52,17 +60,16 @@ public class AlarmClass extends AbstractAlarmObject {
     ///////////////////////////////////////////////////////////////////////////
     // Fields
     ///////////////////////////////////////////////////////////////////////////
-
-    private HashSet<AlarmStreamer> allUpdatesListeners = new HashSet<>();
     private ArrayList<AlarmStreamer> allUpdatesListenerCache = null;
-    private HashSet<AlarmStreamer> escalation1Listeners = new HashSet<>();
+    private HashSet<AlarmStreamer> allUpdatesListeners = new HashSet<>();
     private ArrayList<AlarmStreamer> escalation1ListenerCache = null;
-    private HashSet<AlarmStreamer> escalation2Listeners = new HashSet<>();
+    private HashSet<AlarmStreamer> escalation1Listeners = new HashSet<>();
     private ArrayList<AlarmStreamer> escalation2ListenerCache = null;
+    private HashSet<AlarmStreamer> escalation2Listeners = new HashSet<>();
     private long lastAutoPurge = -1;
     private long lastEscalationCheck = System.currentTimeMillis();
-    private HashSet<AlarmStreamer> newAlarmListeners = new HashSet<>();
     private ArrayList<AlarmStreamer> newAlarmListenerCache = null;
+    private HashSet<AlarmStreamer> newAlarmListeners = new HashSet<>();
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -71,6 +78,271 @@ public class AlarmClass extends AbstractAlarmObject {
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Calls execute on all child algorithms, then checks for escalations.
+     */
+    protected void execute() {
+        if (isEnabled() && getService().isEnabled()) {
+            AlarmObject child;
+            for (int i = 0, len = childCount(); i < len; i++) {
+                child = getChild(i);
+                if (child instanceof AlarmAlgorithm) {
+                    ((AlarmAlgorithm) child).execute();
+                }
+            }
+            checkEscalations();
+        }
+        checkAutoPurge();
+    }
+
+    @Override
+    protected void initActions() {
+        //Acknowledge All
+        Action action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                acknowledgeAllOpen(event);
+            }
+        });
+        action.addParameter(new Parameter(USER, ValueType.STRING));
+        getNode().createChild(ACKNOWLEDGE_ALL, false).setSerializable(false)
+                 .setAction(action).build();
+        //Add Algorithm
+        Node node = getNode();
+        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                addAlgorithm(event);
+            }
+        });
+        action.addParameter(
+                new Parameter(NAME, ValueType.STRING, new Value("")));
+        Set<String> algos = Alarming.getProvider().getAlarmAlgorithms().keySet();
+        action.addParameter(new Parameter(TYPE, ValueType.makeEnum(algos),
+                                          new Value(algos.iterator().next())));
+        node.createChild("Add Algorithm", false).setSerializable(false).setAction(action)
+            .build();
+        //Create Alarm action
+        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                createAlarm(event);
+            }
+        });
+        action.setResultType(ResultType.TABLE);
+        action.addParameter(new Parameter(SOURCE_PATH, ValueType.STRING,
+                                          new Value("")));
+        action.addParameter(
+                new Parameter(CREATE_STATE, ENUM_ALARM_TYPE, new Value(ALERT)));
+        action.addParameter(
+                new Parameter(MESSAGE, ValueType.STRING, new Value("80 Characters Max")));
+        AlarmUtil.encodeAlarmColumns(action);
+        node.createChild(CREATE_ALARM, false).setSerializable(false).setAction(action).build();
+        //Get Alarms
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                getAlarms(event);
+            }
+        });
+        action.addParameter(
+                new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
+                        .setEditorType(EditorType.DATE_RANGE));
+        action.setResultType(ResultType.STREAM);
+        AlarmUtil.encodeAlarmColumns(action);
+        node.createChild("Get Alarms", false).setSerializable(false).setAction(action).build();
+        //Get Open Alarms
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                getOpenAlarms(event);
+            }
+        });
+        action.setResultType(ResultType.STREAM);
+        action.addParameter(
+                new Parameter(STREAM_UPDATES, ValueType.BOOL, new Value(true)));
+        AlarmUtil.encodeAlarmColumns(action);
+        node.createChild("Get Open Alarms", false).setSerializable(false).setAction(action)
+            .build();
+        //Get Alarm Page
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                getAlarmPage(event);
+            }
+        });
+        action.addParameter(
+                new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
+                        .setEditorType(EditorType.DATE_RANGE));
+        action.addParameter(
+                new Parameter(PAGE, ValueType.NUMBER, new Value(0)));
+        action.addParameter(
+                new Parameter(PAGE_SIZE, ValueType.NUMBER, new Value(500)));
+        action.addParameter(
+                new Parameter(ACK_STATE, ACK_STATE_ENUM, new Value(ANY)));
+        action.addParameter(
+                new Parameter(ALARM_STATE, ALARM_STATE_ENUM, new Value(ANY)));
+        action.addParameter(
+                new Parameter(OPEN_STATE, OPEN_STATE_ENUM, new Value(ANY)));
+        action.addParameter(
+                new Parameter(SORT_BY, SORT_TYPE, new Value(CREATED_TIME)));
+        action.addParameter(
+                new Parameter(SORT_ASCENDING, ValueType.BOOL, new Value(true)));
+        action.setResultType(ResultType.TABLE);
+        AlarmUtil.encodeAlarmColumns(action);
+        getNode().createChild("Get Alarm Page", false)
+                 .setSerializable(false)
+                 .setAction(action)
+                 .build();
+        //Get Alarm Page Count
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                getAlarmPageCount(event);
+            }
+        });
+        action.addParameter(
+                new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
+                        .setEditorType(EditorType.DATE_RANGE));
+        action.addParameter(
+                new Parameter(PAGE_SIZE, ValueType.NUMBER, new Value(500)));
+        action.addParameter(
+                new Parameter(ACK_STATE, ACK_STATE_ENUM, new Value(ANY)));
+        action.addParameter(
+                new Parameter(ALARM_STATE, ALARM_STATE_ENUM, new Value(ANY)));
+        action.addParameter(
+                new Parameter(OPEN_STATE, OPEN_STATE_ENUM, new Value(ANY)));
+        action.setResultType(ResultType.VALUES);
+        action.addResult(new Parameter(RESULT, ValueType.NUMBER));
+        getNode().createChild("Get Alarm Page Count", false)
+                 .setSerializable(false)
+                 .setAction(action)
+                 .build();
+        //Stream Escalation 1
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                streamEscalation1(event);
+            }
+        });
+        action.setResultType(ResultType.STREAM);
+        AlarmUtil.encodeAlarmColumns(action);
+        node.createChild("Stream Escalation 1", false).setSerializable(false).setAction(action)
+            .build();
+        //Stream Escalation 2
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                streamEscalation2(event);
+            }
+        });
+        action.setResultType(ResultType.STREAM);
+        AlarmUtil.encodeAlarmColumns(action);
+        node.createChild("Stream Escalation 2", false).setSerializable(false).setAction(action)
+            .build();
+        //Stream New Alarms
+        action = new Action(Permission.READ, new Handler<ActionResult>() {
+            @Override
+            public void handle(ActionResult event) {
+                streamNewAlarms(event);
+            }
+        });
+        action.setResultType(ResultType.STREAM);
+        AlarmUtil.encodeAlarmColumns(action);
+        node.createChild("Stream New Alarms", false).setSerializable(false).setAction(action)
+            .build();
+        addDeleteAction("Delete Alarm Class");
+    }
+
+    @Override
+    protected void initData() {
+        initAttribute("icon", new Value("class.png"));
+        initProperty(PURGE_CLOSED_DAYS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(PURGE_OPEN_DAYS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ENABLED, new Value(true)).setWritable(Writable.CONFIG);
+        initProperty(ESCALATION1_DYS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ESCALATION1_HRS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ESCALATION1_MNS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ESCALATION2_DYS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ESCALATION2_HRS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(ESCALATION2_MNS, new Value(0)).setWritable(Writable.CONFIG);
+        initProperty(IN_ALARM_COUNT, new Value(0)).createFakeBuilder()
+                                                  .setSerializable(false)
+                                                  .setWritable(Writable.NEVER);
+        initProperty(OPEN_ALARM_COUNT, new Value(0)).createFakeBuilder()
+                                                    .setSerializable(false)
+                                                    .setWritable(Writable.NEVER);
+        initProperty(TTL_ALARM_COUNT, new Value(0)).createFakeBuilder()
+                                                   .setSerializable(false)
+                                                   .setWritable(Writable.NEVER);
+        initProperty(UNACKED_ALARM_COUNT, new Value(0)).createFakeBuilder()
+                                                       .setSerializable(false)
+                                                       .setWritable(Writable.NEVER);
+    }
+
+    /**
+     * Adds all child watch objects to the given bucket.
+     */
+    void getWatches(Collection<AlarmWatch> bucket) {
+        AlarmObject child;
+        for (int i = 0, len = childCount(); i < len; i++) {
+            child = getChild(i);
+            if (child instanceof AlarmAlgorithm) {
+                ((AlarmAlgorithm) child).getWatches(bucket);
+            }
+        }
+    }
+
+    /**
+     * Adds the record to all the streams in the corresponding collection.
+     */
+    void notifyAllUpdates(AlarmRecord record) {
+        ArrayList<AlarmStreamer> list = allUpdatesListenerCache;
+        synchronized (allUpdatesListeners) {
+            if ((list == null) || (list.size() != allUpdatesListeners.size())) {
+                allUpdatesListenerCache = new ArrayList<>();
+                list = allUpdatesListenerCache;
+                list.addAll(allUpdatesListeners);
+            }
+        }
+        for (int i = list.size(); --i >= 0; ) {
+            list.get(i).update(record);
+        }
+        getService().notifyOpenAlarmStreams(record);
+        getService().updateCounts();
+    }
+
+    /**
+     * Adds the record to all the streams in the corresponding collection.
+     */
+    void notifyNewRecord(AlarmRecord record) {
+        ArrayList<AlarmStreamer> list = newAlarmListenerCache;
+        synchronized (newAlarmListeners) {
+            if ((list == null) || (newAlarmListeners.size() != list.size())) {
+                newAlarmListenerCache = new ArrayList<>();
+                list = newAlarmListenerCache;
+                list.addAll(newAlarmListeners);
+            }
+        }
+        for (int i = list.size(); --i >= 0; ) {
+            list.get(i).update(record);
+        }
+        getService().updateCounts();
+    }
+
+    /**
+     * The param can be null which indicates 0 counts for everything.
+     */
+    void updateCounts(AlarmService.Counts counts) {
+        if (counts == null) {
+            counts = new Counts();
+        }
+        setProperty(IN_ALARM_COUNT, new Value(counts.alarms));
+        setProperty(OPEN_ALARM_COUNT, new Value(counts.open));
+        setProperty(TTL_ALARM_COUNT, new Value(counts.ttl));
+        setProperty(UNACKED_ALARM_COUNT, new Value(counts.unacked));
+    }
 
     /**
      * Action handler for acknowledging all open alarms.
@@ -267,47 +539,6 @@ public class AlarmClass extends AbstractAlarmObject {
     }
 
     /**
-     * Calls execute on all child algorithms, then checks for escalations.
-     */
-    protected void execute() {
-        if (isEnabled() && getService().isEnabled()) {
-            AlarmObject child;
-            for (int i = 0, len = childCount(); i < len; i++) {
-                child = getChild(i);
-                if (child instanceof AlarmAlgorithm) {
-                    ((AlarmAlgorithm) child).execute();
-                }
-            }
-            checkEscalations();
-        }
-        checkAutoPurge();
-    }
-
-    /**
-     * Action handler for getting alarms for a time range.
-     */
-    private void getAlarms(final ActionResult event) {
-        Calendar from = Calendar.getInstance();
-        Calendar to = Calendar.getInstance();
-        Value timeRange = event.getParameter(TIME_RANGE);
-        if (timeRange != null) {
-            //just fail fast if invalid time range
-            String[] parts = timeRange.getString().split("/");
-            TimeUtils.decode(parts[0], from);
-            TimeUtils.decode(parts[1], to);
-            to.setTimeInMillis(to.getTimeInMillis() + 1); //dglux uses inclusive end
-        } else {
-            //Default to today.
-            TimeUtils.alignDay(from);
-            TimeUtils.addDays(1, to);
-            TimeUtils.alignDay(to);
-        }
-        final AlarmCursor cursor = Alarming.getProvider().queryAlarms(this, from, to);
-        AlarmStreamer streamer = new AlarmStreamer(null, event, cursor);
-        AlarmUtil.run(streamer, "Get Alarms");
-    }
-
-    /**
      * Action handler for getting a 'page' of alarms.
      */
     private void getAlarmPage(final ActionResult event) {
@@ -403,6 +634,30 @@ public class AlarmClass extends AbstractAlarmObject {
     }
 
     /**
+     * Action handler for getting alarms for a time range.
+     */
+    private void getAlarms(final ActionResult event) {
+        Calendar from = Calendar.getInstance();
+        Calendar to = Calendar.getInstance();
+        Value timeRange = event.getParameter(TIME_RANGE);
+        if (timeRange != null) {
+            //just fail fast if invalid time range
+            String[] parts = timeRange.getString().split("/");
+            TimeUtils.decode(parts[0], from);
+            TimeUtils.decode(parts[1], to);
+            to.setTimeInMillis(to.getTimeInMillis() + 1); //dglux uses inclusive end
+        } else {
+            //Default to today.
+            TimeUtils.alignDay(from);
+            TimeUtils.addDays(1, to);
+            TimeUtils.alignDay(to);
+        }
+        final AlarmCursor cursor = Alarming.getProvider().queryAlarms(this, from, to);
+        AlarmStreamer streamer = new AlarmStreamer(null, event, cursor);
+        AlarmUtil.run(streamer, "Get Alarms");
+    }
+
+    /**
      * Action handler for getting all open alarms followed by a stream of updates.
      */
     private void getOpenAlarms(final ActionResult event) {
@@ -420,223 +675,6 @@ public class AlarmClass extends AbstractAlarmObject {
         }
         allUpdatesListenerCache = null;
         AlarmUtil.run(streamer, "Open Alarms");
-    }
-
-    /**
-     * Adds all child watch objects to the given bucket.
-     */
-    void getWatches(Collection<AlarmWatch> bucket) {
-        AlarmObject child;
-        for (int i = 0, len = childCount(); i < len; i++) {
-            child = getChild(i);
-            if (child instanceof AlarmAlgorithm) {
-                ((AlarmAlgorithm) child).getWatches(bucket);
-            }
-        }
-    }
-
-    @Override
-    protected void initActions() {
-        //Acknowledge All
-        Action action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                acknowledgeAllOpen(event);
-            }
-        });
-        action.addParameter(new Parameter(USER, ValueType.STRING));
-        getNode().createChild(ACKNOWLEDGE_ALL, false).setSerializable(false)
-                 .setAction(action).build();
-        //Add Algorithm
-        Node node = getNode();
-        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                addAlgorithm(event);
-            }
-        });
-        action.addParameter(
-                new Parameter(NAME, ValueType.STRING, new Value("")));
-        Set<String> algos = Alarming.getProvider().getAlarmAlgorithms().keySet();
-        action.addParameter(new Parameter(TYPE, ValueType.makeEnum(algos),
-                                          new Value(algos.iterator().next())));
-        node.createChild("Add Algorithm", false).setSerializable(false).setAction(action)
-            .build();
-        //Create Alarm action
-        action = new Action(Permission.WRITE, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                createAlarm(event);
-            }
-        });
-        action.setResultType(ResultType.TABLE);
-        action.addParameter(new Parameter(SOURCE_PATH, ValueType.STRING,
-                                          new Value("")));
-        action.addParameter(
-                new Parameter(CREATE_STATE, ENUM_ALARM_TYPE, new Value(ALERT)));
-        action.addParameter(
-                new Parameter(MESSAGE, ValueType.STRING, new Value("80 Characters Max")));
-        AlarmUtil.encodeAlarmColumns(action);
-        node.createChild(CREATE_ALARM, false).setSerializable(false).setAction(action).build();
-        //Get Alarms
-        action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                getAlarms(event);
-            }
-        });
-        action.addParameter(
-                new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
-                        .setEditorType(EditorType.DATE_RANGE));
-        action.setResultType(ResultType.STREAM);
-        AlarmUtil.encodeAlarmColumns(action);
-        node.createChild("Get Alarms", false).setSerializable(false).setAction(action).build();
-        //Get Open Alarms
-        action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                getOpenAlarms(event);
-            }
-        });
-        action.setResultType(ResultType.STREAM);
-        action.addParameter(
-                new Parameter(STREAM_UPDATES, ValueType.BOOL, new Value(true)));
-        AlarmUtil.encodeAlarmColumns(action);
-        node.createChild("Get Open Alarms", false).setSerializable(false).setAction(action)
-            .build();
-        //Get Alarm Page
-        action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                getAlarmPage(event);
-            }
-        });
-        action.addParameter(
-                new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
-                        .setEditorType(EditorType.DATE_RANGE));
-        action.addParameter(
-                new Parameter(PAGE, ValueType.NUMBER, new Value(0)));
-        action.addParameter(
-                new Parameter(PAGE_SIZE, ValueType.NUMBER, new Value(500)));
-        action.addParameter(
-                new Parameter(ACK_STATE, ACK_STATE_ENUM, new Value(ANY)));
-        action.addParameter(
-                new Parameter(ALARM_STATE, ALARM_STATE_ENUM, new Value(ANY)));
-        action.addParameter(
-                new Parameter(OPEN_STATE, OPEN_STATE_ENUM, new Value(ANY)));
-        action.addParameter(
-                new Parameter(SORT_BY, SORT_TYPE, new Value(CREATED_TIME)));
-        action.addParameter(
-                new Parameter(SORT_ASCENDING, ValueType.BOOL, new Value(true)));
-        action.setResultType(ResultType.TABLE);
-        AlarmUtil.encodeAlarmColumns(action);
-        getNode().createChild("Get Alarm Page", false)
-                 .setSerializable(false)
-                 .setAction(action)
-                 .build();
-        //Get Alarm Page Count
-        action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                getAlarmPageCount(event);
-            }
-        });
-        action.addParameter(
-                new Parameter(TIME_RANGE, ValueType.STRING, new Value("today"))
-                        .setEditorType(EditorType.DATE_RANGE));
-        action.addParameter(
-                new Parameter(PAGE_SIZE, ValueType.NUMBER, new Value(500)));
-        action.addParameter(
-                new Parameter(ACK_STATE, ACK_STATE_ENUM, new Value(ANY)));
-        action.addParameter(
-                new Parameter(ALARM_STATE, ALARM_STATE_ENUM, new Value(ANY)));
-        action.addParameter(
-                new Parameter(OPEN_STATE, OPEN_STATE_ENUM, new Value(ANY)));
-        action.setResultType(ResultType.VALUES);
-        action.addResult(new Parameter(RESULT, ValueType.NUMBER));
-        getNode().createChild("Get Alarm Page Count", false)
-                 .setSerializable(false)
-                 .setAction(action)
-                 .build();
-        //Stream Escalation 1
-        action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                streamEscalation1(event);
-            }
-        });
-        action.setResultType(ResultType.STREAM);
-        AlarmUtil.encodeAlarmColumns(action);
-        node.createChild("Stream Escalation 1", false).setSerializable(false).setAction(action)
-            .build();
-        //Stream Escalation 2
-        action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                streamEscalation2(event);
-            }
-        });
-        action.setResultType(ResultType.STREAM);
-        AlarmUtil.encodeAlarmColumns(action);
-        node.createChild("Stream Escalation 2", false).setSerializable(false).setAction(action)
-            .build();
-        //Stream New Alarms
-        action = new Action(Permission.READ, new Handler<ActionResult>() {
-            @Override
-            public void handle(ActionResult event) {
-                streamNewAlarms(event);
-            }
-        });
-        action.setResultType(ResultType.STREAM);
-        AlarmUtil.encodeAlarmColumns(action);
-        node.createChild("Stream New Alarms", false).setSerializable(false).setAction(action)
-            .build();
-        addDeleteAction("Delete Alarm Class");
-    }
-
-    @Override
-    protected void initData() {
-        initAttribute("icon", new Value("class.png"));
-        initProperty(PURGE_CLOSED_DAYS, new Value(0)).setWritable(Writable.CONFIG);
-        initProperty(PURGE_OPEN_DAYS, new Value(0)).setWritable(Writable.CONFIG);
-        initProperty(ENABLED, new Value(true)).setWritable(Writable.CONFIG);
-        initProperty(ESCALATION1_DYS, new Value(0)).setWritable(Writable.CONFIG);
-        initProperty(ESCALATION1_HRS, new Value(0)).setWritable(Writable.CONFIG);
-        initProperty(ESCALATION1_MNS, new Value(0)).setWritable(Writable.CONFIG);
-        initProperty(ESCALATION2_DYS, new Value(0)).setWritable(Writable.CONFIG);
-        initProperty(ESCALATION2_HRS, new Value(0)).setWritable(Writable.CONFIG);
-        initProperty(ESCALATION2_MNS, new Value(0)).setWritable(Writable.CONFIG);
-        initProperty(IN_ALARM_COUNT, new Value(0)).createFakeBuilder()
-                                                  .setSerializable(false)
-                                                  .setWritable(Writable.NEVER);
-        initProperty(OPEN_ALARM_COUNT, new Value(0)).createFakeBuilder()
-                                                    .setSerializable(false)
-                                                    .setWritable(Writable.NEVER);
-        initProperty(TTL_ALARM_COUNT, new Value(0)).createFakeBuilder()
-                                                   .setSerializable(false)
-                                                   .setWritable(Writable.NEVER);
-        initProperty(UNACKED_ALARM_COUNT, new Value(0)).createFakeBuilder()
-                                                       .setSerializable(false)
-                                                       .setWritable(Writable.NEVER);
-    }
-
-    /**
-     * Adds the record to all the streams in the corresponding collection.
-     */
-    void notifyAllUpdates(AlarmRecord record) {
-        ArrayList<AlarmStreamer> list = allUpdatesListenerCache;
-        synchronized (allUpdatesListeners) {
-            if ((list == null) || (list.size() != allUpdatesListeners.size())) {
-                allUpdatesListenerCache = new ArrayList<>();
-                list = allUpdatesListenerCache;
-                list.addAll(allUpdatesListeners);
-            }
-        }
-        for (int i = list.size(); --i >= 0; ) {
-            list.get(i).update(record);
-        }
-        getService().notifyOpenAlarmStreams(record);
-        getService().updateCounts();
     }
 
     /**
@@ -676,24 +714,6 @@ public class AlarmClass extends AbstractAlarmObject {
     }
 
     /**
-     * Adds the record to all the streams in the corresponding collection.
-     */
-    void notifyNewRecord(AlarmRecord record) {
-        ArrayList<AlarmStreamer> list = newAlarmListenerCache;
-        synchronized (newAlarmListeners) {
-            if ((list == null) || (newAlarmListeners.size() != list.size())) {
-                newAlarmListenerCache = new ArrayList<>();
-                list = newAlarmListenerCache;
-                list.addAll(newAlarmListeners);
-            }
-        }
-        for (int i = list.size(); --i >= 0; ) {
-            list.get(i).update(record);
-        }
-        getService().updateCounts();
-    }
-
-    /**
      * Whether or not escalation is needed.
      *
      * @param escalationTime The time escalation should occur.
@@ -702,6 +722,20 @@ public class AlarmClass extends AbstractAlarmObject {
      */
     private boolean shouldEscalate(long escalationTime, long now) {
         return ((lastEscalationCheck < escalationTime) && (escalationTime <= now));
+    }
+
+    /**
+     * Establishes a stream with no initial set of values.
+     *
+     * @param event     Action invocation event.
+     * @param listeners The set the steamer object will add itself too.
+     * @param title     The name of the thread handling the stream.
+     */
+    private void startStream(final ActionResult event,
+                             Set<AlarmStreamer> listeners,
+                             String title) {
+        AlarmStreamer streamer = new AlarmStreamer(listeners, event, null);
+        AlarmUtil.run(streamer, title);
     }
 
     /**
@@ -721,38 +755,11 @@ public class AlarmClass extends AbstractAlarmObject {
     }
 
     /**
-     * Establishes a stream with no initial set of values.
-     *
-     * @param event     Action invocation event.
-     * @param listeners The set the steamer object will add itself too.
-     * @param title     The name of the thread handling the stream.
-     */
-    private void startStream(final ActionResult event,
-                             Set<AlarmStreamer> listeners,
-                             String title) {
-        AlarmStreamer streamer = new AlarmStreamer(listeners, event, null);
-        AlarmUtil.run(streamer, title);
-    }
-
-    /**
      * Action handler for streaming new alarms
      */
     private void streamNewAlarms(final ActionResult event) {
         startStream(event, newAlarmListeners, getNode().getName() + " New Alarms");
         newAlarmListenerCache = null;
-    }
-
-    /**
-     * The param can be null which indicates 0 counts for everything.
-     */
-    void updateCounts(AlarmService.Counts counts) {
-        if (counts == null) {
-            counts = new Counts();
-        }
-        setProperty(IN_ALARM_COUNT, new Value(counts.alarms));
-        setProperty(OPEN_ALARM_COUNT, new Value(counts.open));
-        setProperty(TTL_ALARM_COUNT, new Value(counts.ttl));
-        setProperty(UNACKED_ALARM_COUNT, new Value(counts.unacked));
     }
 
     ///////////////////////////////////////////////////////////////////////////

@@ -10,6 +10,7 @@ package org.dsa.iot.alarm;
 
 import java.util.Calendar;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.actions.Action;
 import org.dsa.iot.dslink.node.actions.Parameter;
@@ -21,7 +22,6 @@ import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.dslink.util.TimeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Misc utilities.
@@ -140,7 +140,6 @@ public class AlarmUtil implements AlarmConstants {
     /**
      * Enqueues the parameter into the alarming thread pool.
      */
-    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
     public static void enqueue(Callable callable) {
         Objects.getDaemonThreadPool().submit(callable);
     }
@@ -150,6 +149,35 @@ public class AlarmUtil implements AlarmConstants {
      */
     public static void enqueue(Runnable runnable) {
         Objects.getDaemonThreadPool().submit(runnable);
+    }
+
+    /**
+     * Enqueues the parameter into the alarming thread pool.
+     */
+    public static void enqueue(Runnable runnable, long delay) {
+        Objects.getDaemonThreadPool().schedule(runnable, delay, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Attempts to reuse a cached instance.  Callers should return the calendar with the
+     * recycle method.
+     *
+     * @param arg Time to set in the calendar.
+     * @return Never null, will create a new calendar if necessary.
+     */
+    public static Calendar getCalendar(long arg) {
+        Calendar calendar = null;
+        synchronized (StaleAlgorithm.class) {
+            if (calendarCache != null) {
+                calendar = calendarCache;
+                calendarCache = null;
+            }
+        }
+        if (calendar == null) {
+            calendar = Calendar.getInstance();
+        }
+        calendar.setTimeInMillis(arg);
+        return calendar;
     }
 
     /**
@@ -181,28 +209,6 @@ public class AlarmUtil implements AlarmConstants {
     }
 
     /**
-     * Attempts to reuse a cached instance.  Callers should return the calendar with the
-     * recycle method.
-     *
-     * @param arg Time to set in the calendar.
-     * @return Never null, will create a new calendar if necessary.
-     */
-    public static Calendar getCalendar(long arg) {
-        Calendar calendar = null;
-        synchronized (StaleAlgorithm.class) {
-            if (calendarCache != null) {
-                calendar = calendarCache;
-                calendarCache = null;
-            }
-        }
-        if (calendar == null) {
-            calendar = Calendar.getInstance();
-        }
-        calendar.setTimeInMillis(arg);
-        return calendar;
-    }
-
-    /**
      * Submit a calendar for reuse.
      */
     public static void recycle(Calendar arg) {
@@ -223,13 +229,6 @@ public class AlarmUtil implements AlarmConstants {
         thread.setName(threadName);
         thread.setDaemon(true);
         thread.start();
-    }
-
-    /**
-     * Replaces spaces with underscores.
-     */
-    private static String toColumnName(String columnName) {
-        return columnName.replace(' ', '_');
     }
 
     /**
@@ -271,6 +270,13 @@ public class AlarmUtil implements AlarmConstants {
             throwRuntime(x);
         }
         return ret;
+    }
+
+    /**
+     * Replaces spaces with underscores.
+     */
+    private static String toColumnName(String columnName) {
+        return columnName.replace(' ', '_');
     }
 
     ///////////////////////////////////////////////////////////////////////////
