@@ -66,17 +66,17 @@ public class Note {
     }
 
     /**
-     * The user or entity who added the current note.
-     */
-    public String getUser() {
-        return user;
-    }
-
-    /**
      * The UUID of the correspondning alarm record, will not change with calls to next().
      */
     public UUID getUUID() {
         return uuid;
+    }
+
+    /**
+     * The user or entity who added the current note.
+     */
+    public String getUser() {
+        return user;
     }
 
     /**
@@ -96,19 +96,19 @@ public class Note {
     }
 
     /**
-     * The user or entity who added the current note.
-     */
-    public Note setUser(String arg) {
-        user = arg;
-        return this;
-    }
-
-    /**
      * The UUID of the corresponding alarm record, must not change with calls to next(),
      * returns this.
      */
     public Note setUUID(UUID arg) {
         uuid = arg;
+        return this;
+    }
+
+    /**
+     * The user or entity who added the current note.
+     */
+    public Note setUser(String arg) {
+        user = arg;
         return this;
     }
 

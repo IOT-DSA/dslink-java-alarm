@@ -1,9 +1,8 @@
 apply plugin: 'application'
-apply plugin: 'findbugs'
 apply plugin: 'java-library'
 
 group 'org.iot-dsa'
-version '1.9.0'
+version '1.9.1'
 
 mainClassName = 'org.dsa.iot.alarm.jdbc.H2Main'
 sourceCompatibility = 1.7
@@ -17,19 +16,11 @@ repositories {
     }
 }
 
-findbugsMain {
-    reports {
-        xml.enabled = false
-        html.enabled = true
-    }
-}
-
 wrapper {
     gradleVersion = '4.10'
 }
 
 dependencies {
-    compileOnly 'com.google.code.findbugs:annotations:[3.0.1,)'
     implementation 'org.iot-dsa:dslink:0.20.1'
     implementation 'com.h2database:h2:1.4.197'
 }

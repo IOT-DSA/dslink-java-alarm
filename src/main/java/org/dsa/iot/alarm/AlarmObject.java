@@ -52,6 +52,13 @@ public interface AlarmObject {
     public Node getNode();
 
     /**
+     * Closes the watch of the object or of its children.
+     *
+     * @param uuidList pass an empty arrayList to store the UUIDs.
+     */
+    public void getOpenUUIDs(ArrayList<UUID> uuidList);
+
+    /**
      * The parent node or null.
      */
     public AlarmObject getParent();
@@ -72,18 +79,18 @@ public interface AlarmObject {
     public boolean isSteady();
 
     /**
-     * Called when being removed from the parent, before being stopped and actually
-     * removed.  Not automatically called on descendants of the object being removed.
-     */
-    public void removed();
-
-    /**
      * Removes the child from this instance.  This method will call
      * stop on the child if it is steady.
      *
      * @throws IllegalStateException If the child is not parented by this instance.
      */
     public void removeChild(AlarmObject child);
+
+    /**
+     * Called when being removed from the parent, before being stopped and actually
+     * removed.  Not automatically called on descendants of the object being removed.
+     */
+    public void removed();
 
     /**
      * The parent AlarmObject, to be called by addChild.
@@ -108,11 +115,4 @@ public interface AlarmObject {
      * implementations should call unregister on their associate alarm service.
      */
     public void stop();
-
-    /**
-     * Closes the watch of the object or of its children.
-     *
-     * @param uuidList pass an empty arrayList to store the UUIDs.
-     */
-    public void getOpenUUIDs(ArrayList<UUID> uuidList);
 }

@@ -46,192 +46,6 @@ public class AlarmRecord {
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * A value greater than zero represents the instant the alarm was acknowledged, otherwise the
-     * record is unacknowledged.
-     */
-    public long getAckTime() {
-        return ackTime;
-    }
-
-    /**
-     * A value greater than zero represents the instant the alarm was acknowledged, otherwise the
-     * record is unacknowledged.
-     */
-    public AlarmRecord setAckTime(long ackTime) {
-        this.ackTime = ackTime;
-        return this;
-    }
-
-    /**
-     * If the ack time is greater than zero, there should be a entity name representing the
-     * acknowledging entity.
-     */
-    public String getAckUser() {
-        return ackUser;
-    }
-
-    /**
-     * If the ack time is greater than zero, there should be a entity name representing the
-     * acknowledging entity.
-     */
-    public AlarmRecord setAckUser(String ackUser) {
-        this.ackUser = ackUser;
-        return this;
-    }
-
-    /**
-     * The associate alarm class.
-     */
-    public AlarmClass getAlarmClass() {
-        return alarmClass;
-    }
-
-    /**
-     * The associate alarm class.
-     */
-    public AlarmRecord setAlarmClass(AlarmClass alarmClass) {
-        this.alarmClass = alarmClass;
-        return this;
-    }
-
-    /**
-     * The initial state of the alarm.
-     */
-    public AlarmState getAlarmType() {
-        return alarmType;
-    }
-
-    /**
-     * The initial state of the alarm, can not be NORMAL.
-     *
-     * @param alarmType Must not be NORMAL.
-     */
-    public AlarmRecord setAlarmType(AlarmState alarmType) {
-        if (alarmType == AlarmState.NORMAL) {
-            throw new IllegalArgumentException("Normal is not an alarm type");
-        }
-        this.alarmType = alarmType;
-        return this;
-    }
-
-    /**
-     * The alarm watch responsible for the alarm, or null.
-     *
-     * @return Possibly null.
-     */
-    public AlarmWatch getAlarmWatch() {
-        return watch;
-    }
-
-    /**
-     * The alarm watch responsible for the alarm, or null.
-     *
-     * @return Possibly null.
-     */
-    public AlarmRecord setAlarmWatch(AlarmWatch watch) {
-        this.watch = watch;
-        return this;
-    }
-
-    /**
-     * The instant the alarm was created.
-     */
-    public long getCreatedTime() {
-        return createdTime;
-    }
-
-    /**
-     * The instant the alarm was created.
-     */
-    public AlarmRecord setCreatedTime(long createdTime) {
-        this.createdTime = createdTime;
-        return this;
-    }
-
-    /**
-     * Whether or not there are any notes for this alarm.  Notes can be retrieved using the getNotes
-     * action in the AlarmService.
-     */
-    public boolean hasNotes() {
-        return hasNotes;
-    }
-
-    /**
-     * Whether or not there are any notes for this alarm.  Notes can be retrieved using the getNotes
-     * action in the AlarmService.
-     */
-    public AlarmRecord setHasNotes(boolean hasNotes) {
-        this.hasNotes = hasNotes;
-        return this;
-    }
-
-    /**
-     * Brief description of the alarm.
-     */
-    public String getMessage() {
-        return message;
-    }
-
-    /**
-     * Brief description of the alarm.
-     */
-    public AlarmRecord setMessage(String message) {
-        this.message = message;
-        return this;
-    }
-
-    /**
-     * A value greater than zero represents the instant the alarm returned to normal, otherwise the
-     * record is still in it's created state.
-     */
-    public long getNormalTime() {
-        return normalTime;
-    }
-
-    /**
-     * A value greater than zero represents the instant the alarm returned to normal, otherwise the
-     * record is still in it's created state.
-     */
-    public AlarmRecord setNormalTime(long normalTime) {
-        this.normalTime = normalTime;
-        return this;
-    }
-
-    /**
-     * The path to the alarmable entity.
-     */
-    public String getSourcePath() {
-        return sourcePath;
-    }
-
-    /**
-     * The path to the alarmable entity.
-     */
-    public AlarmRecord setSourcePath(String sourcePath) {
-        this.sourcePath = sourcePath;
-        return this;
-    }
-
-    /**
-     * The unique record id.
-     */
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    /**
-     * The unique record id.
-     */
-    public AlarmRecord setUuid(UUID uuid) {
-        this.uuid = uuid;
-        return this;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Methods
-    ///////////////////////////////////////////////////////////////////////////
-
-    /**
      * Sets all internal fields of this record to match the given.
      */
     public void copy(AlarmRecord record) {
@@ -249,6 +63,67 @@ public class AlarmRecord {
     }
 
     /**
+     * A value greater than zero represents the instant the alarm was acknowledged, otherwise the
+     * record is unacknowledged.
+     */
+    public long getAckTime() {
+        return ackTime;
+    }
+
+    /**
+     * If the ack time is greater than zero, there should be a entity name representing the
+     * acknowledging entity.
+     */
+    public String getAckUser() {
+        return ackUser;
+    }
+
+    /**
+     * The associate alarm class.
+     */
+    public AlarmClass getAlarmClass() {
+        return alarmClass;
+    }
+
+    /**
+     * The initial state of the alarm.
+     */
+    public AlarmState getAlarmType() {
+        return alarmType;
+    }
+
+    /**
+     * The alarm watch responsible for the alarm, or null.
+     *
+     * @return Possibly null.
+     */
+    public AlarmWatch getAlarmWatch() {
+        return watch;
+    }
+
+    /**
+     * The instant the alarm was created.
+     */
+    public long getCreatedTime() {
+        return createdTime;
+    }
+
+    /**
+     * Brief description of the alarm.
+     */
+    public String getMessage() {
+        return message;
+    }
+
+    /**
+     * A value greater than zero represents the instant the alarm returned to normal, otherwise the
+     * record is still in it's created state.
+     */
+    public long getNormalTime() {
+        return normalTime;
+    }
+
+    /**
      * If the alarm watch is non-null, that will be returned, otherwise the alarm class will be
      * returned.
      */
@@ -257,6 +132,28 @@ public class AlarmRecord {
             return watch;
         }
         return alarmClass;
+    }
+
+    /**
+     * The path to the alarmable entity.
+     */
+    public String getSourcePath() {
+        return sourcePath;
+    }
+
+    /**
+     * The unique record id.
+     */
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    /**
+     * Whether or not there are any notes for this alarm.  Notes can be retrieved using the getNotes
+     * action in the AlarmService.
+     */
+    public boolean hasNotes() {
+        return hasNotes;
     }
 
     /**
@@ -324,6 +221,109 @@ public class AlarmRecord {
         sourcePath = null;
         uuid = null;
         watch = null;
+    }
+
+    /**
+     * A value greater than zero represents the instant the alarm was acknowledged, otherwise the
+     * record is unacknowledged.
+     */
+    public AlarmRecord setAckTime(long ackTime) {
+        this.ackTime = ackTime;
+        return this;
+    }
+
+    /**
+     * If the ack time is greater than zero, there should be a entity name representing the
+     * acknowledging entity.
+     */
+    public AlarmRecord setAckUser(String ackUser) {
+        this.ackUser = ackUser;
+        return this;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Methods
+    ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * The associate alarm class.
+     */
+    public AlarmRecord setAlarmClass(AlarmClass alarmClass) {
+        this.alarmClass = alarmClass;
+        return this;
+    }
+
+    /**
+     * The initial state of the alarm, can not be NORMAL.
+     *
+     * @param alarmType Must not be NORMAL.
+     */
+    public AlarmRecord setAlarmType(AlarmState alarmType) {
+        if (alarmType == AlarmState.NORMAL) {
+            throw new IllegalArgumentException("Normal is not an alarm type");
+        }
+        this.alarmType = alarmType;
+        return this;
+    }
+
+    /**
+     * The alarm watch responsible for the alarm, or null.
+     *
+     * @return Possibly null.
+     */
+    public AlarmRecord setAlarmWatch(AlarmWatch watch) {
+        this.watch = watch;
+        return this;
+    }
+
+    /**
+     * The instant the alarm was created.
+     */
+    public AlarmRecord setCreatedTime(long createdTime) {
+        this.createdTime = createdTime;
+        return this;
+    }
+
+    /**
+     * Whether or not there are any notes for this alarm.  Notes can be retrieved using the getNotes
+     * action in the AlarmService.
+     */
+    public AlarmRecord setHasNotes(boolean hasNotes) {
+        this.hasNotes = hasNotes;
+        return this;
+    }
+
+    /**
+     * Brief description of the alarm.
+     */
+    public AlarmRecord setMessage(String message) {
+        this.message = message;
+        return this;
+    }
+
+    /**
+     * A value greater than zero represents the instant the alarm returned to normal, otherwise the
+     * record is still in it's created state.
+     */
+    public AlarmRecord setNormalTime(long normalTime) {
+        this.normalTime = normalTime;
+        return this;
+    }
+
+    /**
+     * The path to the alarmable entity.
+     */
+    public AlarmRecord setSourcePath(String sourcePath) {
+        this.sourcePath = sourcePath;
+        return this;
+    }
+
+    /**
+     * The unique record id.
+     */
+    public AlarmRecord setUuid(UUID uuid) {
+        this.uuid = uuid;
+        return this;
     }
 
     ///////////////////////////////////////////////////////////////////////////

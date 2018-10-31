@@ -26,9 +26,9 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     private AlarmService alarmService;
-    private Node superRoot;
     private DSLink requesterLink;
     private DSLink responderLink;
+    private Node superRoot;
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -37,20 +37,6 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Returns the link passed to onRequesterConnected
-     */
-    DSLink getRequesterLink() {
-        return requesterLink;
-    }
-
-    /**
-     * Returns the link passed to onResponderConnected
-     */
-    DSLink getResponderLink() {
-        return responderLink;
-    }
 
     /**
      * Returns true
@@ -135,6 +121,20 @@ public class AlarmLinkHandler extends DSLinkHandler implements AlarmConstants {
         alarmService = null;
         superRoot = null;
         super.stop();
+    }
+
+    /**
+     * Returns the link passed to onRequesterConnected
+     */
+    DSLink getRequesterLink() {
+        return requesterLink;
+    }
+
+    /**
+     * Returns the link passed to onResponderConnected
+     */
+    DSLink getResponderLink() {
+        return responderLink;
     }
 
     ///////////////////////////////////////////////////////////////////////////

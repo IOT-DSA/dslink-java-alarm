@@ -46,6 +46,7 @@ public class AlarmWatch extends AbstractAlarmObject
 
     private Boolean alarmDetected = null;
     private long alarmDetectedTime = System.currentTimeMillis();
+    private long lastCov = alarmDetectedTime;
     private long lastStateTime = alarmDetectedTime;
     private AlarmAlgorithm parentAlgorithm;
     private String subscribedPath;
@@ -57,6 +58,81 @@ public class AlarmWatch extends AbstractAlarmObject
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * The current value of the watch, or null if that doesn't make sense.
+     */
+    public Value getCurrentValue() {
+        return getProperty(CURRENT_VALUE);
+    }
+
+    /**
+     * Time of the last cov;
+     */
+    public long getLastCov() {
+        return lastCov;
+    }
+
+    @Override
+    public void getOpenUUIDs(ArrayList<UUID> uuidList) {
+        UUID openUUID = getLastAlarmUuid();
+        if (openUUID != null) {
+            uuidList.add(openUUID);
+        }
+    }
+
+    /**
+     * The Java instant that the watch entered the current state.
+     */
+    public long getStateTime() {
+        return lastStateTime;
+    }
+
+    /**
+     * Called when the target changes.  Sets up some internal state
+     * then calls AlarmAlgorithm.update(this) asynchronously.
+     */
+    public void handle(SubscriptionValue subValue) {
+        try {
+            if (subValue.getValue().equals(getNode().getValue())) {
+                if (isValid()) {
+                    AlarmUtil.enqueue(this);
+                }
+                return;
+            }
+            lastCov = System.currentTimeMillis();
+            Calendar cal = AlarmUtil.getCalendar(lastCov);
+            setProperty(LAST_COV,
+                        new Value(TimeUtils.encode(cal, true, null).toString()));
+            AlarmUtil.recycle(cal);
+            Value value = subValue.getValue();
+            if (value != null) {
+                Value curVal = getCurrentValue();
+                if (curVal == null) {
+                    initProperty(CURRENT_VALUE, value).setWritable(Writable.NEVER);
+                } else {
+                    if (curVal.getType() != subValue.getValue().getType()) {
+                        Node child = getNode().getChild(CURRENT_VALUE, false);
+                        child.setValueType(subValue.getValue().getType());
+                    }
+                    setProperty(CURRENT_VALUE, value);
+                }
+            }
+            if (isValid()) {
+                AlarmUtil.enqueue(this);
+            }
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(), x);
+        }
+    }
+
+    /**
+     * Used to call AlarmAlgorithm.update asynchronously.
+     */
+    @Override
+    public void run() {
+        getAlgorithm().update(this);
+    }
 
     /**
      * Subscribes to the path.
@@ -81,23 +157,10 @@ public class AlarmWatch extends AbstractAlarmObject
         parentAlgorithm = null;
     }
 
-    @Override
-    public void getOpenUUIDs(ArrayList<UUID> uuidList) {
-        UUID openUUID = getLastAlarmUuid();
-        if (openUUID != null) uuidList.add(openUUID);
-    }
-
     /**
      * Override hook, called periodically on the entire tree; this does nothing.
      */
     protected void execute() {
-    }
-
-    /**
-     * How long in millis since the change of state was first detected.
-     */
-    long getAlarmDetectedStateElapsedTime() {
-        return System.currentTimeMillis() - alarmDetectedTime;
     }
 
     /**
@@ -115,13 +178,6 @@ public class AlarmWatch extends AbstractAlarmObject
             parentAlgorithm = (AlarmAlgorithm) getParent();
         }
         return parentAlgorithm;
-    }
-
-    /**
-     * The current value of the watch, or null if that doesn't make sense.
-     */
-    public Value getCurrentValue() {
-        return getProperty(CURRENT_VALUE);
     }
 
     /**
@@ -173,55 +229,11 @@ public class AlarmWatch extends AbstractAlarmObject
     }
 
     /**
-     * The Java instant that the watch entered the current state.
-     */
-    public long getStateTime() {
-        return lastStateTime;
-    }
-
-    /**
      * How many milliseconds has the source has been in its current state, as best known
      * by this watch.
      */
     protected long getTimeInCurrentState() {
         return System.currentTimeMillis() - lastStateTime;
-    }
-
-    /**
-     * Called when the target changes.  Sets up some internal state
-     * then calls AlarmAlgorithm.update(this) asynchronously.
-     */
-    public void handle(SubscriptionValue subValue) {
-        try {
-            if (subValue.getValue().equals(getNode().getValue())) {
-                if (isValid()) {
-                    AlarmUtil.enqueue(this);
-                }
-                return;
-            }
-            Calendar cal = AlarmUtil.getCalendar(System.currentTimeMillis());
-            setProperty(LAST_COV,
-                        new Value(TimeUtils.encode(cal, true, null).toString()));
-            AlarmUtil.recycle(cal);
-            Value value = subValue.getValue();
-            if (value != null) {
-                Value curVal = getCurrentValue();
-                if (curVal == null) {
-                    initProperty(CURRENT_VALUE, value).setWritable(Writable.NEVER);
-                } else {
-                    if (curVal.getType() != subValue.getValue().getType()) {
-                        Node child = getNode().getChild(CURRENT_VALUE, false);
-                        child.setValueType(subValue.getValue().getType());
-                    }
-                    setProperty(CURRENT_VALUE, value);
-                }
-            }
-            if (isValid()) {
-                AlarmUtil.enqueue(this);
-            }
-        } catch (Exception x) {
-            AlarmUtil.logError(getNode().getPath(), x);
-        }
     }
 
     /**
@@ -271,14 +283,6 @@ public class AlarmWatch extends AbstractAlarmObject
     }
 
     /**
-     * Used to call AlarmAlgorithm.update asynchronously.
-     */
-    @Override
-    public void run() {
-        getAlgorithm().update(this);
-    }
-
-    /**
      * Sets alarm state and time if the given state represents a change.
      */
     protected void setAlarmState(AlarmState state) {
@@ -293,27 +297,6 @@ public class AlarmWatch extends AbstractAlarmObject
         setProperty(ALARM_STATE_TIME,
                     new Value(TimeUtils.encode(cal, true, null).toString()));
         AlarmUtil.recycle(cal);
-    }
-
-    /**
-     * Called by the algorithm each time it evaluates the alarm condition.  This tracks
-     * state changes for inhibit purposes.
-     *
-     * @param state True for alarm, false for normal.
-     */
-    void setAlarmDetected(Boolean state) {
-        if (alarmDetected == null) {
-            if (getAlarmState() == AlarmState.NORMAL) {
-                alarmDetected = Boolean.FALSE;
-            } else {
-                alarmDetected = Boolean.TRUE;
-            }
-        }
-        if (alarmDetected.equals(state)) {
-            return;
-        }
-        this.alarmDetected = state;
-        this.alarmDetectedTime = System.currentTimeMillis();
     }
 
     /**
@@ -355,6 +338,34 @@ public class AlarmWatch extends AbstractAlarmObject
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
         }
+    }
+
+    /**
+     * How long in millis since the change of state was first detected.
+     */
+    long getAlarmDetectedStateElapsedTime() {
+        return System.currentTimeMillis() - alarmDetectedTime;
+    }
+
+    /**
+     * Called by the algorithm each time it evaluates the alarm condition.  This tracks
+     * state changes for inhibit purposes.
+     *
+     * @param state True for alarm, false for normal.
+     */
+    void setAlarmDetected(Boolean state) {
+        if (alarmDetected == null) {
+            if (getAlarmState() == AlarmState.NORMAL) {
+                alarmDetected = Boolean.FALSE;
+            } else {
+                alarmDetected = Boolean.TRUE;
+            }
+        }
+        if (alarmDetected.equals(state)) {
+            return;
+        }
+        this.alarmDetected = state;
+        this.alarmDetectedTime = System.currentTimeMillis();
     }
 
 }

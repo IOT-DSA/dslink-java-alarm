@@ -22,14 +22,6 @@ public abstract class AlarmCursor extends AlarmRecord {
     public abstract void close();
 
     /**
-     * Calls close().
-     */
-    @Override
-    protected void finalize() {
-        close();
-    }
-
-    /**
      * Returns true if cursor advances to the next record.  The record fields should only
      * accessed after this method returns true.
      */
@@ -40,5 +32,13 @@ public abstract class AlarmCursor extends AlarmRecord {
      * appropriate start of page, and only returns pageSize number of rows.
      */
     public abstract void setPaging(int page, int pageSize);
+
+    /**
+     * Calls close().
+     */
+    @Override
+    protected void finalize() {
+        close();
+    }
 
 }

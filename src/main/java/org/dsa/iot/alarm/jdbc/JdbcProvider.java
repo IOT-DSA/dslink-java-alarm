@@ -8,11 +8,28 @@
 
 package org.dsa.iot.alarm.jdbc;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.UUID;
-import org.dsa.iot.alarm.*;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.dsa.iot.alarm.AbstractProvider;
+import org.dsa.iot.alarm.AckFilter;
+import org.dsa.iot.alarm.AlarmClass;
+import org.dsa.iot.alarm.AlarmConstants;
+import org.dsa.iot.alarm.AlarmCursor;
+import org.dsa.iot.alarm.AlarmFilter;
+import org.dsa.iot.alarm.AlarmRecord;
+import org.dsa.iot.alarm.AlarmService;
+import org.dsa.iot.alarm.AlarmState;
+import org.dsa.iot.alarm.AlarmUtil;
+import org.dsa.iot.alarm.AlarmWatch;
+import org.dsa.iot.alarm.Note;
+import org.dsa.iot.alarm.NoteCursor;
+import org.dsa.iot.alarm.OpenFilter;
 
 /**
  * Alarming provider that uses a JDBC data source.  This uses a fixed schema, but
@@ -109,65 +126,6 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
     }
 
     @Override
-    protected synchronized void addNote(Note arg) {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        try {
-            conn = getConnection();
-            //insert the note
-            stmt = conn.prepareStatement("insert into Alarm_Notes "
-                                                 + "(Uuid, Timestamp, User, Note) VALUES (?,?,?,?);");
-            stmt.setString(1, arg.getUUID().toString());
-            stmt.setTimestamp(2, new Timestamp(arg.getTimestamp()));
-            stmt.setString(3, arg.getUser());
-            stmt.setString(4, arg.getText());
-            stmt.executeUpdate();
-            stmt.close();
-            //update the alarm record
-            stmt = conn.prepareStatement(
-                    "update Alarm_Records set HasNotes = true where Uuid = ?;");
-            stmt.setString(1, arg.getUUID().toString());
-            stmt.executeUpdate();
-            conn.commit();
-        } catch (Exception x) {
-            AlarmUtil.throwRuntime(x);
-        } finally {
-            close(conn, stmt, null);
-        }
-    }
-
-    /**
-     * Just a convenience for closing resources.
-     *
-     * @param conn      May be null.
-     * @param statement May be null.
-     * @param results   May be null.
-     */
-    static void close(Connection conn, Statement statement, ResultSet results) {
-        if (results != null) {
-            try {
-                results.close();
-            } catch (Exception x) {
-                AlarmUtil.logError(results.toString(), x);
-            }
-        }
-        if (statement != null) {
-            try {
-                statement.close();
-            } catch (Exception x) {
-                AlarmUtil.logError(statement.toString(), x);
-            }
-        }
-        if (conn != null) {
-            try {
-                conn.close();
-            } catch (Exception x) {
-                AlarmUtil.logError(conn.toString(), x);
-            }
-        }
-    }
-
-    @Override
     public void deleteAllRecords() {
         Connection conn = null;
         Statement statement = null;
@@ -240,39 +198,6 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
         }
         return null;
     }
-
-    private String getColumnName(String displayName) {
-        if (displayName.equals(UUID_STR)) {
-            return "Uuid";
-        }
-        if (displayName.equals(CREATED_TIME)) {
-            return "CreatedTime";
-        }
-        if (displayName.equals(SOURCE_PATH)) {
-            return "SourcePath";
-        }
-        if (displayName.equals(ALARM_CLASS)) {
-            return "AlarmClass";
-        }
-        if (displayName.equals(ALARM_TYPE)) {
-            return "AlarmType";
-        }
-        if (displayName.equals(NORMAL_TIME)) {
-            return "NormalTime";
-        }
-        if (displayName.equals(ACK_TIME)) {
-            return "AckTime";
-        }
-        if (displayName.equals(ACK_USER)) {
-            return "AckUser";
-        }
-        throw new IllegalArgumentException("Unknown column: " + displayName);
-    }
-
-    /**
-     * Subclasses are responsible for obtaining a connection.
-     */
-    protected abstract Connection getConnection();
 
     @Override
     public NoteCursor getNotes(UUID uuid) {
@@ -381,11 +306,49 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
         return null;
     }
 
+    @Override
+    public void start(AlarmService service) {
+        super.start(service);
+        initializeDatabase();
+    }
+
+    @Override
+    protected synchronized void addNote(Note arg) {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        try {
+            conn = getConnection();
+            //insert the note
+            stmt = conn.prepareStatement("insert into Alarm_Notes "
+                                                 + "(Uuid, Timestamp, User, Note) VALUES (?,?,?,?);");
+            stmt.setString(1, arg.getUUID().toString());
+            stmt.setTimestamp(2, new Timestamp(arg.getTimestamp()));
+            stmt.setString(3, arg.getUser());
+            stmt.setString(4, arg.getText());
+            stmt.executeUpdate();
+            stmt.close();
+            //update the alarm record
+            stmt = conn.prepareStatement(
+                    "update Alarm_Records set HasNotes = true where Uuid = ?;");
+            stmt.setString(1, arg.getUUID().toString());
+            stmt.executeUpdate();
+            conn.commit();
+        } catch (Exception x) {
+            AlarmUtil.throwRuntime(x);
+        } finally {
+            close(conn, stmt, null);
+        }
+    }
+
+    /**
+     * Subclasses are responsible for obtaining a connection.
+     */
+    protected abstract Connection getConnection();
+
     /**
      * {@inheritDoc}
      * <p>This only updates NormalTime, AckTime, AckUser, and IsOpen</p>
      */
-    @SuppressFBWarnings("SQL_BAD_PREPARED_STATEMENT_ACCESS")
     @Override
     protected void saveRecord(AlarmRecord arg) {
         StringBuilder buf = new StringBuilder("update Alarm_Records set");
@@ -437,14 +400,14 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
     /**
      * Creates a select statement based on the given parameters.
      *
-     * @param alarmClass   Alarm class name, may be null.
-     * @param from         Earliest inclusive created time, may be null.
-     * @param to           First excluded created time, may be null.
-     * @param ackFilter    Filter for ack state.
+     * @param alarmClass  Alarm class name, may be null.
+     * @param from        Earliest inclusive created time, may be null.
+     * @param to          First excluded created time, may be null.
+     * @param ackFilter   Filter for ack state.
      * @param alarmFilter Filter for normal state.
-     * @param openFilter   Filter for open state.
-     * @param orderBy      Column to sort by.  See AlarmConstants.SORT_TYPE.
-     * @param ascending    True to sort ascending, false for descending.
+     * @param openFilter  Filter for open state.
+     * @param orderBy     Column to sort by.  See AlarmConstants.SORT_TYPE.
+     * @param ascending   True to sort ascending, false for descending.
      */
     protected String selectStatement(AlarmClass alarmClass,
                                      Calendar from,
@@ -517,12 +480,6 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
         return buf.toString();
     }
 
-    @Override
-    public void start(AlarmService service) {
-        super.start(service);
-        initializeDatabase();
-    }
-
     /**
      * Sets the AlarmRecord fields using the current position of the result set.
      */
@@ -573,6 +530,65 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
         if (ts != null) {
             rec.setTimestamp(ts.getTime());
         }
+    }
+
+    /**
+     * Just a convenience for closing resources.
+     *
+     * @param conn      May be null.
+     * @param statement May be null.
+     * @param results   May be null.
+     */
+    static void close(Connection conn, Statement statement, ResultSet results) {
+        if (results != null) {
+            try {
+                results.close();
+            } catch (Exception x) {
+                AlarmUtil.logError(results.toString(), x);
+            }
+        }
+        if (statement != null) {
+            try {
+                statement.close();
+            } catch (Exception x) {
+                AlarmUtil.logError(statement.toString(), x);
+            }
+        }
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (Exception x) {
+                AlarmUtil.logError(conn.toString(), x);
+            }
+        }
+    }
+
+    private String getColumnName(String displayName) {
+        if (displayName.equals(UUID_STR)) {
+            return "Uuid";
+        }
+        if (displayName.equals(CREATED_TIME)) {
+            return "CreatedTime";
+        }
+        if (displayName.equals(SOURCE_PATH)) {
+            return "SourcePath";
+        }
+        if (displayName.equals(ALARM_CLASS)) {
+            return "AlarmClass";
+        }
+        if (displayName.equals(ALARM_TYPE)) {
+            return "AlarmType";
+        }
+        if (displayName.equals(NORMAL_TIME)) {
+            return "NormalTime";
+        }
+        if (displayName.equals(ACK_TIME)) {
+            return "AckTime";
+        }
+        if (displayName.equals(ACK_USER)) {
+            return "AckUser";
+        }
+        throw new IllegalArgumentException("Unknown column: " + displayName);
     }
 
     ///////////////////////////////////////////////////////////////////////////

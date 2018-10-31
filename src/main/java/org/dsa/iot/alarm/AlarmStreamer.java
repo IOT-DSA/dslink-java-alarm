@@ -34,8 +34,8 @@ class AlarmStreamer extends AlarmActionHandler implements AlarmConstants {
     ///////////////////////////////////////////////////////////////////////////
 
     private boolean closedLocally = false;
-    private Collection listenerContainer;
     private AlarmCursor initialSet;
+    private Collection listenerContainer;
     private ActionResult request;
     private Table table;
     private LinkedList<AlarmRecord> updates = new LinkedList<>();

@@ -78,6 +78,13 @@ public class Alarming {
         public void addNote(UUID uuid, String user, String note);
 
         /**
+         * Switch for controlling public access for Providers with public database option.
+         *
+         * @param allow Set to true to allow access.
+         */
+        public void changeDatabaseAccessTo(boolean allow);
+
+        /**
          * Delete everything.
          */
         public void deleteAllRecords();
@@ -88,16 +95,16 @@ public class Alarming {
         public void deleteRecord(UUID uuid);
 
         /**
+         * The alarm record for the given UUID.
+         */
+        public AlarmRecord getAlarm(UUID uuid);
+
+        /**
          * The algorithms available in this link. The returned map should be mutable
          * for subclasses.  All alarm algorithms must subclass AlarmAlgorithm and
          * support the no-arg public constructor.
          */
         public Map<String, Class> getAlarmAlgorithms();
-
-        /**
-         * The alarm record for the given UUID.
-         */
-        public AlarmRecord getAlarm(UUID uuid);
 
         /**
          * Returns the notes for the given alarm record.  This must not return null.
@@ -119,21 +126,6 @@ public class Alarming {
          * after a restart.
          */
         public AlarmService newAlarmService();
-
-        /**
-         * Return the alarm record to the normal state.
-         */
-        public void returnToNormal(UUID uuid);
-
-        /**
-         * Prepare any resources for usage, such as opening a database.
-         */
-        public void start(AlarmService service);
-
-        /**
-         * Release any resources being used.
-         */
-        public void stop();
 
         /**
          * Returns a cursor of alarms from the given alarm class in specified
@@ -179,11 +171,19 @@ public class Alarming {
         public AlarmCursor queryOpenAlarms(AlarmClass alarmClass);
 
         /**
-         * Switch for controlling public access for Providers with public database option.
-         *
-         * @param allow Set to true to allow access.
+         * Return the alarm record to the normal state.
          */
-        public void changeDatabaseAccessTo(boolean allow);
+        public void returnToNormal(UUID uuid);
+
+        /**
+         * Prepare any resources for usage, such as opening a database.
+         */
+        public void start(AlarmService service);
+
+        /**
+         * Release any resources being used.
+         */
+        public void stop();
 
     }
 
