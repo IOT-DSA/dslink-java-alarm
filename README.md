@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Aug 29, 2018
-* Version: 1.9.0
+* Date: Oct 31, 2018
+* Version: 1.9.1
 
 
 Overview
@@ -83,6 +83,10 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.9.1 - 2018-10-31_
+  - Fix stale algorithm.
+  - Fix rescheduling auto update intervals.
+
 _1.9.0 - 2018-8-29_
   - Update gradle.
   - Update sdk.
