@@ -296,7 +296,7 @@ public abstract class JdbcProvider extends AbstractProvider implements AlarmCons
                                     null,
                                     AckFilter.ANY,
                                     AlarmFilter.ANY,
-                                    OpenFilter.ANY,
+                                    OpenFilter.OPEN,
                                     null,
                                     true));
             return new MyAlarmCursor(conn, statement, results);

@@ -2,7 +2,7 @@ apply plugin: 'application'
 apply plugin: 'java-library'
 
 group 'org.iot-dsa'
-version '1.9.1'
+version '1.9.2'
 
 mainClassName = 'org.dsa.iot.alarm.jdbc.H2Main'
 sourceCompatibility = 1.7
@@ -17,7 +17,7 @@ repositories {
 }
 
 wrapper {
-    gradleVersion = '4.10'
+    gradleVersion = '4.10.2'
 }
 
 dependencies {

@@ -1,8 +1,8 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Oct 31, 2018
-* Version: 1.9.1
+* Date: Nov 16, 2018
+* Version: 1.9.2
 
 
 Overview
@@ -83,6 +83,9 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.9.2 - 2018-11-16_
+  - Fix Get Open Alarms.
+
 _1.9.1 - 2018-10-31_
   - Fix stale algorithm.
   - Fix rescheduling auto update intervals.
