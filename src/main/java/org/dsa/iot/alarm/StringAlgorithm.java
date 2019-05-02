@@ -8,6 +8,7 @@
 
 package org.dsa.iot.alarm;
 
+import java.util.ArrayList;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Writable;
 import org.dsa.iot.dslink.node.value.Value;
@@ -28,17 +29,33 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
     private static final String ALARM_VALUE = "Alarm Value";
     private static final String ALARM_VALUE_MODE = "Alarm Value Mode";
     private static final String MODE_CONTAINS = "Contains";
-    private static final String MODE_ENDSWITH = "EndsWith";
+    private static final String MODE_NOT_CONTAINS = "NotContains";
+    private static final String MODE_CONTAINED = "Contained";
+    private static final String MODE_NOT_CONTAINED = "NotContained";
     private static final String MODE_EQUALS = "Equals";
     private static final String MODE_NOTEQUALS = "NotEquals";
+    private static final String MODE_ENDSWITH = "EndsWith";
     private static final String MODE_STARTSWITH = "StartsWith";
+    private static final String MODE_IN_LIST = "InList";
+    private static final String MODE_NOT_IN_LIST = "NotInList";
 
     private ValueType ENUM_VALUE_MODE = ValueType.makeEnum(
-            MODE_EQUALS, MODE_NOTEQUALS, MODE_CONTAINS, MODE_STARTSWITH, MODE_ENDSWITH);
+            MODE_EQUALS,
+            MODE_NOTEQUALS,
+            MODE_CONTAINS,
+            MODE_NOT_CONTAINS,
+            MODE_IN_LIST,
+            MODE_NOT_IN_LIST,
+            MODE_CONTAINED,
+            MODE_NOT_CONTAINED,
+            MODE_STARTSWITH,
+            MODE_ENDSWITH);
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
     ///////////////////////////////////////////////////////////////////////////
+
+    private ArrayList<String> list;
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -81,6 +98,22 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
             return !curString.equals(alarmValue);
         } else if (MODE_CONTAINS.equals(valueMode)) {
             return curString.contains(alarmValue);
+        } else if (MODE_NOT_CONTAINS.equals(valueMode)) {
+            return !curString.contains(alarmValue);
+        } else if (MODE_CONTAINED.equals(valueMode)) {
+            return alarmValue.contains(curString);
+        } else if (MODE_NOT_CONTAINED.equals(valueMode)) {
+            return !alarmValue.contains(curString);
+        } else if (MODE_IN_LIST.equals(valueMode)) {
+            if (list == null) {
+                list = Csv.readRow(alarmValue);
+            }
+            return list.contains(curString);
+        } else if (MODE_NOT_IN_LIST.equals(valueMode)) {
+            if (list == null) {
+                list = Csv.readRow(alarmValue);
+            }
+            return !list.contains(curString);
         } else if (MODE_STARTSWITH.equals(valueMode)) {
             return curString.startsWith(alarmValue);
         } else if (MODE_ENDSWITH.equals(valueMode)) {
@@ -93,8 +126,10 @@ public class StringAlgorithm extends AlarmAlgorithm implements Runnable {
     protected void onPropertyChange(Node child, ValuePair valuePair) {
         if (isSteady()) {
             if (ALARM_VALUE.equals(child.getName())) {
+                list = null;
                 AlarmUtil.enqueue(this);
             } else if (ALARM_VALUE_MODE.equals(child.getName())) {
+                list = null;
                 AlarmUtil.enqueue(this);
             }
         }

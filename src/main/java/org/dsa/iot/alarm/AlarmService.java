@@ -18,7 +18,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.dsa.iot.dslink.DSLink;
 import org.dsa.iot.dslink.link.Requester;
-import org.dsa.iot.dslink.link.SubscriptionHelper;
 import org.dsa.iot.dslink.methods.StreamState;
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
@@ -515,14 +514,14 @@ public class AlarmService extends AbstractAlarmObject {
     /**
      * Use this for subscribing to alarm sources, the SDK cannot handle multiple subscribers to the
      * same path.
+     SubscriptionHelper getSubscriptions() {
+     Requester requester = getRequester();
+     if (requester != null) {
+     return requester.getSubscriptionHelper();
+     }
+     return null;
+     }
      */
-    SubscriptionHelper getSubscriptions() {
-        Requester requester = getRequester();
-        if (requester != null) {
-            return requester.getSubscriptionHelper();
-        }
-        return null;
-    }
 
     /**
      * Adds all child watch objects to the given bucket.
@@ -650,6 +649,14 @@ public class AlarmService extends AbstractAlarmObject {
         } finally {
             updating = false;
         }
+    }
+
+    Requester getRequester() {
+        DSLink link = getLinkHandler().getRequesterLink();
+        if (link != null) {
+            return link.getRequester();
+        }
+        return null;
     }
 
     /**
@@ -973,14 +980,6 @@ public class AlarmService extends AbstractAlarmObject {
             streamer = new AlarmStreamer(null, event, cursor);
         }
         AlarmUtil.run(streamer, "Open Alarms");
-    }
-
-    private Requester getRequester() {
-        DSLink link = getLinkHandler().getRequesterLink();
-        if (link != null) {
-            return link.getRequester();
-        }
-        return null;
     }
 
     private int nextHandle() {

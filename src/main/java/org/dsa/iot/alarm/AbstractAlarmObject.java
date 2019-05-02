@@ -339,7 +339,11 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         if (child.getParent() != this) {
             throw new IllegalStateException("Child not parented by this object");
         }
-        child.removed();
+        try {
+            child.removed();
+        } catch (Exception x) {
+            AlarmUtil.logError("Remove " + child.getNode().getPath(), x);
+        }
         if (child.isSteady()) {
             child.stop();
         }
