@@ -318,7 +318,7 @@ public class AlarmWatch extends AbstractAlarmObject
             if ((subscribedPath == null) || subscribedPath.isEmpty()) {
                 return;
             }
-            getService().getSubscriptions().subscribe(subscribedPath, this);
+            getService().getRequester().subscribe(subscribedPath, this);
         } catch (Exception x) {
             AlarmUtil.logError(getNode().getPath(), x);
         }
@@ -331,8 +331,8 @@ public class AlarmWatch extends AbstractAlarmObject
     protected void unsubscribePath() {
         try {
             if ((subscribedPath != null) && !subscribedPath.isEmpty()) {
-                getService().getSubscriptions()
-                            .unsubscribe(subscribedPath, this, null);
+                getService().getRequester().unsubscribe(
+                        subscribedPath, this, null);
                 subscribedPath = null;
             }
         } catch (Exception x) {

@@ -1,27 +1,30 @@
+import groovy.json.JsonSlurper
+
 apply plugin: 'application'
-apply plugin: 'java-library'
+apply plugin: 'java'
 
 group 'org.iot-dsa'
-version '1.9.2'
-
 mainClassName = 'org.dsa.iot.alarm.jdbc.H2Main'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
+build { //Update version in dslink.json
+    def inputFile = file('dslink.json')
+    def json = new JsonSlurper().parseText(inputFile.text)
+    version = json.version
+}
+
 repositories {
-    //mavenLocal()
-    mavenCentral()
-    maven {
-        url 'https://oss.sonatype.org/content/repositories/snapshots/'
-    }
+    mavenLocal()
+    jcenter()
 }
 
 wrapper {
-    gradleVersion = '4.10.2'
+    gradleVersion = '5.4'
 }
 
 dependencies {
-    implementation 'org.iot-dsa:dslink:0.20.1'
+    implementation 'org.iot-dsa:dslink:0.21.1'
     implementation 'com.h2database:h2:1.4.197'
 }
 
