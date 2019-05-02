@@ -1,10 +1,6 @@
 DSLINK-JAVA-ALARM
 =================
 
-* Date: Nov 16, 2018
-* Version: 1.9.2
-
-
 Overview
 --------
 
@@ -83,6 +79,12 @@ under a [Creative Commons Attribute 2.5 License](http://creativecommons.org/lice
 
 History
 -------
+_1.10.0 - 2019-5-2_
+  - Build.gradle changes (jcenter).
+  - Stop using the subscription manager.
+  - Update sdk dependency.
+  - New StringAlgorithm modes: NotContains, Contained, NotContained, InList, NotInList.
+
 _1.9.2 - 2018-11-16_
   - Fix Get Open Alarms.
 
