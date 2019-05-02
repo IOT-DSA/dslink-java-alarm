@@ -651,6 +651,14 @@ public class AlarmService extends AbstractAlarmObject {
         }
     }
 
+    Requester getRequester() {
+        DSLink link = getLinkHandler().getRequesterLink();
+        if (link != null) {
+            return link.getRequester();
+        }
+        return null;
+    }
+
     /**
      * Action handler for acknowledging alarms with comma-separated UUIDs.
      */
@@ -972,14 +980,6 @@ public class AlarmService extends AbstractAlarmObject {
             streamer = new AlarmStreamer(null, event, cursor);
         }
         AlarmUtil.run(streamer, "Open Alarms");
-    }
-
-    Requester getRequester() {
-        DSLink link = getLinkHandler().getRequesterLink();
-        if (link != null) {
-            return link.getRequester();
-        }
-        return null;
     }
 
     private int nextHandle() {

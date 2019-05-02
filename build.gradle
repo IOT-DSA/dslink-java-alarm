@@ -25,7 +25,7 @@ wrapper {
 
 dependencies {
     implementation 'org.iot-dsa:dslink:0.21.1'
-    implementation 'com.h2database:h2:1.4.197'
+    implementation 'com.h2database:h2:1.4.199'
 }
 
 run {
