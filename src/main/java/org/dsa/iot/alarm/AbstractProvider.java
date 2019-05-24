@@ -44,6 +44,9 @@ public abstract class AbstractProvider implements Alarming.Provider {
     @Override
     public void acknowledge(UUID uuid, String user) {
         AlarmRecord rec = getAlarm(uuid);
+        if (rec == null) {
+            return;
+        }
         if (user == null) {
             throw new NullPointerException("User");
         }
