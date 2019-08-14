@@ -22,7 +22,7 @@ wrapper {
 }
 
 dependencies {
-    implementation 'org.iot-dsa:dslink:0.22.0'
+    implementation 'org.iot-dsa:dslink:0.22.2'
     implementation 'com.h2database:h2:1.4.199'
 }
 
