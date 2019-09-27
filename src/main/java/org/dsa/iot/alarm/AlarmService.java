@@ -801,6 +801,9 @@ public class AlarmService extends AbstractAlarmObject {
             }
             AlarmRecord record = Alarming.getProvider().getAlarm(
                     UUID.fromString(uuid.getString()));
+            if (record == null) {
+                throw new RuntimeException("No alarm found for given UUID");
+            }
             event.setStreamState(StreamState.INITIALIZED);
             Table table = event.getTable();
             table.setMode(Table.Mode.APPEND);
