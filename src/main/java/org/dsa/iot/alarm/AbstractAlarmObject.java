@@ -268,7 +268,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         if (child == null) {
             child = node.createChild(name, false).setSerializable(true).build();
             child.setValueType(type);
-            child.setValue(value);
+            child.setValue(value, true);
         }
         child.setHasChildren(false);
         final Node tmp = child;
@@ -384,7 +384,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     public Value setProperty(String name, Value value) {
         Node child = node.getChild(name, false);
         Value ret = child.getValue();
-        child.setValue(value);
+        child.setValue(value, true);
         return ret;
     }
 

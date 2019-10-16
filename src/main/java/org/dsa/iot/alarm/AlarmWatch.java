@@ -144,7 +144,7 @@ public class AlarmWatch extends AbstractAlarmObject
             public void run() {
                 subscribePath();
             }
-        });
+        }, 500);
         super.doSteady();
     }
 
@@ -269,15 +269,15 @@ public class AlarmWatch extends AbstractAlarmObject
     }
 
     @Override
-    protected void onPropertyChange(Node node, ValuePair valuePair) {
+    protected void onPropertyChange(Node node, final ValuePair valuePair) {
         if (isSteady()) {
             if (SOURCE_PATH.equals(node.getName())) {
                 AlarmUtil.enqueue(new Runnable() {
                     @Override
                     public void run() {
-                        subscribePath();
+                        subscribePath(valuePair.getCurrent().toString());
                     }
-                });
+                },100);
             }
         }
     }
@@ -310,18 +310,7 @@ public class AlarmWatch extends AbstractAlarmObject
      * Subscribes to the path.
      */
     protected void subscribePath() {
-        try {
-            if ((subscribedPath != null) && !subscribedPath.isEmpty()) {
-                unsubscribePath();
-            }
-            subscribedPath = getSourcePath();
-            if ((subscribedPath == null) || subscribedPath.isEmpty()) {
-                return;
-            }
-            getService().getRequester().subscribe(subscribedPath, this);
-        } catch (Exception x) {
-            AlarmUtil.logError(getNode().getPath(), x);
-        }
+        subscribePath(getSourcePath());
     }
 
     /**
@@ -366,6 +355,27 @@ public class AlarmWatch extends AbstractAlarmObject
         }
         this.alarmDetected = state;
         this.alarmDetectedTime = System.currentTimeMillis();
+    }
+
+    /**
+     * Subscribes to the path.
+     */
+    private synchronized void subscribePath(String path) {
+        try {
+            if ((subscribedPath != null) && !subscribedPath.isEmpty()) {
+                if ((path != null) && path.equals(subscribedPath)) {
+                    return;
+                }
+                unsubscribePath();
+            }
+            subscribedPath = path;
+            if ((subscribedPath == null) || subscribedPath.isEmpty()) {
+                return;
+            }
+            getService().getRequester().subscribe(subscribedPath, this);
+        } catch (Exception x) {
+            AlarmUtil.logError(getNode().getPath(), x);
+        }
     }
 
 }
