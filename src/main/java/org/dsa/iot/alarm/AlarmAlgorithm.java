@@ -281,9 +281,6 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
      * alarm record.  Inhibits are taken into account as well.
      */
     protected void updateState(AlarmState state, AlarmWatch watch) {
-        if (state == watch.getAlarmState()) {
-            return;
-        }
         if (!isValid() || !watch.isValid()) {
             return;
         }
@@ -295,14 +292,16 @@ public abstract class AlarmAlgorithm extends AbstractAlarmObject implements Runn
         if (!service.isValid()) {
             return;
         }
+        watch.setAlarmDetected(state != AlarmState.NORMAL);
+        if (state == watch.getAlarmState()) {
+            return;
+        }
         if (state == AlarmState.NORMAL) {
-            watch.setAlarmDetected(Boolean.FALSE);
             long inhibit = getToNormalInhibit();
             if ((inhibit > 0) && (watch.getAlarmDetectedStateElapsedTime() < inhibit)) {
                 return;
             }
         } else {
-            watch.setAlarmDetected(Boolean.TRUE);
             long inhibit = getToAlarmInhibit();
             if ((inhibit > 0) && (watch.getAlarmDetectedStateElapsedTime() < inhibit)) {
                 return;
