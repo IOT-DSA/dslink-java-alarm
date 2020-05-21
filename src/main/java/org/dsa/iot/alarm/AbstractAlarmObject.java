@@ -97,11 +97,15 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
     public void deleteSelf() {
         ArrayList<UUID> toClose = new ArrayList<UUID>();
         getOpenUUIDs(toClose);
-        for (UUID id : toClose) {
-            Alarming.getProvider().acknowledge(id, "DELETED");
-            Alarming.getProvider().returnToNormal(id);
-        }
         getParent().removeChild(this);
+        for (UUID id : toClose) {
+            try {
+                Alarming.getProvider().acknowledge(id, "DELETED");
+                Alarming.getProvider().returnToNormal(id);
+            } catch (Exception x) {
+                AlarmUtil.logTrace("Deleting " + id, x);
+            }
+        }
     }
 
     @Override
@@ -290,7 +294,7 @@ public abstract class AbstractAlarmObject implements AlarmObject, AlarmConstants
         if (val == null) {
             return true;
         }
-        return val.getBool().booleanValue();
+        return val.getBool();
     }
 
     @Override

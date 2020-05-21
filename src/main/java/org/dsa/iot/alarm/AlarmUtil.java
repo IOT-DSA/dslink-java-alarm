@@ -204,6 +204,13 @@ public class AlarmUtil implements AlarmConstants {
     /**
      * Abstracts the implementation as that is likely to change in the future.
      */
+    public static void logTrace(String msg, Throwable x) {
+        LOG.trace(msg, x);
+    }
+
+    /**
+     * Abstracts the implementation as that is likely to change in the future.
+     */
     public static void logWarning(String msg) {
         LOG.warn(msg);
     }
