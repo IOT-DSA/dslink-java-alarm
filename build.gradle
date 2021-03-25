@@ -18,11 +18,11 @@ repositories {
 }
 
 wrapper {
-    gradleVersion = '6.3'
+    gradleVersion = '6.8'
 }
 
 dependencies {
-    implementation 'org.iot-dsa:dslink:0.24.0'
+    implementation 'org.iot-dsa:dslink:0.24.2'
     implementation 'com.h2database:h2:1.4.199'
 }
 
