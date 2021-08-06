@@ -1,9 +1,10 @@
 apply plugin: 'application'
 apply plugin: 'java'
+apply plugin: 'maven'
 
 mainClassName = 'org.dsa.iot.alarm.jdbc.H2Main'
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 import groovy.json.JsonSlurper
 build { //Update version in dslink.json
@@ -13,16 +14,18 @@ build { //Update version in dslink.json
 }
 
 repositories {
-    jcenter()
     mavenLocal()
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 wrapper {
-    gradleVersion = '6.8'
+    gradleVersion = '6.8.3'
 }
 
 dependencies {
-    implementation 'org.iot-dsa:dslink:0.24.2'
+    //implementation 'org.iot-dsa:dslink:0.24.3'
+    implementation 'com.github.iot-dsa:sdk-dslink-java:1.0.0'
     implementation 'com.h2database:h2:1.4.199'
 }
 
